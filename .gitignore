@@ -1,0 +1,4 @@
+spendshelf-backend
+.idea/
+# MonogoDB directory
+dbdata/

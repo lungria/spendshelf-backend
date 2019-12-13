@@ -1,0 +1,22 @@
+version: '3.1'
+
+services:
+  mongod:
+    image: mongo
+    volumes:
+      - ./dbdata:/data/db
+    ports:
+      - 27017:27017
+    container_name: mongod
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: toor
+  spendshelf:
+    build: .
+    ports:
+      - 8080:8080
+    container_name: spendshelf
+    restart: always
+    depends_on:
+      - mongod
