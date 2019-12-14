@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	addr := flag.String("addr", ":8080", "HTTP address of server")
+	addr := flag.String("addr", ":80", "HTTP address of server")
 	flag.Parse()
 
 	s := NewServer(*addr)

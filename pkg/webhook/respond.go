@@ -1,4 +1,4 @@
-package api
+package webhook
 
 type errorResponse struct {
 	Message string `json:"message"`

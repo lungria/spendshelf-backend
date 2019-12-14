@@ -1,12 +1,12 @@
 package main
 
 import (
+	"github.com/lungria/spendshelf-backend/pkg/webhook"
 	"net/http"
 	"time"
 
 	gzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
-	"github.com/lungria/spendshelf-backend/api"
 	"go.uber.org/zap"
 )
 
@@ -19,8 +19,8 @@ func NewServer(addr string) *http.Server {
 	router.Use(gzap.Ginzap(logger, time.RFC3339, true))
 	router.Use(gin.Recovery())
 
-	router.GET("/webhook", api.WebHookHandlerGet)
-	router.POST("/webhook", api.WebHookHandlerPost)
+	router.GET("/webhook", webhook.WebHookHandlerGet)
+	router.POST("/webhook", webhook.WebHookHandlerPost)
 
 	return &http.Server{
 		Addr:    addr,
