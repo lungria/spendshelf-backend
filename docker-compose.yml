@@ -14,9 +14,21 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: toor
   spendshelf:
     build: .
-    ports:
-      - 8080:8080
     container_name: spendshelf
     restart: always
+    environment:
+      - MONGO_URI=mongodb://root:toor@mongod:27017
+      - SPEND_SHELF_DB=SpendShelf
     depends_on:
       - mongod
+  lb:
+    image: nginx:alpine
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/upstream.conf:/etc/nginx/conf.d/upstream.conf
+    ports:
+      - 80:80
+      - 443:443
+    container_name: "lb"
+    depends_on:
+      - spendshelf
