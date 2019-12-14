@@ -1,32 +1,43 @@
-package api
+package webhook
 
 import (
-	"github.com/lungria/spendshelf-backend/db"
+	"github.com/lungria/mono"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 type webHookRequest struct {
-	Type string          `json:"type"`
-	Data *db.Transaction `json:"data"`
+	Type string       `json:"type"`
+	Data *Transaction `json:"data"`
+}
+
+// Transaction ...
+type Transaction struct {
+	AccountId     string             `json:"account" bson:"account_id"`
+	StatementItem mono.StatementItem `json:"statementItem" bson:"statement_item"`
 }
 
 // WebHookHandlerPost catch the request from monoAPI and save to DB
 func WebHookHandlerPost(c *gin.Context) {
 	var err error
 	var req *webHookRequest
+
 	err = c.BindJSON(&req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, errorResponse{Message: "Bad request", Error: err.Error()})
+		return
 	}
-	database, err := db.NewConnection()
+
+	s, err := NewConnection()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse{Message: "Connection to database failed", Error: err.Error()})
+		c.JSON(http.StatusInternalServerError, errorResponse{Message: "Connect to database failed", Error: err.Error()})
+		return
 	}
-	err = database.SaveOneTransaction(req.Data)
+	err = s.SaveOneTransaction(req.Data)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse{Message: "Saving transaction failed", Error: err.Error()})
+		c.JSON(http.StatusInternalServerError, errorResponse{Message: "Saving Transaction failed", Error: err.Error()})
+		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Success"})
 }
