@@ -17,7 +17,7 @@ func NewServer(addr string) *http.Server {
 	logger, _ := zap.NewProduction()
 
 	router.Use(gzap.Ginzap(logger, time.RFC3339, true))
-	router.Use(gin.Recovery())
+	router.Use(gzap.RecoveryWithZap(logger, true))
 
 	router.GET("/webhook", webhook.WebHookHandlerGet)
 	router.POST("/webhook", webhook.WebHookHandlerPost)
