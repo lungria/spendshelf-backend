@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"github.com/lungria/spendshelf-backend/src/pkg/webhook"
 	"log"
 	"os"
 	"os/signal"
@@ -11,13 +12,15 @@ import (
 )
 
 func main() {
-	addr := flag.String("addr", ":80", "HTTP address of server")
+	var err error
+	addr := flag.String("addr", ":8080", "HTTP address of server")
 	flag.Parse()
 
-	s := NewServer(*addr)
+	s := webhook.NewServer(*addr, "", "")
+
 
 	go func() {
-		if err := s.ListenAndServe(); err != nil {
+		if err = s.HTTPServer.ListenAndServe(); err != nil {
 			log.Fatalf("ListenAndServe failed %v", err)
 		}
 	}()
@@ -30,7 +33,7 @@ func main() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	if err := s.Shutdown(ctx); err != nil {
+	if err = s.HTTPServer.Shutdown(ctx); err != nil {
 		log.Fatalln("Server shutdown: ", err)
 	}
 
