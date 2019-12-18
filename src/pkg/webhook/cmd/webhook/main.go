@@ -3,7 +3,8 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/lungria/spendshelf-backend/src/pkg/webhook"
+	"github.com/lungria/spendshelf-backend/src/pkg/webhook/api"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -16,7 +17,10 @@ func main() {
 	addr := flag.String("addr", ":8080", "HTTP address of server")
 	flag.Parse()
 
-	s := webhook.NewServer(*addr, "SpendShelf", "mongodb://root:toor@localhost:27017")
+	s, err := api.NewAPI(*addr, "SpendShelf", "mongodb://root:toor@localhost:27017")
+	if err != nil {
+		log.Fatalln("Couldn't create a new server")
+	}
 
 	done := make(chan bool, 1)
 	sigChan := make(chan os.Signal, 1)
