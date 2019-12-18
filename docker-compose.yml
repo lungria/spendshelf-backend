@@ -13,7 +13,7 @@ services:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: toor
   spendshelf:
-    build: .
+    build: ./src/Dockerfile
     container_name: spendshelf
     restart: always
     environment:
