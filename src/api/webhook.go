@@ -1,14 +1,15 @@
 package api
 
 import (
-	"github.com/lungria/spendshelf-backend/src/pkg/webhook/models"
 	"net/http"
+
+	"github.com/lungria/spendshelf-backend/src/models"
 
 	"github.com/gin-gonic/gin"
 )
 
 type webHookRequest struct {
-	Type string       `json:"type"`
+	Type string              `json:"type"`
 	Data *models.Transaction `json:"data"`
 }
 

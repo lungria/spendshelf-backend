@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/lungria/spendshelf-backend/src/pkg/webhook/api"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
+
+	"github.com/lungria/spendshelf-backend/src/api"
 )
 
 func main() {
@@ -44,7 +45,7 @@ func main() {
 		s.Logger.Fatalf("Couldn't listen on %v: %v\n", &addr, err)
 	}
 
-	<- done
+	<-done
 	s.Logger.Info("Server stopped")
 
 }

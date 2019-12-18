@@ -1,18 +1,19 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/lungria/spendshelf-backend/src/pkg/webhook/db"
-	gzap "github.com/gin-contrib/zap"
-	"go.uber.org/zap"
 	"net/http"
 	"time"
+
+	gzap "github.com/gin-contrib/zap"
+	"github.com/gin-gonic/gin"
+	"github.com/lungria/spendshelf-backend/src/db"
+	"go.uber.org/zap"
 )
 
 type WebHookAPI struct {
-	Database  *db.Database
+	Database   *db.Database
 	HTTPServer *http.Server
-	Logger 		*zap.SugaredLogger
+	Logger     *zap.SugaredLogger
 }
 
 func NewAPI(addr, dbname, mongoURI string) (*WebHookAPI, error) {
@@ -27,13 +28,13 @@ func NewAPI(addr, dbname, mongoURI string) (*WebHookAPI, error) {
 	}
 
 	a := WebHookAPI{
-		Database: database,
-		HTTPServer:   nil,
-		Logger: logger.Sugar(),
+		Database:   database,
+		HTTPServer: nil,
+		Logger:     logger.Sugar(),
 	}
 	a.initRouter(addr)
 
-
+	return &a, nil
 }
 
 func (a *WebHookAPI) initRouter(addr string) {
@@ -46,6 +47,8 @@ func (a *WebHookAPI) initRouter(addr string) {
 
 	router.Any("/webhook", a.WebHookHandler)
 
-	a.HTTPServer.Addr = addr
-	a.HTTPServer.Handler = router
+	a.HTTPServer = &http.Server{
+		Addr:    addr,
+		Handler: router,
+	}
 }

@@ -3,8 +3,8 @@ package db
 import (
 	"context"
 	"errors"
-	"github.com/lungria/spendshelf-backend/src/pkg/webhook/api"
-	"github.com/lungria/spendshelf-backend/src/pkg/webhook/models"
+
+	"github.com/lungria/spendshelf-backend/src/models"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -30,11 +30,11 @@ func (d *Database) GetAllTransactions(accountID string) ([]models.Transaction, e
 	collection := d.MongoDB.Collection(transactionsCollection)
 	cur, err := collection.Find(context.Background(), bson.M{"account_id": accountID})
 	if err != nil {
-		d.logger.Errorw("GetAllTransactions failed", "Database", d.MongoDB.Name(), "Collection", transactionsCollection, "Account ID",accountID, "Error", err)
+		d.logger.Errorw("GetAllTransactions failed", "Database", d.MongoDB.Name(), "Collection", transactionsCollection, "Account ID", accountID, "Error", err)
 		return nil, errors.New("retrieve transactions failed")
 	}
 	for cur.Next(context.Background()) {
-		var t api.Transaction
+		var t models.Transaction
 		cur.Decode(&t)
 		transactions = append(transactions, t)
 	}
@@ -46,7 +46,7 @@ func (d *Database) SaveOneTransaction(transaction *models.Transaction) error {
 	collection := d.MongoDB.Collection(transactionsCollection)
 	_, err := collection.InsertOne(context.Background(), transaction)
 	if err != nil {
-		d.logger.Errorw("SaveOneTransaction failed", "Database", d.MongoDB.Name(), "Collection", transactionsCollection, "transaction",transaction, "Error", err)
+		d.logger.Errorw("SaveOneTransaction failed", "Database", d.MongoDB.Name(), "Collection", transactionsCollection, "transaction", transaction, "Error", err)
 		return errors.New("save transaction to database failed")
 	}
 	return nil

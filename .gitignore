@@ -1,6 +1,5 @@
-spendshelf-backend
+webhook
 .idea/
 # MonogoDB directory
 dbdata/
 # Path to binary
-src/pkg/webhook/cmd/webhook/webhook
