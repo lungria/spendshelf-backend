@@ -3,4 +3,4 @@ spendshelf-backend
 # MonogoDB directory
 dbdata/
 # Path to binary
-/home/mark/go/src/github.com/lungria/spendshelf-backend/src/pkg/webhook/cmd/webhook/webhook
+src/pkg/webhook/cmd/webhook/webhook
