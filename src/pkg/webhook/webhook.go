@@ -7,10 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type WebHookAPI struct {
-	HTTPServer *http.Server
-}
-
 type webHookRequest struct {
 	Type string       `json:"type"`
 	Data *Transaction `json:"data"`
@@ -20,6 +16,18 @@ type webHookRequest struct {
 type Transaction struct {
 	AccountId     string             `json:"account" bson:"account_id"`
 	StatementItem mono.StatementItem `json:"statementItem" bson:"statement_item"`
+}
+
+func (s *Server) WebHookHandler(c *gin.Context) {
+	c.Header("content-type", "application/json")
+	switch c.Request.Method {
+	case http.MethodGet:
+		s.WebHookHandlerGet(c)
+	case http.MethodPost:
+		s.WebHookHandlerPost(c)
+	default:
+		c.JSON(http.StatusMethodNotAllowed, "")
+	}
 }
 
 // WebHookHandlerPost catch the request from monoAPI and save to DB
@@ -32,7 +40,7 @@ func (s *Server) WebHookHandlerPost(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, errorResponse{Message: "Bad request", Error: err.Error()})
 		return
 	}
-	err = s.MongoDB.SaveOneTransaction(req.Data)
+	err = s.SaveOneTransaction(req.Data)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errorResponse{Message: "Saving Transaction failed", Error: err.Error()})
 		return
