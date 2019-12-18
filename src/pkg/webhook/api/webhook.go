@@ -1,7 +1,7 @@
-package webhook
+package api
 
 import (
-	"github.com/lungria/mono"
+	"github.com/lungria/spendshelf-backend/src/pkg/webhook/models"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -9,29 +9,23 @@ import (
 
 type webHookRequest struct {
 	Type string       `json:"type"`
-	Data *Transaction `json:"data"`
+	Data *models.Transaction `json:"data"`
 }
 
-// Transaction ...
-type Transaction struct {
-	AccountId     string             `json:"account" bson:"account_id"`
-	StatementItem mono.StatementItem `json:"statementItem" bson:"statement_item"`
-}
-
-func (s *Server) WebHookHandler(c *gin.Context) {
+func (a *WebHookAPI) WebHookHandler(c *gin.Context) {
 	c.Header("content-type", "application/json")
 	switch c.Request.Method {
 	case http.MethodGet:
-		s.WebHookHandlerGet(c)
+		a.WebHookHandlerGet(c)
 	case http.MethodPost:
-		s.WebHookHandlerPost(c)
+		a.WebHookHandlerPost(c)
 	default:
 		c.JSON(http.StatusMethodNotAllowed, "")
 	}
 }
 
 // WebHookHandlerPost catch the request from monoAPI and save to DB
-func (s *Server) WebHookHandlerPost(c *gin.Context) {
+func (a *WebHookAPI) WebHookHandlerPost(c *gin.Context) {
 	var err error
 	var req *webHookRequest
 
@@ -40,7 +34,7 @@ func (s *Server) WebHookHandlerPost(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, errorResponse{Message: "Bad request", Error: err.Error()})
 		return
 	}
-	err = s.SaveOneTransaction(req.Data)
+	err = a.Database.SaveOneTransaction(req.Data)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errorResponse{Message: "Saving Transaction failed", Error: err.Error()})
 		return
@@ -49,6 +43,6 @@ func (s *Server) WebHookHandlerPost(c *gin.Context) {
 }
 
 // WebHookHandlerGet respond 200 to monoAPI when WebHook was set
-func (s *Server) WebHookHandlerGet(c *gin.Context) {
+func (a *WebHookAPI) WebHookHandlerGet(c *gin.Context) {
 	c.String(http.StatusOK, "")
 }
