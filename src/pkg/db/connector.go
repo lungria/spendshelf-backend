@@ -4,31 +4,18 @@ import (
 	"context"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"os"
 	"time"
 )
 
-type MongoDB struct {
-	Database   *mongo.Database
-	Cancel     context.CancelFunc
-	Context    context.Context
-	Collection string
-}
-
-func Connect(dbName string) (*MongoDB, error) {
-	mongoURI := os.Getenv("MONGO_URI")
-	db, err := mongo.NewClient(options.Client().ApplyURI(mongoURI))
+func Connect(dbName, URI string) (*mongo.Database, error) {
+	client, err := mongo.NewClient(options.Client().ApplyURI(URI), options.Client().SetMaxPoolSize(50))
 	if err != nil {
-		return &MongoDB{}, err
+		return nil, err
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	if err := db.Connect(ctx); err != nil {
-		return &MongoDB{}, err
+	ctx, _ := context.WithTimeout(context.Background(), time.Millisecond*4999)
+	if err := client.Connect(ctx); err != nil {
+		return nil, err
 	}
-	database := db.Database(dbName)
-	return &MongoDB{
-		Database:   database,
-		Cancel:     cancel,
-		Context:    ctx,
-	}, nil
+	database := client.Database(dbName)
+	return database, nil
 }
