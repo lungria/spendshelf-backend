@@ -1,52 +1,37 @@
 package webhook
 
 import (
-	"github.com/lungria/spendshelf-backend/pkg/db"
+	"context"
+	"errors"
 	"go.mongodb.org/mongo-driver/bson"
-	"os"
 )
 
 const (
 	transactionsCollection = "Transactions"
 )
 
-// SpendShelf is struct for SpendShelf database in MongoDB
-type SpendShelf struct {
-	*db.MongoDB
-}
-
-// NewConnection create a new connection to specified database
-func NewConnection() (*SpendShelf, error) {
-	dbName := os.Getenv("SPEND_SHELF_DB")
-	mongoClient, err := db.Connect(dbName)
-	if err != nil {
-		return nil, err
-	}
-	return &SpendShelf{mongoClient}, nil
-}
-
 // GetTransactionByID fetch one Transaction by transactionId from MongoDB
-func (s SpendShelf) GetTransactionByID(transactionID string) (Transaction, error) {
-	defer s.MongoDB.Cancel()
+func (s *Server) GetTransactionByID(transactionID string) (Transaction, error) {
 	var t Transaction
-	collection := s.Database.Collection(transactionsCollection)
-	err := collection.FindOne(s.Context, bson.M{"id": transactionID}).Decode(t)
+	collection := s.MongoDB.Collection(transactionsCollection)
+	err := collection.FindOne(context.Background(), bson.M{"id": transactionID}).Decode(t)
 	if err != nil {
-		return t, err
+		s.Logger.Errorw("GetTransactionByID failed", "Database", s.MongoDB.Name(), "Collection", transactionsCollection, "Transaction ID", transactionID, "Error", err)
+		return t, errors.New("retrieve transaction failed")
 	}
 	return t, err
 }
 
 // GetAllTransactions fetch all Transaction by accountId from MongoDB
-func (s SpendShelf) GetAllTransactions(accountID string) ([]Transaction, error) {
-	defer s.MongoDB.Cancel()
+func (s *Server) GetAllTransactions(accountID string) ([]Transaction, error) {
 	var transactions []Transaction
-	collection := s.Database.Collection(transactionsCollection)
-	cur, err := collection.Find(s.MongoDB.Context, bson.M{"account_id": accountID})
+	collection := s.MongoDB.Collection(transactionsCollection)
+	cur, err := collection.Find(context.Background(), bson.M{"account_id": accountID})
 	if err != nil {
-		return nil, nil
+		s.Logger.Errorw("GetAllTransactions failed", "Database", s.MongoDB.Name(), "Collection", transactionsCollection, "Account ID",accountID, "Error", err)
+		return nil, errors.New("retrieve transactions failed")
 	}
-	for cur.Next(s.MongoDB.Context) {
+	for cur.Next(context.Background()) {
 		var t Transaction
 		cur.Decode(&t)
 		transactions = append(transactions, t)
@@ -55,12 +40,12 @@ func (s SpendShelf) GetAllTransactions(accountID string) ([]Transaction, error) 
 }
 
 // SaveOneTransaction save one Transaction to MongoDB
-func (s SpendShelf) SaveOneTransaction(transaction *Transaction) error {
-	defer s.MongoDB.Cancel()
-	collection := s.Database.Collection(transactionsCollection)
-	_, err := collection.InsertOne(s.MongoDB.Context, transaction)
+func (s *Server) SaveOneTransaction(transaction *Transaction) error {
+	collection := s.MongoDB.Collection(transactionsCollection)
+	_, err := collection.InsertOne(context.Background(), transaction)
 	if err != nil {
-		return err
+		s.Logger.Errorw("SaveOneTransaction failed", "Database", s.MongoDB.Name(), "Collection", transactionsCollection, "transaction",transaction, "Error", err)
+		return errors.New("save transaction to database failed")
 	}
 	return nil
 }
