@@ -32,12 +32,13 @@ func NewAPI(addr, dbname, mongoURI string) (*WebHookAPI, error) {
 		HTTPServer: nil,
 		Logger:     logger.Sugar(),
 	}
-	a.initRouter(addr)
+	a.InitRouter(addr)
 
 	return &a, nil
 }
 
-func (a *WebHookAPI) initRouter(addr string) {
+// InitRouter is initiate a new router also using in tests
+func (a *WebHookAPI) InitRouter(addr string) {
 	router := gin.New()
 
 	logger, _ := zap.NewProduction()
