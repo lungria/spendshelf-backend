@@ -8,10 +8,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-const (
-	transactionsCollection = "Transactions"
-)
-
 // GetTransactionByID fetch one Transaction by transactionId from MongoDB
 func (d *Database) GetTransactionByID(transactionID string) (models.Transaction, error) {
 	var t models.Transaction
