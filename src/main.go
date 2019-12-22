@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"log"
 	"net/http"
 	"os"
@@ -15,17 +14,16 @@ import (
 func main() {
 	var err error
 
-	addr := flag.String("addr", ":8080", "HTTP address of server")
-	flag.Parse()
+	config := NewConfig()
 
-	s, err := api.NewAPI(*addr, "SpendShelf", "mongodb://root:toor@localhost:27017")
+	s, err := api.NewAPI(config.HTTTAddr, config.DBName, config.MongoURI)
 	if err != nil {
 		log.Fatalln("Couldn't create a new server")
 	}
 
 	done := make(chan bool, 1)
 	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt)
+	signal.Notify(sigChan, os.Interrupt, os.Kill)
 
 	go func() {
 		<-sigChan
@@ -42,7 +40,7 @@ func main() {
 	}()
 
 	if err = s.HTTPServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		s.Logger.Fatalf("Couldn't listen on %v: %v\n", &addr, err)
+		s.Logger.Fatalf("Couldn't listen on %v: %v\n", config.HTTTAddr, err)
 	}
 
 	<-done
