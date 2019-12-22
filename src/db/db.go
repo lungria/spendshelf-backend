@@ -57,9 +57,14 @@ func (d *Database) initCappedCollection(collName string) error {
 	if err := result.All(context.Background(), &cursor); err != nil {
 		return err
 	}
+	cmd := bson.D{{"convertToCapped", transactionsCollection}, {"size", 5000000}}
+	if len(cursor) == 0 {
+		d.MongoDB.RunCommand(context.Background(), cmd)
+		return nil
+	}
 	for coll := 0; coll < len(cursor); coll++ {
 		if cursor[coll]["name"] == collName {
-			d.MongoDB.RunCommand(context.Background(), bson.D{{"convertToCapped", cursor[coll]["name"]}, {"size", 5000000}})
+			d.MongoDB.RunCommand(context.Background(), cmd)
 		}
 	}
 	return nil
