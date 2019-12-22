@@ -16,9 +16,8 @@ const (
 )
 
 type Database struct {
-	MongoDB    *mongo.Database
-	logger     *zap.SugaredLogger
-	CancelFunc context.CancelFunc
+	MongoDB *mongo.Database
+	logger  *zap.SugaredLogger
 }
 
 // NewDatabase is create a new database connection
@@ -57,7 +56,7 @@ func (d *Database) initCappedCollection(collName string) error {
 	if err := result.All(context.Background(), &cursor); err != nil {
 		return err
 	}
-	cmd := bson.D{{"convertToCapped", transactionsCollection}, {"size", 5000000}}
+	cmd := bson.D{{"convertToCapped", collName}, {"size", 5000000}}
 	if len(cursor) == 0 {
 		d.MongoDB.RunCommand(context.Background(), cmd)
 		return nil
@@ -65,6 +64,7 @@ func (d *Database) initCappedCollection(collName string) error {
 	for coll := 0; coll < len(cursor); coll++ {
 		if cursor[coll]["name"] == collName {
 			d.MongoDB.RunCommand(context.Background(), cmd)
+			break
 		}
 	}
 	return nil

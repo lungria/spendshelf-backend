@@ -13,7 +13,8 @@ services:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: toor
   webhook:
-    build: ./src/Dockerfile
+    image: webhook
+    build: ./src/
     container_name: webhook
     restart: always
     environment:
@@ -29,6 +30,6 @@ services:
     ports:
       - 80:80
       - 443:443
-    container_name: lb
+    container_name: "lb"
     depends_on:
-      - spendshelf
+      - webhook
