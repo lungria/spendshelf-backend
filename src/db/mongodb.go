@@ -8,6 +8,12 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+type WebHookDB interface {
+	GetTransactionByID(transactionID string) (models.Transaction, error)
+	GetAllTransactions(accountID string) ([]models.Transaction, error)
+	SaveOneTransaction(transaction *models.Transaction) error
+}
+
 // GetTransactionByID fetch one Transaction by transactionId from MongoDB
 func (d *Database) GetTransactionByID(transactionID string) (models.Transaction, error) {
 	var t models.Transaction
