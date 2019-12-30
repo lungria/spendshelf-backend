@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/DataDog/zstd v1.4.4 // indirect
+	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/gin-contrib/zap v0.0.0-20191128031730-d12829f8f61b
 	github.com/gin-gonic/gin v1.5.0
 	github.com/go-stack/stack v1.8.0 // indirect

@@ -14,9 +14,12 @@ import (
 func main() {
 	var err error
 
-	config := NewConfig()
+	config, err := NewConfig()
+	if err != nil {
+		log.Fatalln("Couldn't parse environment variables", err)
+	}
 
-	s, err := api.NewAPI(config.HTTTAddr, config.DBName, config.MongoURI)
+	s, err := api.NewAPI(config.HTTPAddr, config.DBName, config.MongoURI)
 	if err != nil {
 		log.Fatalln("Couldn't create a new server")
 	}
@@ -40,7 +43,7 @@ func main() {
 	}()
 
 	if err = s.HTTPServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		s.Logger.Fatalf("Couldn't listen on %v: %v\n", config.HTTTAddr, err)
+		s.Logger.Fatalf("Couldn't listen on %v: %v\n", config.HTTPAddr, err)
 	}
 
 	<-done

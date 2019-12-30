@@ -19,7 +19,7 @@ services:
     restart: always
     environment:
       - MONGO_URI=mongodb://root:toor@mongod:27017
-      - SPEND_SHELF_DB=SpendShelf
+      - SPEND_SHELF_DB=spendShelf
     depends_on:
       - mongod
   lb:

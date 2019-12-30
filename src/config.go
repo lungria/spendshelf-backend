@@ -1,43 +1,23 @@
 package main
 
 import (
-	"os"
+	"github.com/caarlos0/env"
 )
 
+// Config is struct for all configuration params of the project
 type Config struct {
-	HTTTAddr string
-	MongoURI string
-	DBName   string
+	HTTPAddr string `env:"WEB_HOOK_ADDR" envDefault:":80"`
+	MongoURI string `env:"MONGO_URI" envDefault:"mongodb://root:toor@localhost:27017"`
+	DBName   string `env:"SPEND_SHELF_DB" envDefault:"spendShelf"`
 }
 
-func NewConfig() *Config {
+// NewConfig is parsing environment variables and returns filled Config
+func NewConfig() (*Config, error) {
 	c := Config{}
-	defaultAddr := ":80"
-	defaultDBName := "SpendShelf"
-	defaultMongoURI := "mongodb://root:toor@localhost:27017"
-
-	envAddr := os.Getenv("WEB_HOOK_ADDR")
-	envDBName := os.Getenv("SPEND_SHELF_DB")
-	envMongoURI := os.Getenv("MONGO_URI")
-
-	if envAddr != "" {
-		c.HTTTAddr = envAddr
-	} else {
-		c.HTTTAddr = defaultAddr
+	err := env.Parse(&c)
+	if err != nil {
+		return nil, err
 	}
 
-	if envDBName != "" {
-		c.DBName = envDBName
-	} else {
-		c.DBName = defaultDBName
-
-	}
-
-	if envMongoURI != "" {
-		c.MongoURI = envMongoURI
-	} else {
-		c.MongoURI = defaultMongoURI
-	}
-
-	return &c
+	return &c, nil
 }
