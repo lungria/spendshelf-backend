@@ -13,6 +13,7 @@ type webHookRequest struct {
 	Data *models.Transaction `json:"data"`
 }
 
+// WebHookHandler is routing for different HTTP methods
 func (a *WebHookAPI) WebHookHandler(c *gin.Context) {
 	c.Header("content-type", "application/json")
 	switch c.Request.Method {

@@ -15,6 +15,7 @@ const (
 	transactionsCollection = "Transactions"
 )
 
+// Database is contain mongo connection and logger also all methods which do some work with database implement this struct
 type Database struct {
 	MongoDB *mongo.Database
 	logger  *zap.SugaredLogger

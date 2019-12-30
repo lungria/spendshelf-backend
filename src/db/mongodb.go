@@ -8,6 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+// WebHookDB define all methods which do some work with database
 type WebHookDB interface {
 	GetTransactionByID(transactionID string) (models.Transaction, error)
 	GetAllTransactions(accountID string) ([]models.Transaction, error)

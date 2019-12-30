@@ -10,12 +10,14 @@ import (
 	"go.uber.org/zap"
 )
 
+// WebHookAPI is API instance with DB, logger and router
 type WebHookAPI struct {
 	Database   *db.Database
 	HTTPServer *http.Server
 	Logger     *zap.SugaredLogger
 }
 
+// NewAPI create a new WebHookAPI with DB, logger and router
 func NewAPI(addr, dbname, mongoURI string) (*WebHookAPI, error) {
 	database, err := db.NewDatabase(dbname, mongoURI)
 	if err != nil {
