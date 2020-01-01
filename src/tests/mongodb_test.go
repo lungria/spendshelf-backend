@@ -11,7 +11,7 @@ import (
 
 func TestSaveOneTransaction(t *testing.T) {
 	transaction := models.Transaction{
-		AccountId: "test_id",
+		AccountID: "test_id",
 		StatementItem: mono.StatementItem{
 			ID:              "test_t_id",
 			Time:            1577011328,
@@ -52,11 +52,11 @@ func TestGetAllTransactions(t *testing.T) {
 		Balance:         45648,
 	}
 	expectedTransactions := []models.Transaction{{
-		AccountId:     "test1",
+		AccountID:     "test1",
 		StatementItem: item,
 	},
 		{
-			AccountId:     "test1",
+			AccountID:     "test1",
 			StatementItem: item,
 		}}
 	ctrl := gomock.NewController(t)
@@ -78,7 +78,7 @@ func TestGetAllTransactions(t *testing.T) {
 
 func TestGetOneTransactions(t *testing.T) {
 	expectedTransaction := models.Transaction{
-		AccountId: "test_id",
+		AccountID: "test_id",
 		StatementItem: mono.StatementItem{
 			ID:              "test_t_id",
 			Time:            1577011328,
