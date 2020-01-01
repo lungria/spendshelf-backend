@@ -3,6 +3,7 @@ package categories
 import (
 	"context"
 	"errors"
+	"sync"
 
 	"golang.org/x/text/unicode/norm"
 )
@@ -16,6 +17,7 @@ type InMemoryCategoriesProvider struct {
 	categories  map[string]Category
 	updatesChan <-chan Category
 	context     context.Context
+	mutex       *sync.RWMutex
 }
 
 func NewProvider(seed []Category, updates <-chan Category, context context.Context) (*InMemoryCategoriesProvider, error) {
@@ -34,14 +36,15 @@ func NewProvider(seed []Category, updates <-chan Category, context context.Conte
 		categories:  categories,
 		updatesChan: updates,
 		context:     context,
+		mutex:       &sync.RWMutex{},
 	}
 	go provider.runSync()
 	return provider, nil
 }
 
 func (provider *InMemoryCategoriesProvider) GetAll() []Category {
-	// todo lock
-	// todo defer unlock
+	provider.mutex.RLock()
+	defer provider.mutex.RUnlock()
 	arr := []Category{}
 	for _, v := range provider.categories {
 		arr = append(arr, v)
@@ -50,8 +53,8 @@ func (provider *InMemoryCategoriesProvider) GetAll() []Category {
 }
 
 func (provider *InMemoryCategoriesProvider) Find(name string) (Category, bool) {
-	// todo lock
-	// todo defer unlock
+	provider.mutex.RLock()
+	defer provider.mutex.RUnlock()
 	normalized := norm.NFC.String(name)
 	val, exists := provider.categories[normalized]
 	return val, exists
@@ -69,10 +72,10 @@ func (provider *InMemoryCategoriesProvider) runSync() {
 				if !ok {
 					return
 				}
-				// todo lock
+				provider.mutex.Lock()
 				key := val.NormalizedName
 				provider.categories[key] = val
-				// todo unlock
+				provider.mutex.Unlock()
 			}
 		}
 	}
