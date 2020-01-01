@@ -4,52 +4,50 @@ import (
 	"net/http"
 	"time"
 
+	"go.uber.org/zap"
+
+	"github.com/lungria/spendshelf-backend/src/api/handlers"
+
+	"github.com/lungria/spendshelf-backend/src/categories"
+	"github.com/pkg/errors"
+
 	gzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
 	"github.com/lungria/spendshelf-backend/src/db"
-	"go.uber.org/zap"
 )
 
-// WebHookAPI is API instance with DB, logger and router
-type WebHookAPI struct {
-	Database   *db.Database
-	HTTPServer *http.Server
-	Logger     *zap.SugaredLogger
-}
-
 // NewAPI create a new WebHookAPI with DB, logger and router
-func NewAPI(addr, dbname, mongoURI string) (*WebHookAPI, error) {
-	logger, err := zap.NewProduction()
+func NewAPI(addr, dbname, mongoURI string, logger *zap.Logger, sugar *zap.SugaredLogger) (*http.Server, error) {
+	database, err := db.NewDatabase(dbname, mongoURI)
 	if err != nil {
 		return nil, err
 	}
-	sugar := logger.Sugar()
-	database, err := db.NewDatabase(dbname, mongoURI, sugar)
+	ctgRepo, err := categories.NewCachedRepository(database)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "Unable to create cached repository")
 	}
-
-	a := WebHookAPI{
-		Database:   database,
-		HTTPServer: nil,
-		Logger:     sugar,
+	ctgHandler, err := handlers.NewCategoriesHandler(ctgRepo)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to create categories handler")
 	}
-	a.InitRouter(addr, logger)
-
-	return &a, nil
-}
-
-// InitRouter is initiate a new router also using in tests
-func (a *WebHookAPI) InitRouter(addr string, logger *zap.Logger) {
+	trRepo, err := db.NewTransactionsMongoDbRepository(database, sugar)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to create transactions repository")
+	}
+	hookHandler, err := handlers.NewWebHookHandler(trRepo, sugar)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to create transactions handler")
+	}
 	router := gin.New()
-
 	router.Use(gzap.Ginzap(logger, time.RFC3339, true))
 	router.Use(gzap.RecoveryWithZap(logger, true))
 
-	router.Any("/webhook", a.WebHookHandler)
+	router.Any("/webhook", hookHandler.Handle)
+	router.POST("/categories", ctgHandler.Handle)
 
-	a.HTTPServer = &http.Server{
+	server := &http.Server{
 		Addr:    addr,
 		Handler: router,
 	}
+	return server, nil
 }

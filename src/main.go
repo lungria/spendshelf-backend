@@ -8,6 +8,8 @@ import (
 	"os/signal"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/lungria/spendshelf-backend/src/api"
 )
 
@@ -18,8 +20,12 @@ func main() {
 	if err != nil {
 		log.Fatalln("Couldn't parse environment variables", err)
 	}
-
-	s, err := api.NewAPI(config.HTTPAddr, config.DBName, config.MongoURI)
+	logger, err := zap.NewProduction()
+	if err != nil {
+		log.Fatalf("Couldn't initialize logger %+v", err)
+	}
+	sugar := logger.Sugar()
+	s, err := api.NewAPI(config.HTTPAddr, config.DBName, config.MongoURI, logger, sugar)
 	if err != nil {
 		log.Fatalln("Couldn't create a new server")
 	}
@@ -30,23 +36,22 @@ func main() {
 
 	go func() {
 		<-sigChan
-		s.Logger.Info("Server is shutting down...")
+		sugar.Info("Server is shutting down...")
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		s.HTTPServer.SetKeepAlivesEnabled(false)
-		if err = s.HTTPServer.Shutdown(ctx); err != nil {
-			s.Logger.Fatalf("Couldn't gracefully shutdown the server: %v\n", err)
+		s.SetKeepAlivesEnabled(false)
+		if err = s.Shutdown(ctx); err != nil {
+			sugar.Fatalf("Couldn't gracefully shutdown the server: %v\n", err)
 		}
 		close(done)
 	}()
 
-	if err = s.HTTPServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		s.Logger.Fatalf("Couldn't listen on %v: %v\n", config.HTTPAddr, err)
+	if err = s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		sugar.Fatalf("Couldn't listen on %v: %v\n", config.HTTPAddr, err)
 	}
 
 	<-done
-	s.Logger.Info("Server stopped")
-
+	sugar.Info("Server stopped")
 }

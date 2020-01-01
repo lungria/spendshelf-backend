@@ -8,21 +8,10 @@ import (
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.uber.org/zap"
 )
-
-const (
-	transactionsCollection = "Transactions"
-)
-
-// Database is contain mongo connection and logger also all methods which do some work with database implement this struct
-type Database struct {
-	MongoDB *mongo.Database
-	logger  *zap.SugaredLogger
-}
 
 // NewDatabase is create a new database connection
-func NewDatabase(dbname, URI string, logger *zap.SugaredLogger) (*Database, error) {
+func NewDatabase(dbname, URI string) (*mongo.Database, error) {
 	client, err := mongo.NewClient(options.Client().ApplyURI(URI), options.Client().SetMaxPoolSize(50))
 	if err != nil {
 		return nil, err
@@ -32,34 +21,27 @@ func NewDatabase(dbname, URI string, logger *zap.SugaredLogger) (*Database, erro
 		return nil, err
 	}
 	database := client.Database(dbname)
-
-	d := Database{
-		MongoDB: database,
-		logger:  logger,
-	}
-
-	err = d.initCappedCollection(transactionsCollection)
+	err = initCappedCollection(database, transactionsCollection)
 	if err != nil {
 		return nil, err
 	}
-
-	return &d, nil
+	return database, nil
 }
 
-func (d *Database) initCappedCollection(collName string) error {
+func initCappedCollection(database *mongo.Database, collName string) error {
 	var cursor []bson.M
-	result, _ := d.MongoDB.ListCollections(context.Background(), bson.D{})
+	result, _ := database.ListCollections(context.Background(), bson.D{})
 	if err := result.All(context.Background(), &cursor); err != nil {
 		return err
 	}
 	cmd := bson.D{{"convertToCapped", collName}, {"size", 5000000}}
 	if len(cursor) == 0 {
-		d.MongoDB.RunCommand(context.Background(), cmd)
+		database.RunCommand(context.Background(), cmd)
 		return nil
 	}
 	for coll := 0; coll < len(cursor); coll++ {
 		if cursor[coll]["name"] == collName {
-			d.MongoDB.RunCommand(context.Background(), cmd)
+			database.RunCommand(context.Background(), cmd)
 			break
 		}
 	}

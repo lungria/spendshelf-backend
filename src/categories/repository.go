@@ -28,7 +28,7 @@ type CachedRepository struct {
 	updates    chan<- Category
 }
 
-func NewCachedRepository(db mongo.Database) (Repository, error) {
+func NewCachedRepository(db *mongo.Database) (Repository, error) {
 	//todo get shutdown context
 	ctx := context.Background()
 	collection := db.Collection(categoriesCollection)
