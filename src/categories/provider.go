@@ -8,19 +8,19 @@ import (
 	"golang.org/x/text/unicode/norm"
 )
 
-type CategoriesProvider interface {
+type Provider interface {
 	GetAll() []Category
 	Find(name string) (Category, bool)
 }
 
-type InMemoryCategoriesProvider struct {
+type InMemoryProvider struct {
 	categories  map[string]Category
 	updatesChan <-chan Category
 	context     context.Context
 	mutex       *sync.RWMutex
 }
 
-func NewProvider(seed []Category, updates <-chan Category, context context.Context) (*InMemoryCategoriesProvider, error) {
+func NewProvider(seed []Category, updates <-chan Category, context context.Context) (*InMemoryProvider, error) {
 	if seed == nil {
 		return nil, errors.New("seed map must not be nil")
 	}
@@ -32,7 +32,7 @@ func NewProvider(seed []Category, updates <-chan Category, context context.Conte
 		categories[v.NormalizedName] = v
 	}
 
-	provider := &InMemoryCategoriesProvider{
+	provider := &InMemoryProvider{
 		categories:  categories,
 		updatesChan: updates,
 		context:     context,
@@ -42,7 +42,7 @@ func NewProvider(seed []Category, updates <-chan Category, context context.Conte
 	return provider, nil
 }
 
-func (provider *InMemoryCategoriesProvider) GetAll() []Category {
+func (provider *InMemoryProvider) GetAll() []Category {
 	provider.mutex.RLock()
 	defer provider.mutex.RUnlock()
 	arr := []Category{}
@@ -52,7 +52,7 @@ func (provider *InMemoryCategoriesProvider) GetAll() []Category {
 	return arr
 }
 
-func (provider *InMemoryCategoriesProvider) Find(name string) (Category, bool) {
+func (provider *InMemoryProvider) Find(name string) (Category, bool) {
 	provider.mutex.RLock()
 	defer provider.mutex.RUnlock()
 	normalized := norm.NFC.String(name)
@@ -60,7 +60,7 @@ func (provider *InMemoryCategoriesProvider) Find(name string) (Category, bool) {
 	return val, exists
 }
 
-func (provider *InMemoryCategoriesProvider) runSync() {
+func (provider *InMemoryProvider) runSync() {
 	for {
 		select {
 		case <-provider.context.Done():

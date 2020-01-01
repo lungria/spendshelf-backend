@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson/primitive"
+
 	"golang.org/x/text/unicode/norm"
 )
 
@@ -25,10 +27,10 @@ func Test_GetAll_ForTwoSeededCategories_ReturnsTwoCategories(t *testing.T) {
 
 func Test_Find_ForExistingCategory_ReturnsCategory(t *testing.T) {
 	name := norm.NFC.String("test")
-	seedId := CategoryId(10)
+	seedId := CategoryId(primitive.NewObjectID())
 	seed := []Category{
 		{NormalizedName: name, Id: seedId},
-		{NormalizedName: "other_category", Id: CategoryId(999)},
+		{NormalizedName: "other_category", Id: CategoryId(primitive.NewObjectID())},
 	}
 	provider := getProvider(seed, make(chan Category))
 
@@ -41,9 +43,9 @@ func Test_Find_ForExistingCategory_ReturnsCategory(t *testing.T) {
 
 func Test_Find_ForNewlyInsertedCategory_ReturnsCategory(t *testing.T) {
 	seed := []Category{
-		{NormalizedName: norm.NFC.String("test"), Id: CategoryId(10)},
+		{NormalizedName: norm.NFC.String("test"), Id: CategoryId(primitive.NewObjectID())},
 	}
-	newCategory := Category{CategoryId(20), norm.NFC.String("test2"), norm.NFC.String("test2")}
+	newCategory := Category{CategoryId(primitive.NewObjectID()), norm.NFC.String("test2"), norm.NFC.String("test2")}
 	updates := make(chan Category)
 	provider := getProvider(seed, updates)
 
@@ -60,7 +62,7 @@ func Test_Find_ForNewlyInsertedCategory_ReturnsCategory(t *testing.T) {
 	}
 }
 
-func getProvider(categories []Category, updates chan Category) *InMemoryCategoriesProvider {
+func getProvider(categories []Category, updates chan Category) *InMemoryProvider {
 	provider, _ := NewProvider(categories, updates, context.Background())
 	return provider
 }
