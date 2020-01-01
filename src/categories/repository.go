@@ -29,7 +29,7 @@ type CachedRepository struct {
 }
 
 func NewCachedRepository(db mongo.Database) (Repository, error) {
-	//todo get context
+	//todo get shutdown context
 	ctx := context.Background()
 	collection := db.Collection(categoriesCollection)
 	cursor, err := collection.Find(ctx, bson.D{})
