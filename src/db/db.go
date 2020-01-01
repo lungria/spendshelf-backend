@@ -22,7 +22,7 @@ type Database struct {
 }
 
 // NewDatabase is create a new database connection
-func NewDatabase(dbname, URI string) (*Database, error) {
+func NewDatabase(dbname, URI string, logger *zap.SugaredLogger) (*Database, error) {
 	client, err := mongo.NewClient(options.Client().ApplyURI(URI), options.Client().SetMaxPoolSize(50))
 	if err != nil {
 		return nil, err
@@ -33,14 +33,9 @@ func NewDatabase(dbname, URI string) (*Database, error) {
 	}
 	database := client.Database(dbname)
 
-	logger, err := zap.NewProduction()
-	if err != nil {
-		return nil, err
-	}
-
 	d := Database{
 		MongoDB: database,
-		logger:  logger.Sugar(),
+		logger:  logger,
 	}
 
 	err = d.initCappedCollection(transactionsCollection)

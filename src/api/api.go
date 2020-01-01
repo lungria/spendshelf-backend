@@ -19,12 +19,12 @@ type WebHookAPI struct {
 
 // NewAPI create a new WebHookAPI with DB, logger and router
 func NewAPI(addr, dbname, mongoURI string) (*WebHookAPI, error) {
-	database, err := db.NewDatabase(dbname, mongoURI)
+	logger, err := zap.NewProduction()
 	if err != nil {
 		return nil, err
 	}
-
-	logger, err := zap.NewProduction()
+	sugar := logger.Sugar()
+	database, err := db.NewDatabase(dbname, mongoURI, sugar)
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +32,7 @@ func NewAPI(addr, dbname, mongoURI string) (*WebHookAPI, error) {
 	a := WebHookAPI{
 		Database:   database,
 		HTTPServer: nil,
-		Logger:     logger.Sugar(),
+		Logger:     sugar,
 	}
 	a.InitRouter(addr)
 
