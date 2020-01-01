@@ -6,6 +6,8 @@
 package main
 
 import (
+	"github.com/gin-contrib/zap"
+	"github.com/gin-gonic/gin"
 	"github.com/lungria/spendshelf-backend/src/api"
 	"github.com/lungria/spendshelf-backend/src/api/handlers"
 	"github.com/lungria/spendshelf-backend/src/categories"
@@ -13,17 +15,18 @@ import (
 	"github.com/lungria/spendshelf-backend/src/db"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
-	"net/http"
+	"time"
 )
 
 // Injectors from wire.go:
 
-func InitializeServer() (*http.Server, error) {
-	environmentConfiguration, err := config.NewConfig()
+func InitializeServer() (*config.Dependencies, error) {
+	logger, err := zapProvider()
 	if err != nil {
 		return nil, err
 	}
-	logger, err := zapProvider()
+	sugaredLogger := sugarProvider(logger)
+	environmentConfiguration, err := config.NewConfig()
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +34,6 @@ func InitializeServer() (*http.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	sugaredLogger := sugarProvider(logger)
 	transactionsMongoDbRepository, err := db.NewTransactionsMongoDbRepository(database, sugaredLogger)
 	if err != nil {
 		return nil, err
@@ -48,11 +50,16 @@ func InitializeServer() (*http.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	server, err := api.NewAPI(environmentConfiguration, logger, webHookHandler, categoriesHandler)
+	engine := routerProvider(logger, webHookHandler, categoriesHandler)
+	server, err := api.NewAPI(environmentConfiguration, engine)
 	if err != nil {
 		return nil, err
 	}
-	return server, nil
+	dependencies := &config.Dependencies{
+		Logger: sugaredLogger,
+		Server: server,
+	}
+	return dependencies, nil
 }
 
 // wire.go:
@@ -67,4 +74,13 @@ func sugarProvider(logger *zap.Logger) *zap.SugaredLogger {
 
 func zapProvider() (*zap.Logger, error) {
 	return zap.NewProduction()
+}
+
+func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ctgHandler *handlers.CategoriesHandler) *gin.Engine {
+	router := gin.New()
+	router.Use(ginzap.Ginzap(logger, time.RFC3339, true))
+	router.Use(ginzap.RecoveryWithZap(logger, true))
+	router.Any("/webhook", hookHandler.Handle)
+	router.POST("/categories", ctgHandler.Handle)
+	return router
 }

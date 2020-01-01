@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	s, err := InitializeServer()
+	services, err := InitializeServer()
 	if err != nil {
 		log.Fatal("Unable to initialize server")
 	}
@@ -20,19 +20,20 @@ func main() {
 
 	go func() {
 		<-sigChan
+		services.Logger.Info("Shutting down")
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		s.SetKeepAlivesEnabled(false)
-		if err = s.Shutdown(ctx); err != nil {
-			log.Fatalf("Couldn't gracefully shutdown the server: %+v\n", err)
+		services.Server.SetKeepAlivesEnabled(false)
+		if err = services.Server.Shutdown(ctx); err != nil {
+			services.Logger.Fatalf("Couldn't gracefully shutdown the server: %+v\n", err)
 		}
 		close(done)
 	}()
 
-	if err = s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatalf("Couldn't listen: %+v\n", err)
+	if err = services.Server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		services.Logger.Fatalf("Couldn't listen: %+v\n", err)
 	}
-
+	services.Logger.Info("Server shutdown")
 	<-done
 }

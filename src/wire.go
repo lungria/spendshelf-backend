@@ -3,7 +3,10 @@
 package main
 
 import (
-	"net/http"
+	"time"
+
+	gzap "github.com/gin-contrib/zap"
+	"github.com/gin-gonic/gin"
 
 	"go.uber.org/zap"
 
@@ -32,7 +35,16 @@ func zapProvider() (*zap.Logger, error) {
 	return zap.NewProduction()
 }
 
-func InitializeServer() (*http.Server, error) {
+func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ctgHandler *handlers.CategoriesHandler) *gin.Engine {
+	router := gin.New()
+	router.Use(gzap.Ginzap(logger, time.RFC3339, true))
+	router.Use(gzap.RecoveryWithZap(logger, true))
+	router.Any("/webhook", hookHandler.Handle)
+	router.POST("/categories", ctgHandler.Handle)
+	return router
+}
+
+func InitializeServer() (*config.Dependencies, error) {
 	wire.Build(config.NewConfig,
 		mongoDbProvider,
 		categories.NewCachedRepository,
@@ -41,9 +53,11 @@ func InitializeServer() (*http.Server, error) {
 		handlers.NewWebHookHandler,
 		zapProvider,
 		sugarProvider,
+		routerProvider,
 		api.NewAPI,
 		wire.Bind(new(db.TransactionsRepository), new(*db.TransactionsMongoDbRepository)),
 		wire.Bind(new(categories.Repository), new(*categories.CachedRepository)),
+		wire.Struct(new(config.Dependencies), "Logger", "Server"),
 	)
-	return &http.Server{}, nil
+	return &config.Dependencies{}, nil
 }
