@@ -46,7 +46,7 @@ func InitializeServer() (*config.Dependencies, error) {
 	if err != nil {
 		return nil, err
 	}
-	categoriesHandler, err := handlers.NewCategoriesHandler(cachedRepository)
+	categoriesHandler, err := handlers.NewCategoriesHandler(cachedRepository, sugaredLogger)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,8 @@ func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ct
 	router := gin.New()
 	router.Use(ginzap.Ginzap(logger, time.RFC3339, true))
 	router.Use(ginzap.RecoveryWithZap(logger, true))
-	router.Any("/webhook", hookHandler.Handle)
+	router.GET("/webhook", hookHandler.WebHookHandlerGet)
+	router.POST("/webhook", hookHandler.WebHookHandlerPost)
 	router.POST("/categories", ctgHandler.HandlePost)
 	router.GET("/categories", ctgHandler.HandleGet)
 	return router

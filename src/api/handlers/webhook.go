@@ -35,21 +35,9 @@ func NewWebHookHandler(repo db.TransactionsRepository, logger *zap.SugaredLogger
 	}, nil
 }
 
-// WebHookHandler is routing for different HTTP methods
-func (handler *WebHookHandler) Handle(c *gin.Context) {
+// WebHookHandlerPost catch the request from monoAPI and save to DB
+func (handler *WebHookHandler) WebHookHandlerPost(c *gin.Context) {
 	c.Header("content-type", "application/json")
-	switch c.Request.Method {
-	case http.MethodGet:
-		handler.webHookHandlerGet(c)
-	case http.MethodPost:
-		handler.webHookHandlerPost(c)
-	default:
-		c.JSON(http.StatusMethodNotAllowed, "")
-	}
-}
-
-// webHookHandlerPost catch the request from monoAPI and save to DB
-func (handler *WebHookHandler) webHookHandlerPost(c *gin.Context) {
 	var err error
 	var req *webHookRequest
 
@@ -66,7 +54,8 @@ func (handler *WebHookHandler) webHookHandlerPost(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Success"})
 }
 
-// webHookHandlerGet respond 200 to monoAPI when WebHook was set
-func (handler *WebHookHandler) webHookHandlerGet(c *gin.Context) {
+// WebHookHandlerGet respond 200 to monoAPI when WebHook was set
+func (handler *WebHookHandler) WebHookHandlerGet(c *gin.Context) {
+	c.Header("content-type", "application/json")
 	c.String(http.StatusOK, "")
 }

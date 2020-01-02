@@ -12,7 +12,7 @@ import (
 func main() {
 	services, err := InitializeServer()
 	if err != nil {
-		log.Fatal("Unable to initialize server")
+		log.Fatalf("Unable to initialize server: %+v", err)
 	}
 	done := make(chan bool, 1)
 	sigChan := make(chan os.Signal, 1)

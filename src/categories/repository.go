@@ -19,7 +19,7 @@ const (
 
 type Repository interface {
 	Provider
-	Insert(ctx context.Context, name string) (CategoryId, error)
+	Insert(ctx context.Context, name string) (primitive.ObjectID, error)
 }
 
 type CachedRepository struct {
@@ -37,7 +37,7 @@ func NewCachedRepository(db *mongo.Database) (*CachedRepository, error) {
 		return nil, errors.Wrap(err, "Unable to seed categories cache")
 	}
 	seed := make([]Category, 0)
-	err = cursor.All(ctx, seed)
+	err = cursor.All(ctx, &seed)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to seed categories cache")
 	}
@@ -61,7 +61,7 @@ func (repo *CachedRepository) Find(name string) (Category, bool) {
 	return repo.provider.Find(name)
 }
 
-func (repo *CachedRepository) Insert(ctx context.Context, name string) (CategoryId, error) {
+func (repo *CachedRepository) Insert(ctx context.Context, name string) (primitive.ObjectID, error) {
 	// todo add unique index for normalized name in db
 	c, exists := repo.provider.Find(name)
 	if exists {
@@ -71,13 +71,14 @@ func (repo *CachedRepository) Insert(ctx context.Context, name string) (Category
 	c = Category{
 		NormalizedName: normalized,
 		Name:           name,
+		Id:             primitive.NewObjectID(),
 	}
 	result, err := repo.collection.InsertOne(ctx, c)
 	if err != nil {
-		return CategoryId{}, errors.Wrap(err, "Unable to insert category")
+		return primitive.ObjectID{}, errors.Wrap(err, "Unable to insert category")
 	}
 
-	c.Id = CategoryId(result.InsertedID.(primitive.ObjectID))
+	c.Id = result.InsertedID.(primitive.ObjectID)
 	go func() {
 		repo.updates <- c
 	}()
