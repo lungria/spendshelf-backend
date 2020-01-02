@@ -29,7 +29,7 @@ func TestSaveOneTransaction(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	db := mock_db.NewMockWebHookDB(ctrl)
+	db := mock_db.NewMockTransactionsRepository(ctrl)
 
 	db.EXPECT().SaveOneTransaction(&transaction)
 	if err := db.SaveOneTransaction(&transaction); err != nil {
@@ -62,7 +62,7 @@ func TestGetAllTransactions(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	db := mock_db.NewMockWebHookDB(ctrl)
+	db := mock_db.NewMockTransactionsRepository(ctrl)
 	db.EXPECT().GetAllTransactions("test1").Return(expectedTransactions, nil)
 
 	actualTransactions, err := db.GetAllTransactions("test1")
@@ -97,7 +97,7 @@ func TestGetOneTransactions(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	db := mock_db.NewMockWebHookDB(ctrl)
+	db := mock_db.NewMockTransactionsRepository(ctrl)
 	db.EXPECT().GetTransactionByID("test_t_id").Return(expectedTransaction, nil)
 
 	actualTransaction, err := db.GetTransactionByID("test_t_id")
