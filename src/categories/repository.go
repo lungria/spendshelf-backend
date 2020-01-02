@@ -2,6 +2,7 @@ package categories
 
 import (
 	"context"
+	"strings"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
@@ -63,14 +64,15 @@ func (repo *CachedRepository) Find(name string) (Category, bool) {
 
 func (repo *CachedRepository) Insert(ctx context.Context, name string) (primitive.ObjectID, error) {
 	// todo add unique index for normalized name in db
-	c, exists := repo.provider.Find(name)
+	trimmed := strings.TrimSpace(name)
+	normalized := norm.NFC.String(trimmed)
+	c, exists := repo.provider.Find(normalized)
 	if exists {
 		return c.Id, nil
 	}
-	normalized := norm.NFC.String(name)
 	c = Category{
 		NormalizedName: normalized,
-		Name:           name,
+		Name:           trimmed,
 		Id:             primitive.NewObjectID(),
 	}
 	result, err := repo.collection.InsertOne(ctx, c)

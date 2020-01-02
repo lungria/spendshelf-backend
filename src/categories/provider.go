@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"sync"
-
-	"golang.org/x/text/unicode/norm"
 )
 
 type Provider interface {
@@ -52,11 +50,10 @@ func (provider *InMemoryProvider) GetAll() []Category {
 	return arr
 }
 
-func (provider *InMemoryProvider) Find(name string) (Category, bool) {
+func (provider *InMemoryProvider) Find(normalizedName string) (Category, bool) {
 	provider.mutex.RLock()
 	defer provider.mutex.RUnlock()
-	normalized := norm.NFC.String(name)
-	val, exists := provider.categories[normalized]
+	val, exists := provider.categories[normalizedName]
 	return val, exists
 }
 
