@@ -40,7 +40,8 @@ func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ct
 	router.Use(gzap.Ginzap(logger, time.RFC3339, true))
 	router.Use(gzap.RecoveryWithZap(logger, true))
 	router.Any("/webhook", hookHandler.Handle)
-	router.POST("/categories", ctgHandler.Handle)
+	router.POST("/categories", ctgHandler.HandlePost)
+	router.GET("/categories", ctgHandler.HandleGet)
 	return router
 }
 
