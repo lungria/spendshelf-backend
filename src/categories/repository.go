@@ -65,7 +65,7 @@ func (repo *CachedRepository) Find(name string) (Category, bool) {
 func (repo *CachedRepository) Insert(ctx context.Context, name string) (primitive.ObjectID, error) {
 	// todo add unique index for normalized name in db
 	trimmed := strings.TrimSpace(name)
-	normalized := norm.NFC.String(trimmed)
+	normalized := norm.NFC.String(strings.ToUpper(trimmed))
 	c, exists := repo.provider.Find(normalized)
 	if exists {
 		return c.Id, nil

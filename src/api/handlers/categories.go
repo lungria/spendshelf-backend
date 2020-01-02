@@ -3,6 +3,8 @@ package handlers
 import (
 	"net/http"
 
+	"go.mongodb.org/mongo-driver/bson/primitive"
+
 	"go.uber.org/zap"
 
 	"github.com/pkg/errors"
@@ -14,6 +16,14 @@ import (
 
 type CreateCategoryRequest struct {
 	Name string `json:"name"`
+}
+
+type GetAllCategoriesResponse struct {
+	Categories []categories.Category `json:"categories"`
+}
+
+type InsertCategoryResponse struct {
+	Id primitive.ObjectID `json:"id"`
 }
 
 type CategoriesHandler struct {
@@ -35,7 +45,7 @@ func NewCategoriesHandler(repo categories.Repository, logger *zap.SugaredLogger)
 
 func (handler *CategoriesHandler) HandleGet(c *gin.Context) {
 	c.Header("content-type", "application/json") // todo mb move to middleware?
-	c.JSON(http.StatusOK, handler.repo.GetAll())
+	c.JSON(http.StatusOK, GetAllCategoriesResponse{handler.repo.GetAll()})
 	return
 }
 
@@ -53,5 +63,5 @@ func (handler *CategoriesHandler) HandlePost(c *gin.Context) {
 		handler.logger.Error(err)
 		return
 	}
-	c.JSON(http.StatusOK, id)
+	c.JSON(http.StatusOK, InsertCategoryResponse{id})
 }
