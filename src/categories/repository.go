@@ -76,7 +76,7 @@ func (repo *CachedRepository) Insert(ctx context.Context, name string) (primitiv
 	}
 	result, err := repo.collection.InsertOne(ctx, c)
 	if err != nil {
-		return primitive.ObjectID{}, errors.Wrap(err, "Unable to insert category")
+		return primitive.NilObjectID, errors.Wrap(err, "Unable to insert category")
 	}
 
 	c.Id = result.InsertedID.(primitive.ObjectID)
