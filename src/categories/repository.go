@@ -73,7 +73,6 @@ func (repo *CachedRepository) Insert(ctx context.Context, name string) (primitiv
 	c = Category{
 		NormalizedName: normalized,
 		Name:           trimmed,
-		Id:             primitive.NewObjectID(),
 	}
 	result, err := repo.collection.InsertOne(ctx, c)
 	if err != nil {
