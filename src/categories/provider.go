@@ -18,7 +18,7 @@ type InMemoryProvider struct {
 	mutex       *sync.RWMutex
 }
 
-func NewProvider(seed []Category, updates <-chan Category, context context.Context) (*InMemoryProvider, error) {
+func NewProvider(context context.Context, seed []Category, updates <-chan Category) (*InMemoryProvider, error) {
 	if seed == nil {
 		return nil, errors.New("seed map must not be nil")
 	}

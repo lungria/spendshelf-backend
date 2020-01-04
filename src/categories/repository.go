@@ -43,7 +43,7 @@ func NewCachedRepository(db *mongo.Database) (*CachedRepository, error) {
 		return nil, errors.Wrap(err, "Unable to seed categories cache")
 	}
 	updates := make(chan Category)
-	provider, err := NewProvider(seed, updates, ctx)
+	provider, err := NewProvider(ctx, seed, updates)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to seed categories collection")
 	}

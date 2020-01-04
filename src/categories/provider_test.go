@@ -63,6 +63,6 @@ func Test_Find_ForNewlyInsertedCategory_ReturnsCategory(t *testing.T) {
 }
 
 func getProvider(categories []Category, updates chan Category) *InMemoryProvider {
-	provider, _ := NewProvider(categories, updates, context.Background())
+	provider, _ := NewProvider(context.Background(), categories, updates)
 	return provider
 }
