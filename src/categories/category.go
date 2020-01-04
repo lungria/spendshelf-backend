@@ -2,8 +2,9 @@ package categories
 
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
+// Category is general struct for spendshelf categories
 type Category struct {
-	Id             primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	ID             primitive.ObjectID `json:"id" bson:"_id,omitempty"`
 	Name           string             `json:"name" bson:"name"`
 	NormalizedName string             `json:"normalizedName" bson:"normalizedName"`
 }

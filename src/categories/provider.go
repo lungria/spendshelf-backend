@@ -6,19 +6,19 @@ import (
 	"sync"
 )
 
-type Provider interface {
+type provider interface {
 	GetAll() []Category
 	Find(name string) (Category, bool)
 }
 
-type InMemoryProvider struct {
+type inMemoryProvider struct {
 	categories  map[string]Category
 	updatesChan <-chan Category
 	context     context.Context
 	mutex       *sync.RWMutex
 }
 
-func NewProvider(context context.Context, seed []Category, updates <-chan Category) (*InMemoryProvider, error) {
+func newProvider(context context.Context, seed []Category, updates <-chan Category) (*inMemoryProvider, error) {
 	if seed == nil {
 		return nil, errors.New("seed map must not be nil")
 	}
@@ -30,7 +30,7 @@ func NewProvider(context context.Context, seed []Category, updates <-chan Catego
 		categories[v.NormalizedName] = v
 	}
 
-	provider := &InMemoryProvider{
+	provider := &inMemoryProvider{
 		categories:  categories,
 		updatesChan: updates,
 		context:     context,
@@ -40,7 +40,8 @@ func NewProvider(context context.Context, seed []Category, updates <-chan Catego
 	return provider, nil
 }
 
-func (provider *InMemoryProvider) GetAll() []Category {
+// GetAll return all categories from in memory cache
+func (provider *inMemoryProvider) GetAll() []Category {
 	provider.mutex.RLock()
 	defer provider.mutex.RUnlock()
 	arr := []Category{}
@@ -50,14 +51,15 @@ func (provider *InMemoryProvider) GetAll() []Category {
 	return arr
 }
 
-func (provider *InMemoryProvider) Find(normalizedName string) (Category, bool) {
+// Find specific record from in memory cache
+func (provider *inMemoryProvider) Find(normalizedName string) (Category, bool) {
 	provider.mutex.RLock()
 	defer provider.mutex.RUnlock()
 	val, exists := provider.categories[normalizedName]
 	return val, exists
 }
 
-func (provider *InMemoryProvider) runSync() {
+func (provider *inMemoryProvider) runSync() {
 	for {
 		select {
 		case <-provider.context.Done():

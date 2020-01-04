@@ -5,6 +5,8 @@ package main
 import (
 	"time"
 
+	"github.com/lungria/spendshelf-backend/src/webhooks"
+
 	gzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
 
@@ -39,8 +41,8 @@ func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ct
 	router := gin.New()
 	router.Use(gzap.Ginzap(logger, time.RFC3339, true))
 	router.Use(gzap.RecoveryWithZap(logger, true))
-	router.GET("/webhook", hookHandler.WebHookHandlerGet)
-	router.POST("/webhook", hookHandler.WebHookHandlerPost)
+	router.GET("/webhook", hookHandler.HandleGet)
+	router.POST("/webhook", hookHandler.HandlePost)
 	router.POST("/categories", ctgHandler.HandlePost)
 	router.GET("/categories", ctgHandler.HandleGet)
 	return router
@@ -51,13 +53,13 @@ func InitializeServer() (*config.Dependencies, error) {
 		mongoDbProvider,
 		categories.NewCachedRepository,
 		handlers.NewCategoriesHandler,
-		db.NewTransactionsMongoDbRepository,
+		webhooks.NewWebHookRepository,
 		handlers.NewWebHookHandler,
 		zapProvider,
 		sugarProvider,
 		routerProvider,
 		api.NewAPI,
-		wire.Bind(new(db.TransactionsRepository), new(*db.TransactionsMongoDbRepository)),
+		wire.Bind(new(webhooks.Repository), new(*webhooks.WebHookRepository)),
 		wire.Bind(new(categories.Repository), new(*categories.CachedRepository)),
 		wire.Struct(new(config.Dependencies), "Logger", "Server"),
 	)

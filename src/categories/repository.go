@@ -18,17 +18,20 @@ const (
 	categoriesCollection = "categories"
 )
 
+// Repository define methods which do some work with database
 type Repository interface {
-	Provider
+	provider
 	Insert(ctx context.Context, name string) (primitive.ObjectID, error)
 }
 
+// CachedRepository database repository
 type CachedRepository struct {
-	provider   Provider
+	provider   provider
 	collection *mongo.Collection
 	updates    chan<- Category
 }
 
+// NewCachedRepository is creating a new CachedRepository
 func NewCachedRepository(db *mongo.Database) (*CachedRepository, error) {
 	//todo get shutdown context
 	ctx := context.Background()
@@ -43,7 +46,7 @@ func NewCachedRepository(db *mongo.Database) (*CachedRepository, error) {
 		return nil, errors.Wrap(err, "Unable to seed categories cache")
 	}
 	updates := make(chan Category)
-	provider, err := NewProvider(ctx, seed, updates)
+	provider, err := newProvider(ctx, seed, updates)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to seed categories collection")
 	}
@@ -54,21 +57,24 @@ func NewCachedRepository(db *mongo.Database) (*CachedRepository, error) {
 	}, nil
 }
 
+// GetAll return all categories
 func (repo *CachedRepository) GetAll() []Category {
 	return repo.provider.GetAll()
 }
 
+// Find is returning preferred category
 func (repo *CachedRepository) Find(name string) (Category, bool) {
 	return repo.provider.Find(name)
 }
 
+// Insert is writing category to database and in memory cache
 func (repo *CachedRepository) Insert(ctx context.Context, name string) (primitive.ObjectID, error) {
 	// todo add unique index for normalized name in db
 	trimmed := strings.TrimSpace(name)
 	normalized := norm.NFC.String(strings.ToUpper(trimmed))
 	c, exists := repo.provider.Find(normalized)
 	if exists {
-		return c.Id, nil
+		return c.ID, nil
 	}
 	c = Category{
 		NormalizedName: normalized,
@@ -79,9 +85,9 @@ func (repo *CachedRepository) Insert(ctx context.Context, name string) (primitiv
 		return primitive.NilObjectID, errors.Wrap(err, "Unable to insert category")
 	}
 
-	c.Id = result.InsertedID.(primitive.ObjectID)
+	c.ID = result.InsertedID.(primitive.ObjectID)
 	go func() {
 		repo.updates <- c
 	}()
-	return c.Id, nil
+	return c.ID, nil
 }

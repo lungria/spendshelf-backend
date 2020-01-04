@@ -27,23 +27,23 @@ func Test_GetAll_ForTwoSeededCategories_ReturnsTwoCategories(t *testing.T) {
 
 func Test_Find_ForExistingCategory_ReturnsCategory(t *testing.T) {
 	name := norm.NFC.String("test")
-	seedId := primitive.NewObjectID()
+	seedID := primitive.NewObjectID()
 	seed := []Category{
-		{NormalizedName: name, Id: seedId},
-		{NormalizedName: "other_category", Id: primitive.NewObjectID()},
+		{NormalizedName: name, ID: seedID},
+		{NormalizedName: "other_category", ID: primitive.NewObjectID()},
 	}
 	provider := getProvider(seed, make(chan Category))
 
 	category, _ := provider.Find(name)
 
-	if category.Id != seedId {
-		t.Error(fmt.Sprintf("Expected category with id %v, received %v", seedId, category.Id))
+	if category.ID != seedID {
+		t.Error(fmt.Sprintf("Expected category with id %v, received %v", seedID, category.ID))
 	}
 }
 
 func Test_Find_ForNewlyInsertedCategory_ReturnsCategory(t *testing.T) {
 	seed := []Category{
-		{NormalizedName: norm.NFC.String("test"), Id: primitive.NewObjectID()},
+		{NormalizedName: norm.NFC.String("test"), ID: primitive.NewObjectID()},
 	}
 	newCategory := Category{primitive.NewObjectID(), norm.NFC.String("test2"), norm.NFC.String("test2")}
 	updates := make(chan Category)
@@ -62,7 +62,7 @@ func Test_Find_ForNewlyInsertedCategory_ReturnsCategory(t *testing.T) {
 	}
 }
 
-func getProvider(categories []Category, updates chan Category) *InMemoryProvider {
-	provider, _ := NewProvider(context.Background(), categories, updates)
+func getProvider(categories []Category, updates chan Category) *inMemoryProvider {
+	provider, _ := newProvider(context.Background(), categories, updates)
 	return provider
 }

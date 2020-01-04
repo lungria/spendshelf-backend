@@ -13,6 +13,7 @@ import (
 	"github.com/lungria/spendshelf-backend/src/categories"
 	"github.com/lungria/spendshelf-backend/src/config"
 	"github.com/lungria/spendshelf-backend/src/db"
+	"github.com/lungria/spendshelf-backend/src/webhooks"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
 	"time"
@@ -34,11 +35,11 @@ func InitializeServer() (*config.Dependencies, error) {
 	if err != nil {
 		return nil, err
 	}
-	transactionsMongoDbRepository, err := db.NewTransactionsMongoDbRepository(database, sugaredLogger)
+	webHookRepository, err := webhooks.NewWebHookRepository(database, sugaredLogger)
 	if err != nil {
 		return nil, err
 	}
-	webHookHandler, err := handlers.NewWebHookHandler(transactionsMongoDbRepository, sugaredLogger)
+	webHookHandler, err := handlers.NewWebHookHandler(webHookRepository, sugaredLogger)
 	if err != nil {
 		return nil, err
 	}
@@ -80,8 +81,8 @@ func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ct
 	router := gin.New()
 	router.Use(ginzap.Ginzap(logger, time.RFC3339, true))
 	router.Use(ginzap.RecoveryWithZap(logger, true))
-	router.GET("/webhook", hookHandler.WebHookHandlerGet)
-	router.POST("/webhook", hookHandler.WebHookHandlerPost)
+	router.GET("/webhook", hookHandler.HandleGet)
+	router.POST("/webhook", hookHandler.HandlePost)
 	router.POST("/categories", ctgHandler.HandlePost)
 	router.GET("/categories", ctgHandler.HandleGet)
 	return router

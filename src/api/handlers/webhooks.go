@@ -4,30 +4,31 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/lungria/spendshelf-backend/src/db"
-	"go.uber.org/zap"
+	"github.com/lungria/spendshelf-backend/src/webhooks"
 
-	"github.com/lungria/spendshelf-backend/src/models"
+	"go.uber.org/zap"
 
 	"github.com/gin-gonic/gin"
 )
 
 type webHookRequest struct {
-	Type string              `json:"type"`
-	Data *models.Transaction `json:"data"`
+	Type string            `json:"type"`
+	Data *webhooks.WebHook `json:"data"`
 }
 
+// WebHookHandler is a struct which implemented by webhooks handlers
 type WebHookHandler struct {
-	repo   db.TransactionsRepository
+	repo   webhooks.Repository
 	Logger *zap.SugaredLogger
 }
 
-func NewWebHookHandler(repo db.TransactionsRepository, logger *zap.SugaredLogger) (*WebHookHandler, error) {
+// NewWebHookHandler create a new instance of WebHookHandler
+func NewWebHookHandler(repo webhooks.Repository, logger *zap.SugaredLogger) (*WebHookHandler, error) {
 	if repo == nil {
-		return nil, errors.New("Repo must not be nil")
+		return nil, errors.New("repo must not be nil")
 	}
 	if logger == nil {
-		return nil, errors.New("Logger must not be nil")
+		return nil, errors.New("logger must not be nil")
 	}
 	return &WebHookHandler{
 		repo:   repo,
@@ -35,8 +36,8 @@ func NewWebHookHandler(repo db.TransactionsRepository, logger *zap.SugaredLogger
 	}, nil
 }
 
-// WebHookHandlerPost catch the request from monoAPI and save to DB
-func (handler *WebHookHandler) WebHookHandlerPost(c *gin.Context) {
+// HandlePost catch the request from monoAPI and save to DB
+func (handler *WebHookHandler) HandlePost(c *gin.Context) {
 	c.Header("content-type", "application/json")
 	var err error
 	var req *webHookRequest
@@ -46,7 +47,7 @@ func (handler *WebHookHandler) WebHookHandlerPost(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, errorResponse{Message: "Bad request", Error: err.Error()})
 		return
 	}
-	err = handler.repo.SaveOneTransaction(req.Data)
+	err = handler.repo.SaveOneHook(req.Data)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errorResponse{Message: "Saving Transaction failed", Error: err.Error()})
 		return
@@ -54,8 +55,8 @@ func (handler *WebHookHandler) WebHookHandlerPost(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Success"})
 }
 
-// WebHookHandlerGet respond 200 to monoAPI when WebHook was set
-func (handler *WebHookHandler) WebHookHandlerGet(c *gin.Context) {
+// HandleGet respond 200 to monoAPI when WebHook was set
+func (handler *WebHookHandler) HandleGet(c *gin.Context) {
 	c.Header("content-type", "application/json")
 	c.String(http.StatusOK, "")
 }

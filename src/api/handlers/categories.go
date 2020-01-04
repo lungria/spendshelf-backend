@@ -14,23 +14,25 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type CreateCategoryRequest struct {
+type createCategoryRequest struct {
 	Name string `json:"name"`
 }
 
-type GetAllCategoriesResponse struct {
+type getAllCategoriesResponse struct {
 	Categories []categories.Category `json:"categories"`
 }
 
-type InsertCategoryResponse struct {
-	Id primitive.ObjectID `json:"id"`
+type insertCategoryResponse struct {
+	ID primitive.ObjectID `json:"id"`
 }
 
+// CategoriesHandler is a struct which implemented by categories handler
 type CategoriesHandler struct {
 	repo   categories.Repository
 	logger *zap.SugaredLogger
 }
 
+// NewCategoriesHandler create a new instance of CategoriesHandler
 func NewCategoriesHandler(repo categories.Repository, logger *zap.SugaredLogger) (*CategoriesHandler, error) {
 	if repo == nil {
 		return nil, errors.New("Repo must not be nil")
@@ -43,15 +45,17 @@ func NewCategoriesHandler(repo categories.Repository, logger *zap.SugaredLogger)
 		logger: logger}, nil
 }
 
+// HandleGet return all existing categories
 func (handler *CategoriesHandler) HandleGet(c *gin.Context) {
 	c.Header("content-type", "application/json") // todo mb move to middleware?
-	c.JSON(http.StatusOK, GetAllCategoriesResponse{handler.repo.GetAll()})
+	c.JSON(http.StatusOK, getAllCategoriesResponse{handler.repo.GetAll()})
 	return
 }
 
+// HandlePost create a new category
 func (handler *CategoriesHandler) HandlePost(c *gin.Context) {
 	c.Header("content-type", "application/json") // todo mb move to middleware?
-	var req CreateCategoryRequest
+	var req createCategoryRequest
 	err := c.BindJSON(&req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, "Unable to parse body as JSON")
@@ -63,5 +67,5 @@ func (handler *CategoriesHandler) HandlePost(c *gin.Context) {
 		handler.logger.Error(err)
 		return
 	}
-	c.JSON(http.StatusOK, InsertCategoryResponse{id})
+	c.JSON(http.StatusOK, insertCategoryResponse{id})
 }
