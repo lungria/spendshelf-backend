@@ -18,7 +18,7 @@ services:
     container_name: spendshelf
     restart: always
     environment:
-      - HTTPAddr=:80
+      - HTTP_ADDR=:80
       - MONGO_URI=mongodb://root:toor@mongod:27017
       - SPEND_SHELF_DB=spendShelf
     depends_on:
