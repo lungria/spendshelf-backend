@@ -47,14 +47,12 @@ func NewCategoriesHandler(repo categories.Repository, logger *zap.SugaredLogger)
 
 // HandleGet return all existing categories
 func (handler *CategoriesHandler) HandleGet(c *gin.Context) {
-	c.Header("content-type", "application/json") // todo mb move to middleware?
 	c.JSON(http.StatusOK, getAllCategoriesResponse{handler.repo.GetAll()})
 	return
 }
 
 // HandlePost create a new category
 func (handler *CategoriesHandler) HandlePost(c *gin.Context) {
-	c.Header("content-type", "application/json") // todo mb move to middleware?
 	var req createCategoryRequest
 	err := c.BindJSON(&req)
 	if err != nil {

@@ -38,7 +38,6 @@ func NewWebHookHandler(repo webhooks.Repository, logger *zap.SugaredLogger) (*We
 
 // HandlePost catch the request from monoAPI and save to DB
 func (handler *WebHookHandler) HandlePost(c *gin.Context) {
-	c.Header("content-type", "application/json")
 	var err error
 	var req *webHookRequest
 
@@ -57,6 +56,5 @@ func (handler *WebHookHandler) HandlePost(c *gin.Context) {
 
 // HandleGet respond 200 to monoAPI when WebHook was set
 func (handler *WebHookHandler) HandleGet(c *gin.Context) {
-	c.Header("content-type", "application/json")
 	c.String(http.StatusOK, "")
 }
