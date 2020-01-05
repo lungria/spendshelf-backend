@@ -33,4 +33,4 @@ services:
       - 443:443
     container_name: "lb"
     depends_on:
-      - webhook
+      - spendshelf

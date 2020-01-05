@@ -17,8 +17,8 @@ func TestNewConfig(t *testing.T) {
 		assert.Equal(t, ":8080", config.HTTPAddr)
 	}
 
-	if mongoUri := os.Getenv("MONGO_URI"); mongoUri != "" {
-		assert.Equal(t, mongoUri, config.MongoURI)
+	if mongoURI := os.Getenv("MONGO_URI"); mongoURI != "" {
+		assert.Equal(t, mongoURI, config.MongoURI)
 	} else {
 		assert.Equal(t, "mongodb://root:toor@localhost:27017", config.MongoURI)
 	}

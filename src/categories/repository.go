@@ -24,7 +24,7 @@ type Repository interface {
 	Insert(ctx context.Context, name string) (primitive.ObjectID, error)
 }
 
-// CachedRepository database repository
+// CachedRepository implements by methods which do some work with database
 type CachedRepository struct {
 	provider   provider
 	collection *mongo.Collection
