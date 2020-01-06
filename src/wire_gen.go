@@ -6,6 +6,7 @@
 package main
 
 import (
+	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
 	"github.com/lungria/spendshelf-backend/src/api"
@@ -80,6 +81,7 @@ func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ct
 	router := gin.New()
 	router.Use(ginzap.Ginzap(logger, time.RFC3339, true))
 	router.Use(ginzap.RecoveryWithZap(logger, true))
+	router.Use(cors.Default())
 	router.GET("/webhook", hookHandler.WebHookHandlerGet)
 	router.POST("/webhook", hookHandler.WebHookHandlerPost)
 	router.POST("/categories", ctgHandler.HandlePost)

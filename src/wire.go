@@ -5,6 +5,8 @@ package main
 import (
 	"time"
 
+	"github.com/gin-contrib/cors"
+
 	gzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
 
@@ -39,6 +41,7 @@ func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ct
 	router := gin.New()
 	router.Use(gzap.Ginzap(logger, time.RFC3339, true))
 	router.Use(gzap.RecoveryWithZap(logger, true))
+	router.Use(cors.Default())
 	router.GET("/webhook", hookHandler.WebHookHandlerGet)
 	router.POST("/webhook", hookHandler.WebHookHandlerPost)
 	router.POST("/categories", ctgHandler.HandlePost)
