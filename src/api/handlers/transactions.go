@@ -4,6 +4,8 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/lungria/spendshelf-backend/src/models"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/gin-gonic/gin"
@@ -16,17 +18,8 @@ type patchCategoryRequest struct {
 	Category string `json:"category" binding:"required"`
 }
 
-type transactionResponse struct {
-	ID          string `json:"id"`
-	Time        int32  `json:"time"`
-	Description string `json:"description"`
-	Category    string `json:"category"`
-	Amount      int64  `json:"amount"`
-	Balance     int64  `json:"balance"`
-}
-
 type getTransactionsResponse struct {
-	Transactions []transactionResponse `json:"transactions"`
+	Transactions []models.Transaction `json:"transactions"`
 }
 
 // TransactionsHandler is a struct which implemented by transactions handler
@@ -101,13 +94,12 @@ func (handler *TransactionsHandler) HandlePatch(c *gin.Context) {
 
 func (handler *TransactionsHandler) allTransactions(c *gin.Context) {
 	t, err := handler.repo.FindAll()
-	handler.logger.Info(t)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errorResponse{Message: "Unable to received all transactions", Error: err.Error()})
 		return
 	}
-	tArr := handler.prepareResponse(t)
-	c.JSON(http.StatusOK, getTransactionsResponse{Transactions: tArr})
+
+	c.JSON(http.StatusOK, getTransactionsResponse{Transactions: t})
 	return
 }
 
@@ -117,8 +109,8 @@ func (handler *TransactionsHandler) onlyCategorizedTransactions(c *gin.Context) 
 		c.JSON(http.StatusInternalServerError, errorResponse{Message: "Unable to received categorized transactions", Error: err.Error()})
 		return
 	}
-	tArr := handler.prepareResponse(t)
-	c.JSON(http.StatusOK, getTransactionsResponse{Transactions: tArr})
+
+	c.JSON(http.StatusOK, getTransactionsResponse{Transactions: t})
 	return
 }
 
@@ -128,8 +120,8 @@ func (handler *TransactionsHandler) onlyUncategorizedTransactions(c *gin.Context
 		c.JSON(http.StatusInternalServerError, errorResponse{Message: "Unable to received uncategorized transactions", Error: err.Error()})
 		return
 	}
-	tArr := handler.prepareResponse(t)
-	c.JSON(http.StatusOK, getTransactionsResponse{Transactions: tArr})
+
+	c.JSON(http.StatusOK, getTransactionsResponse{Transactions: t})
 	return
 }
 
@@ -139,21 +131,7 @@ func (handler *TransactionsHandler) oneCategoryTransactions(c *gin.Context, cate
 		c.JSON(http.StatusInternalServerError, errorResponse{Message: "Unable to received transactions for specify category " + category, Error: err.Error()})
 		return
 	}
-	tArr := handler.prepareResponse(t)
-	c.JSON(http.StatusOK, getTransactionsResponse{Transactions: tArr})
+
+	c.JSON(http.StatusOK, getTransactionsResponse{Transactions: t})
 	return
-}
-
-func (handler *TransactionsHandler) prepareResponse(rawTxn []transactions.Transaction) []transactionResponse {
-	processedTxn := make([]transactionResponse, len(rawTxn))
-
-	for i := 0; i < len(rawTxn); i++ {
-		processedTxn[i].ID = rawTxn[i].ID.Hex()
-		processedTxn[i].Time = rawTxn[i].StatementItem.Time
-		processedTxn[i].Description = rawTxn[i].StatementItem.Description
-		processedTxn[i].Category = rawTxn[i].Category
-		processedTxn[i].Amount = rawTxn[i].StatementItem.Amount
-		processedTxn[i].Balance = rawTxn[i].StatementItem.Balance
-	}
-	return processedTxn
 }

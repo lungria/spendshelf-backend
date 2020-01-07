@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/lungria/spendshelf-backend/src/models"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -17,10 +19,10 @@ const (
 
 // Repository defines methods which do some work with database
 type Repository interface {
-	FindAll() ([]Transaction, error)
-	FindAllCategorized() ([]Transaction, error)
-	FindAllUncategorized() ([]Transaction, error)
-	FindAllByCategory(category string) ([]Transaction, error)
+	FindAll() ([]models.Transaction, error)
+	FindAllCategorized() ([]models.Transaction, error)
+	FindAllUncategorized() ([]models.Transaction, error)
+	FindAllByCategory(category string) ([]models.Transaction, error)
 	UpdateCategory(id primitive.ObjectID, category string) error
 }
 
@@ -46,8 +48,8 @@ func NewTransactionRepository(db *mongo.Database, logger *zap.SugaredLogger) (*T
 }
 
 // FindAllUncategorized returns all uncategorized transactions
-func (repo *TransactionRepository) FindAllUncategorized() ([]Transaction, error) {
-	var transactions []Transaction
+func (repo *TransactionRepository) FindAllUncategorized() ([]models.Transaction, error) {
+	var transactions []models.Transaction
 	ctx := context.Background()
 	cur, err := repo.collection.Find(ctx, bson.M{"$or": bson.A{bson.M{"category": bson.M{"$exists": false}}, bson.M{"category": nil}}})
 	if err != nil {
@@ -60,8 +62,8 @@ func (repo *TransactionRepository) FindAllUncategorized() ([]Transaction, error)
 }
 
 // FindAll returns all transactions
-func (repo *TransactionRepository) FindAll() ([]Transaction, error) {
-	var transactions []Transaction
+func (repo *TransactionRepository) FindAll() ([]models.Transaction, error) {
+	var transactions []models.Transaction
 	ctx := context.Background()
 	cur, err := repo.collection.Find(ctx, bson.M{})
 	if err != nil {
@@ -74,8 +76,8 @@ func (repo *TransactionRepository) FindAll() ([]Transaction, error) {
 }
 
 // FindAllByCategory returns all transactions which relate with specify category
-func (repo *TransactionRepository) FindAllByCategory(category string) ([]Transaction, error) {
-	var transactions []Transaction
+func (repo *TransactionRepository) FindAllByCategory(category string) ([]models.Transaction, error) {
+	var transactions []models.Transaction
 	ctx := context.Background()
 	cur, err := repo.collection.Find(ctx, bson.M{"category": category})
 	if err != nil {
@@ -88,8 +90,8 @@ func (repo *TransactionRepository) FindAllByCategory(category string) ([]Transac
 }
 
 // FindAllCategorized returns all categorized transactions
-func (repo *TransactionRepository) FindAllCategorized() ([]Transaction, error) {
-	var transactions []Transaction
+func (repo *TransactionRepository) FindAllCategorized() ([]models.Transaction, error) {
+	var transactions []models.Transaction
 	ctx := context.Background()
 	cur, err := repo.collection.Find(ctx, bson.M{"$and": bson.A{bson.M{"category": bson.M{"$exists": true}}, bson.M{"category": bson.M{"$ne": nil}}}})
 	if err != nil {
@@ -112,9 +114,9 @@ func (repo *TransactionRepository) UpdateCategory(id primitive.ObjectID, categor
 	return nil
 }
 
-func transactionsDecoder(ctx context.Context, cursor *mongo.Cursor, transactions []Transaction) []Transaction {
+func transactionsDecoder(ctx context.Context, cursor *mongo.Cursor, transactions []models.Transaction) []models.Transaction {
 	for cursor.Next(ctx) {
-		var t Transaction
+		var t models.Transaction
 		cursor.Decode(&t)
 		transactions = append(transactions, t)
 	}
