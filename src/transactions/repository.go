@@ -21,7 +21,7 @@ type Repository interface {
 	FindAllCategorized() ([]Transaction, error)
 	FindAllUncategorized() ([]Transaction, error)
 	FindAllByCategory(category string) ([]Transaction, error)
-	UpdateCategory(id string, category string) error
+	UpdateCategory(id primitive.ObjectID, category string) error
 }
 
 // TransactionRepository implements by methods which do some work with transaction collection
@@ -102,15 +102,8 @@ func (repo *TransactionRepository) FindAllCategorized() ([]Transaction, error) {
 }
 
 // UpdateCategory changes the category for appropriate transaction
-func (repo *TransactionRepository) UpdateCategory(id string, category string) error {
-	transactionID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		errMsg := "unable to convert transaction id to ObjectID"
-		repo.logger.Errorw(errMsg, "TransactionID", id, "Category", category, "Database", repo.collection.Database().Name(), "Collection", repo.collection.Name(), "Error", err)
-		return errors.New(errMsg)
-	}
-
-	_, err = repo.collection.UpdateOne(context.Background(), bson.M{"_id": transactionID}, bson.M{"$set": bson.M{"category": category}})
+func (repo *TransactionRepository) UpdateCategory(id primitive.ObjectID, category string) error {
+	_, err := repo.collection.UpdateOne(context.Background(), bson.M{"_id": id}, bson.M{"$set": bson.M{"category": category}})
 	if err != nil {
 		errMsg := "unable to update transaction"
 		repo.logger.Errorw(errMsg, "TransactionID", id, "Category", category, "Database", repo.collection.Database().Name(), "Collection", repo.collection.Name(), "Error", err)

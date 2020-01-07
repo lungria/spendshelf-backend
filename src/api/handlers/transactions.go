@@ -4,6 +4,8 @@ import (
 	"errors"
 	"net/http"
 
+	"go.mongodb.org/mongo-driver/bson/primitive"
+
 	"github.com/gin-gonic/gin"
 
 	"github.com/lungria/spendshelf-backend/src/transactions"
@@ -83,7 +85,13 @@ func (handler *TransactionsHandler) HandlePatch(c *gin.Context) {
 		return
 	}
 	transactionID := c.Param("transactionID")
-	err = handler.repo.UpdateCategory(transactionID, req.Category)
+	tObjID, err := primitive.ObjectIDFromHex(transactionID)
+	if err != nil {
+		handler.logger.Errorw("Transaction ID wrong or invalid", "TransactionID", tObjID, "Error", err)
+		c.JSON(http.StatusBadRequest, errorResponse{"Unable to find the transaction", "TransactionID is wrong"})
+		return
+	}
+	err = handler.repo.UpdateCategory(tObjID, req.Category)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errorResponse{Message: "Update failed", Error: err.Error()})
 		return
