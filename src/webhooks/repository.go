@@ -16,9 +16,9 @@ const (
 	transactionsCollection = "transactions"
 )
 
-// Repository define all methods which do some work with database
+// Repository defines method which inserts the transaction from monoAPI
 type Repository interface {
-	SaveOneHook(transaction *WebHook) error
+	InsertOneHook(transaction *WebHook) error
 }
 
 // WebHookRepository implements by methods which save the transaction to transactions collection
@@ -41,17 +41,17 @@ func NewWebHookRepository(db *mongo.Database, logger *zap.SugaredLogger) (*WebHo
 	}, nil
 }
 
-// SaveOneHook save one Transaction to MongoDB
-func (repo *WebHookRepository) SaveOneHook(webhook *WebHook) error {
-	_, err := repo.collection.InsertOne(context.Background(), repo.convert(webhook))
+// InsertOneHook insert one Transaction to MongoDB
+func (repo *WebHookRepository) InsertOneHook(webhook *WebHook) error {
+	_, err := repo.collection.InsertOne(context.Background(), repo.webhookToTxn(webhook))
 	if err != nil {
-		repo.logger.Errorw("SaveOneHook failed", "Database", repo.collection.Database().Name(), "Collection", repo.collection.Name(), "webHook", webhook, "Error", err)
+		repo.logger.Errorw("InsertOneHook failed", "Database", repo.collection.Database().Name(), "Collection", repo.collection.Name(), "webHook", webhook, "Error", err)
 		return errors.New("save webHook to database failed")
 	}
 	return nil
 }
 
-func (repo *WebHookRepository) convert(webhook *WebHook) models.Transaction {
+func (repo *WebHookRepository) webhookToTxn(webhook *WebHook) models.Transaction {
 	dest := models.Transaction{}
 
 	dest.ID = primitive.NewObjectID()

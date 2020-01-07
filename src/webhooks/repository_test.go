@@ -26,8 +26,8 @@ func TestSaveOneHook(t *testing.T) {
 		},
 	}
 	repoMock := &MockRepository{}
-	repoMock.On("SaveOneHook", &webhook).Return(nil).Once()
-	err := repoMock.SaveOneHook(&webhook)
+	repoMock.On("InsertOneHook", &webhook).Return(nil).Once()
+	err := repoMock.InsertOneHook(&webhook)
 	assert.Equal(t, nil, err)
 	repoMock.AssertExpectations(t)
 }

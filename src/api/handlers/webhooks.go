@@ -46,7 +46,7 @@ func (handler *WebHookHandler) HandlePost(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, errorResponse{Message: "Bad request", Error: err.Error()})
 		return
 	}
-	err = handler.repo.SaveOneHook(req.Data)
+	err = handler.repo.InsertOneHook(req.Data)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errorResponse{Message: "Saving Transaction failed", Error: err.Error()})
 		return

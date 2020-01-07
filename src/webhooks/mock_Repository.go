@@ -9,8 +9,8 @@ type MockRepository struct {
 	mock.Mock
 }
 
-// SaveOneHook provides a mock function with given fields: transaction
-func (_m *MockRepository) SaveOneHook(transaction *WebHook) error {
+// InsertOneHook provides a mock function with given fields: transaction
+func (_m *MockRepository) InsertOneHook(transaction *WebHook) error {
 	ret := _m.Called(transaction)
 
 	var r0 error

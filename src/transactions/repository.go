@@ -17,7 +17,7 @@ const (
 	transactionsCollection = "transactions"
 )
 
-// Repository defines methods which do some work with database
+// Repository defines methods which find the transactions and update the category
 type Repository interface {
 	FindAll() ([]models.Transaction, error)
 	FindAllCategorized() ([]models.Transaction, error)
@@ -26,7 +26,7 @@ type Repository interface {
 	UpdateCategory(id primitive.ObjectID, category string) error
 }
 
-// TransactionRepository implements by methods which do some work with transaction collection
+// TransactionRepository implements by methods which define in Repository interface
 type TransactionRepository struct {
 	logger     *zap.SugaredLogger
 	collection *mongo.Collection

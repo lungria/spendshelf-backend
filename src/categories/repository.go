@@ -18,13 +18,13 @@ const (
 	categoriesCollection = "categories"
 )
 
-// Repository define methods which do some work with database
+// Repository define methods which Insert category to database and inherit methods of  memory cache
 type Repository interface {
 	provider
 	Insert(ctx context.Context, name string) (primitive.ObjectID, error)
 }
 
-// CachedRepository implements by methods which do some work with database
+// CachedRepository implements by methods which define in Repository
 type CachedRepository struct {
 	provider   provider
 	collection *mongo.Collection
