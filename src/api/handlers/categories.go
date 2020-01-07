@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/lungria/spendshelf-backend/src/models"
 	"net/http"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -19,7 +20,7 @@ type createCategoryRequest struct {
 }
 
 type getAllCategoriesResponse struct {
-	Categories []categories.Category `json:"categories"`
+	Categories []models.Category `json:"categories"`
 }
 
 type insertCategoryResponse struct {

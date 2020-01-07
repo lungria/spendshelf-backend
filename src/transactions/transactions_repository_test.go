@@ -22,7 +22,7 @@ var txn2 = models.Transaction{
 	ID:          primitive.NewObjectID(),
 	Time:        1578391654,
 	Description: "Test description",
-	Category:    "Shopping",
+	CategoryID:  primitive.NewObjectID(),
 	Amount:      -90,
 	Balance:     0,
 }

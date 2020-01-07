@@ -3,6 +3,7 @@ package webhooks
 import (
 	"context"
 	"errors"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
@@ -43,7 +44,7 @@ func NewWebHookRepository(db *mongo.Database, logger *zap.SugaredLogger) (*WebHo
 
 // InsertOneHook insert one Transaction to MongoDB
 func (repo *WebHookRepository) InsertOneHook(webhook *WebHook) error {
-	_, err := repo.collection.InsertOne(context.Background(), repo.webhookToTxn(webhook))
+	_, err := repo.collection.InsertOne(context.Background(), repo.txnFromHook(webhook))
 	if err != nil {
 		repo.logger.Errorw("InsertOneHook failed", "Database", repo.collection.Database().Name(), "Collection", repo.collection.Name(), "webHook", webhook, "Error", err)
 		return errors.New("save webHook to database failed")
@@ -51,13 +52,17 @@ func (repo *WebHookRepository) InsertOneHook(webhook *WebHook) error {
 	return nil
 }
 
-func (repo *WebHookRepository) webhookToTxn(webhook *WebHook) models.Transaction {
+func (repo *WebHookRepository) txnFromHook(webhook *WebHook) models.Transaction {
 	dest := models.Transaction{}
 
+	gTime := time.Unix(int64(webhook.StatementItem.Time), 0)
+	mTime := primitive.NewDateTimeFromTime(gTime)
+
 	dest.ID = primitive.NewObjectID()
+	dest.CategoryID = primitive.NilObjectID
 	dest.Amount = webhook.StatementItem.Amount
 	dest.Balance = webhook.StatementItem.Balance
 	dest.Description = webhook.StatementItem.Description
-	dest.Time = webhook.StatementItem.Time
+	dest.Time = mTime
 	return dest
 }

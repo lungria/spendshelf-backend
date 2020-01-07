@@ -56,7 +56,7 @@ func InitializeServer() (*config.Dependencies, error) {
 	if err != nil {
 		return nil, err
 	}
-	transactionsHandler, err := handlers.NewTransactionsHandler(transactionRepository, sugaredLogger)
+	transactionsHandler, err := handlers.NewTransactionsHandler(transactionRepository, cachedRepository, sugaredLogger)
 	if err != nil {
 		return nil, err
 	}

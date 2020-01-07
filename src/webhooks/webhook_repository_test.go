@@ -8,7 +8,7 @@ import (
 	"github.com/lungria/mono"
 )
 
-func TestSaveOneHook(t *testing.T) {
+func TestInsertOneHook(t *testing.T) {
 	webhook := WebHook{
 		AccountID: "test_id",
 		StatementItem: mono.StatementItem{

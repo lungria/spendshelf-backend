@@ -63,10 +63,10 @@ func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ct
 func InitializeServer() (*config.Dependencies, error) {
 	wire.Build(config.NewConfig,
 		mongoDbProvider,
-		transactions.NewTransactionRepository,
-		handlers.NewTransactionsHandler,
 		categories.NewCachedRepository,
 		handlers.NewCategoriesHandler,
+		transactions.NewTransactionRepository,
+		handlers.NewTransactionsHandler,
 		webhooks.NewWebHookRepository,
 		handlers.NewWebHookHandler,
 		zapProvider,

@@ -22,8 +22,8 @@ type Repository interface {
 	FindAll() ([]models.Transaction, error)
 	FindAllCategorized() ([]models.Transaction, error)
 	FindAllUncategorized() ([]models.Transaction, error)
-	FindAllByCategory(category string) ([]models.Transaction, error)
-	UpdateCategory(id primitive.ObjectID, category string) error
+	FindAllByCategoryID(categoryID primitive.ObjectID) ([]models.Transaction, error)
+	UpdateCategory(transactionID primitive.ObjectID, categoryID primitive.ObjectID) (int64, error)
 }
 
 // TransactionRepository implements by methods which define in Repository interface
@@ -51,7 +51,7 @@ func NewTransactionRepository(db *mongo.Database, logger *zap.SugaredLogger) (*T
 func (repo *TransactionRepository) FindAllUncategorized() ([]models.Transaction, error) {
 	var transactions []models.Transaction
 	ctx := context.Background()
-	cur, err := repo.collection.Find(ctx, bson.M{"$or": bson.A{bson.M{"category": bson.M{"$exists": false}}, bson.M{"category": nil}}})
+	cur, err := repo.collection.Find(ctx, bson.M{"$or": bson.A{bson.M{"category_id": bson.M{"$exists": false}}, bson.M{"category_id": nil}}})
 	if err != nil {
 		errMsg := "unable to received transactions without category"
 		repo.logger.Errorw(errMsg, "Database", repo.collection.Database().Name(), "Collection", repo.collection.Name(), "Error", err)
@@ -75,14 +75,14 @@ func (repo *TransactionRepository) FindAll() ([]models.Transaction, error) {
 	return transactionsDecoder(ctx, cur, transactions), nil
 }
 
-// FindAllByCategory returns all transactions which relate with specify category
-func (repo *TransactionRepository) FindAllByCategory(category string) ([]models.Transaction, error) {
+// FindAllByCategoryID returns all transactions which relate with specify category
+func (repo *TransactionRepository) FindAllByCategoryID(categoryID primitive.ObjectID) ([]models.Transaction, error) {
 	var transactions []models.Transaction
 	ctx := context.Background()
-	cur, err := repo.collection.Find(ctx, bson.M{"category": category})
+	cur, err := repo.collection.Find(ctx, bson.M{"category_id": categoryID})
 	if err != nil {
 		errMsg := "unable to received transactions with category"
-		repo.logger.Errorw(errMsg, "Category", category, "Database", repo.collection.Database().Name(), "Collection", repo.collection.Name(), "Error", err)
+		repo.logger.Errorw(errMsg, "CategoryID", categoryID, "Database", repo.collection.Database().Name(), "Collection", repo.collection.Name(), "Error", err)
 		return nil, errors.New(errMsg)
 	}
 
@@ -93,7 +93,7 @@ func (repo *TransactionRepository) FindAllByCategory(category string) ([]models.
 func (repo *TransactionRepository) FindAllCategorized() ([]models.Transaction, error) {
 	var transactions []models.Transaction
 	ctx := context.Background()
-	cur, err := repo.collection.Find(ctx, bson.M{"$and": bson.A{bson.M{"category": bson.M{"$exists": true}}, bson.M{"category": bson.M{"$ne": nil}}}})
+	cur, err := repo.collection.Find(ctx, bson.M{"$and": bson.A{bson.M{"category_id": bson.M{"$exists": true}}, bson.M{"category_id": bson.M{"$ne": nil}}}})
 	if err != nil {
 		errMsg := "unable to received transactions with category"
 		repo.logger.Errorw(errMsg, "Database", repo.collection.Database().Name(), "Collection", repo.collection.Name(), "Error", err)
@@ -104,14 +104,14 @@ func (repo *TransactionRepository) FindAllCategorized() ([]models.Transaction, e
 }
 
 // UpdateCategory changes the category for appropriate transaction
-func (repo *TransactionRepository) UpdateCategory(id primitive.ObjectID, category string) error {
-	_, err := repo.collection.UpdateOne(context.Background(), bson.M{"_id": id}, bson.M{"$set": bson.M{"category": category}})
+func (repo *TransactionRepository) UpdateCategory(transactionID primitive.ObjectID, categoryID primitive.ObjectID) (int64, error) {
+	txn, err := repo.collection.UpdateOne(context.Background(), bson.M{"_id": transactionID}, bson.M{"$set": bson.M{"category_id": categoryID}})
 	if err != nil {
 		errMsg := "unable to update transaction"
-		repo.logger.Errorw(errMsg, "TransactionID", id, "Category", category, "Database", repo.collection.Database().Name(), "Collection", repo.collection.Name(), "Error", err)
-		return errors.New(errMsg)
+		repo.logger.Errorw(errMsg, "TransactionID", transactionID, "CategoryID", categoryID, "Database", repo.collection.Database().Name(), "Collection", repo.collection.Name(), "Error", err)
+		return txn.ModifiedCount, errors.New(errMsg)
 	}
-	return nil
+	return txn.ModifiedCount, nil
 }
 
 func transactionsDecoder(ctx context.Context, cursor *mongo.Cursor, transactions []models.Transaction) []models.Transaction {
