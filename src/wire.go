@@ -7,6 +7,7 @@ import (
 
 	"github.com/lungria/spendshelf-backend/src/transactions"
 
+	"github.com/gin-contrib/cors"
 	"github.com/lungria/spendshelf-backend/src/webhooks"
 
 	gzap "github.com/gin-contrib/zap"
@@ -51,6 +52,9 @@ func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ct
 	router.Use(gzap.Ginzap(logger, time.RFC3339, true))
 	router.Use(gzap.RecoveryWithZap(logger, true))
 	router.Use(defaultHeaders())
+	router.GET("/webhook", hookHandler.HandleGet)
+	router.POST("/webhook", hookHandler.HandlePost)
+	router.Use(cors.Default())
 	router.GET("/webhook", hookHandler.HandleGet)
 	router.POST("/webhook", hookHandler.HandlePost)
 	router.POST("/categories", ctgHandler.HandlePost)
