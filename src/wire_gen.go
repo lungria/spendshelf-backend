@@ -14,6 +14,8 @@ import (
 	"github.com/lungria/spendshelf-backend/src/categories"
 	"github.com/lungria/spendshelf-backend/src/config"
 	"github.com/lungria/spendshelf-backend/src/db"
+	"github.com/lungria/spendshelf-backend/src/transactions"
+	"github.com/lungria/spendshelf-backend/src/webhooks"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
 	"time"
@@ -35,11 +37,11 @@ func InitializeServer() (*config.Dependencies, error) {
 	if err != nil {
 		return nil, err
 	}
-	transactionsMongoDbRepository, err := db.NewTransactionsMongoDbRepository(database, sugaredLogger)
+	webHookRepository, err := webhooks.NewWebHookRepository(database, sugaredLogger)
 	if err != nil {
 		return nil, err
 	}
-	webHookHandler, err := handlers.NewWebHookHandler(transactionsMongoDbRepository, sugaredLogger)
+	webHookHandler, err := handlers.NewWebHookHandler(webHookRepository, sugaredLogger)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +53,15 @@ func InitializeServer() (*config.Dependencies, error) {
 	if err != nil {
 		return nil, err
 	}
-	engine := routerProvider(logger, webHookHandler, categoriesHandler)
+	transactionRepository, err := transactions.NewTransactionRepository(database, sugaredLogger)
+	if err != nil {
+		return nil, err
+	}
+	transactionsHandler, err := handlers.NewTransactionsHandler(transactionRepository, cachedRepository, sugaredLogger)
+	if err != nil {
+		return nil, err
+	}
+	engine := routerProvider(logger, webHookHandler, categoriesHandler, transactionsHandler)
 	server, err := api.NewAPI(environmentConfiguration, engine)
 	if err != nil {
 		return nil, err
@@ -77,14 +87,26 @@ func zapProvider() (*zap.Logger, error) {
 	return zap.NewProduction()
 }
 
-func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ctgHandler *handlers.CategoriesHandler) *gin.Engine {
+func defaultHeaders() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Header("content-type", "application/json")
+		c.Next()
+	}
+}
+
+func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ctgHandler *handlers.CategoriesHandler, txHandler *handlers.TransactionsHandler) *gin.Engine {
 	router := gin.New()
 	router.Use(ginzap.Ginzap(logger, time.RFC3339, true))
 	router.Use(ginzap.RecoveryWithZap(logger, true))
+	router.Use(defaultHeaders())
+	router.GET("/webhook", hookHandler.HandleGet)
+	router.POST("/webhook", hookHandler.HandlePost)
 	router.Use(cors.Default())
-	router.GET("/webhook", hookHandler.WebHookHandlerGet)
-	router.POST("/webhook", hookHandler.WebHookHandlerPost)
+	router.GET("/webhook", hookHandler.HandleGet)
+	router.POST("/webhook", hookHandler.HandlePost)
 	router.POST("/categories", ctgHandler.HandlePost)
 	router.GET("/categories", ctgHandler.HandleGet)
+	router.GET("/transactions", txHandler.HandleGet)
+	router.PATCH("/transactions/:transactionID", txHandler.HandlePatch)
 	return router
 }

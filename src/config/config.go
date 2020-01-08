@@ -6,7 +6,7 @@ import (
 
 // EnvironmentConfiguration is struct for all configuration params of the project
 type EnvironmentConfiguration struct {
-	HTTPAddr string `env:"WEB_HOOK_ADDR" envDefault:":8080"`
+	HTTPAddr string `env:"HTTP_ADDR" envDefault:":8080"`
 	MongoURI string `env:"MONGO_URI" envDefault:"mongodb://root:toor@localhost:27017"`
 	DBName   string `env:"SPEND_SHELF_DB" envDefault:"spendShelf"`
 }

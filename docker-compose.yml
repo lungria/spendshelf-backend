@@ -12,12 +12,13 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: toor
-  webhook:
-    image: webhook
+  spendshelf:
+    image: spendshelf
     build: ./src/
-    container_name: webhook
+    container_name: spendshelf
     restart: always
     environment:
+      - HTTP_ADDR=:80
       - MONGO_URI=mongodb://root:toor@mongod:27017
       - SPEND_SHELF_DB=spendShelf
     depends_on:
@@ -32,4 +33,4 @@ services:
       - 443:443
     container_name: "lb"
     depends_on:
-      - webhook
+      - spendshelf

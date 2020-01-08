@@ -34,6 +34,7 @@ func main() {
 	if err = services.Server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		services.Logger.Fatalf("Couldn't listen: %+v\n", err)
 	}
-	services.Logger.Info("Server shutdown")
+
 	<-done
+	services.Logger.Info("Server shutdown")
 }

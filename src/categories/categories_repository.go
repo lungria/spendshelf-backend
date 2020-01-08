@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/lungria/spendshelf-backend/src/models"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"golang.org/x/text/unicode/norm"
@@ -18,17 +20,20 @@ const (
 	categoriesCollection = "categories"
 )
 
+// Repository define methods which Insert category to database and inherit methods of  memory cache
 type Repository interface {
-	Provider
+	provider
 	Insert(ctx context.Context, name string) (primitive.ObjectID, error)
 }
 
+// CachedRepository implements by methods which define in Repository
 type CachedRepository struct {
-	provider   Provider
+	provider   provider
 	collection *mongo.Collection
-	updates    chan<- Category
+	updates    chan<- models.Category
 }
 
+// NewCachedRepository is creating a new CachedRepository
 func NewCachedRepository(db *mongo.Database) (*CachedRepository, error) {
 	//todo get shutdown context
 	ctx := context.Background()
@@ -37,13 +42,13 @@ func NewCachedRepository(db *mongo.Database) (*CachedRepository, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to seed categories cache")
 	}
-	seed := make([]Category, 0)
+	seed := make([]models.Category, 0)
 	err = cursor.All(ctx, &seed)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to seed categories cache")
 	}
-	updates := make(chan Category)
-	provider, err := NewProvider(seed, updates, ctx)
+	updates := make(chan models.Category)
+	provider, err := newProvider(ctx, seed, updates)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to seed categories collection")
 	}
@@ -54,23 +59,31 @@ func NewCachedRepository(db *mongo.Database) (*CachedRepository, error) {
 	}, nil
 }
 
-func (repo *CachedRepository) GetAll() []Category {
+// GetAll return all categories
+func (repo *CachedRepository) GetAll() []models.Category {
 	return repo.provider.GetAll()
 }
 
-func (repo *CachedRepository) Find(name string) (Category, bool) {
+// Find is returning preferred category
+func (repo *CachedRepository) Find(name string) (models.Category, bool) {
 	return repo.provider.Find(name)
 }
 
+// FindByID returns the category which was found by ObjectID
+func (repo *CachedRepository) FindByID(id primitive.ObjectID) (models.Category, bool) {
+	return repo.provider.FindByID(id)
+}
+
+// Insert is writing category to database and in memory cache
 func (repo *CachedRepository) Insert(ctx context.Context, name string) (primitive.ObjectID, error) {
 	// todo add unique index for normalized name in db
 	trimmed := strings.TrimSpace(name)
 	normalized := norm.NFC.String(strings.ToUpper(trimmed))
 	c, exists := repo.provider.Find(normalized)
 	if exists {
-		return c.Id, nil
+		return c.ID, nil
 	}
-	c = Category{
+	c = models.Category{
 		NormalizedName: normalized,
 		Name:           trimmed,
 	}
@@ -79,9 +92,9 @@ func (repo *CachedRepository) Insert(ctx context.Context, name string) (primitiv
 		return primitive.NilObjectID, errors.Wrap(err, "Unable to insert category")
 	}
 
-	c.Id = result.InsertedID.(primitive.ObjectID)
+	c.ID = result.InsertedID.(primitive.ObjectID)
 	go func() {
 		repo.updates <- c
 	}()
-	return c.Id, nil
+	return c.ID, nil
 }

@@ -6,17 +6,19 @@ import (
 	"testing"
 	"time"
 
+	"github.com/lungria/spendshelf-backend/src/models"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"golang.org/x/text/unicode/norm"
 )
 
 func Test_GetAll_ForTwoSeededCategories_ReturnsTwoCategories(t *testing.T) {
-	seed := []Category{
+	seed := []models.Category{
 		{NormalizedName: "test"},
 		{NormalizedName: "test2"},
 	}
-	provider := getProvider(seed, make(chan Category))
+	provider := getProvider(seed, make(chan models.Category))
 
 	categories := provider.GetAll()
 
@@ -27,26 +29,26 @@ func Test_GetAll_ForTwoSeededCategories_ReturnsTwoCategories(t *testing.T) {
 
 func Test_Find_ForExistingCategory_ReturnsCategory(t *testing.T) {
 	name := norm.NFC.String("test")
-	seedId := primitive.NewObjectID()
-	seed := []Category{
-		{NormalizedName: name, Id: seedId},
-		{NormalizedName: "other_category", Id: primitive.NewObjectID()},
+	seedID := primitive.NewObjectID()
+	seed := []models.Category{
+		{NormalizedName: name, ID: seedID},
+		{NormalizedName: "other_category", ID: primitive.NewObjectID()},
 	}
-	provider := getProvider(seed, make(chan Category))
+	provider := getProvider(seed, make(chan models.Category))
 
 	category, _ := provider.Find(name)
 
-	if category.Id != seedId {
-		t.Error(fmt.Sprintf("Expected category with id %v, received %v", seedId, category.Id))
+	if category.ID != seedID {
+		t.Error(fmt.Sprintf("Expected category with id %v, received %v", seedID, category.ID))
 	}
 }
 
 func Test_Find_ForNewlyInsertedCategory_ReturnsCategory(t *testing.T) {
-	seed := []Category{
-		{NormalizedName: norm.NFC.String("test"), Id: primitive.NewObjectID()},
+	seed := []models.Category{
+		{NormalizedName: norm.NFC.String("test"), ID: primitive.NewObjectID()},
 	}
-	newCategory := Category{primitive.NewObjectID(), norm.NFC.String("test2"), norm.NFC.String("test2")}
-	updates := make(chan Category)
+	newCategory := models.Category{ID: primitive.NewObjectID(), Name: norm.NFC.String("test2"), NormalizedName: norm.NFC.String("test2")}
+	updates := make(chan models.Category)
 	provider := getProvider(seed, updates)
 
 	_, exists := provider.Find(newCategory.NormalizedName)
@@ -62,7 +64,7 @@ func Test_Find_ForNewlyInsertedCategory_ReturnsCategory(t *testing.T) {
 	}
 }
 
-func getProvider(categories []Category, updates chan Category) *InMemoryProvider {
-	provider, _ := NewProvider(categories, updates, context.Background())
+func getProvider(categories []models.Category, updates chan models.Category) *inMemoryProvider {
+	provider, _ := newProvider(context.Background(), categories, updates)
 	return provider
 }
