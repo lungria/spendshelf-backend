@@ -52,8 +52,6 @@ func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ct
 	router.Use(gzap.Ginzap(logger, time.RFC3339, true))
 	router.Use(gzap.RecoveryWithZap(logger, true))
 	router.Use(defaultHeaders())
-	router.GET("/webhook", hookHandler.HandleGet)
-	router.POST("/webhook", hookHandler.HandlePost)
 	router.Use(cors.Default())
 	router.GET("/webhook", hookHandler.HandleGet)
 	router.POST("/webhook", hookHandler.HandlePost)
