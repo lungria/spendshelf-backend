@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"go.mongodb.org/mongo-driver/mongo/options"
+
 	"github.com/lungria/spendshelf-backend/src/models"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -23,7 +25,7 @@ type Repository interface {
 	FindAllCategorized() ([]models.Transaction, error)
 	FindAllUncategorized() ([]models.Transaction, error)
 	FindAllByCategoryID(categoryID primitive.ObjectID) ([]models.Transaction, error)
-	UpdateCategory(transactionID primitive.ObjectID, categoryID primitive.ObjectID) (int64, error)
+	UpdateCategory(transactionID primitive.ObjectID, category models.Category) (int64, error)
 }
 
 // TransactionRepository implements by methods which define in Repository interface
@@ -51,7 +53,11 @@ func NewTransactionRepository(db *mongo.Database, logger *zap.SugaredLogger) (*T
 func (repo *TransactionRepository) FindAllUncategorized() ([]models.Transaction, error) {
 	var transactions []models.Transaction
 	ctx := context.Background()
-	cur, err := repo.collection.Find(ctx, bson.M{"$or": bson.A{bson.M{"category_id": bson.M{"$exists": false}}, bson.M{"category_id": nil}}})
+
+	optProjections := options.Find().SetProjection(bson.M{"_id": 1, "time": 1, "description": 1, "category": 1, "amount": 1, "balance": 1, "bank": 1})
+	filter := bson.M{"$or": bson.A{bson.M{"category": bson.M{"$exists": false}}, bson.M{"category": nil}}}
+	cur, err := repo.collection.Find(ctx, filter, optProjections)
+
 	if err != nil {
 		errMsg := "unable to received transactions without category"
 		repo.logger.Errorw(errMsg, "Database", repo.collection.Database().Name(), "Collection", repo.collection.Name(), "Error", err)
@@ -79,10 +85,10 @@ func (repo *TransactionRepository) FindAll() ([]models.Transaction, error) {
 func (repo *TransactionRepository) FindAllByCategoryID(categoryID primitive.ObjectID) ([]models.Transaction, error) {
 	var transactions []models.Transaction
 	ctx := context.Background()
-	cur, err := repo.collection.Find(ctx, bson.M{"category_id": categoryID})
+	cur, err := repo.collection.Find(ctx, bson.M{"category._id": categoryID})
 	if err != nil {
 		errMsg := "unable to received transactions with category"
-		repo.logger.Errorw(errMsg, "CategoryID", categoryID, "Database", repo.collection.Database().Name(), "Collection", repo.collection.Name(), "Error", err)
+		repo.logger.Errorw(errMsg, "Category", categoryID, "Database", repo.collection.Database().Name(), "Collection", repo.collection.Name(), "Error", err)
 		return nil, errors.New(errMsg)
 	}
 
@@ -93,7 +99,7 @@ func (repo *TransactionRepository) FindAllByCategoryID(categoryID primitive.Obje
 func (repo *TransactionRepository) FindAllCategorized() ([]models.Transaction, error) {
 	var transactions []models.Transaction
 	ctx := context.Background()
-	cur, err := repo.collection.Find(ctx, bson.M{"$and": bson.A{bson.M{"category_id": bson.M{"$exists": true}}, bson.M{"category_id": bson.M{"$ne": nil}}}})
+	cur, err := repo.collection.Find(ctx, bson.M{"$and": bson.A{bson.M{"category": bson.M{"$exists": true}}, bson.M{"category": bson.M{"$ne": nil}}}})
 	if err != nil {
 		errMsg := "unable to received transactions with category"
 		repo.logger.Errorw(errMsg, "Database", repo.collection.Database().Name(), "Collection", repo.collection.Name(), "Error", err)
@@ -104,11 +110,11 @@ func (repo *TransactionRepository) FindAllCategorized() ([]models.Transaction, e
 }
 
 // UpdateCategory changes the category for appropriate transaction
-func (repo *TransactionRepository) UpdateCategory(transactionID primitive.ObjectID, categoryID primitive.ObjectID) (int64, error) {
-	txn, err := repo.collection.UpdateOne(context.Background(), bson.M{"_id": transactionID}, bson.M{"$set": bson.M{"category_id": categoryID}})
+func (repo *TransactionRepository) UpdateCategory(transactionID primitive.ObjectID, category models.Category) (int64, error) {
+	txn, err := repo.collection.UpdateOne(context.Background(), bson.M{"_id": transactionID}, bson.M{"$set": bson.M{"category": category}})
 	if err != nil {
 		errMsg := "unable to update transaction"
-		repo.logger.Errorw(errMsg, "TransactionID", transactionID, "CategoryID", categoryID, "Database", repo.collection.Database().Name(), "Collection", repo.collection.Name(), "Error", err)
+		repo.logger.Errorw(errMsg, "TransactionID", transactionID, "Category", category, "Database", repo.collection.Database().Name(), "Collection", repo.collection.Name(), "Error", err)
 		return txn.ModifiedCount, errors.New(errMsg)
 	}
 	return txn.ModifiedCount, nil

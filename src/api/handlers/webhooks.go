@@ -4,6 +4,8 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/lungria/spendshelf-backend/src/models"
+
 	"github.com/lungria/spendshelf-backend/src/webhooks"
 
 	"go.uber.org/zap"
@@ -12,8 +14,8 @@ import (
 )
 
 type webHookRequest struct {
-	Type string            `json:"type"`
-	Data *webhooks.WebHook `json:"data"`
+	Type string          `json:"type"`
+	Data *models.WebHook `json:"data"`
 }
 
 // WebHookHandler is a struct which implemented by webhooks handlers

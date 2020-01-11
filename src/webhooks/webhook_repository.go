@@ -13,13 +13,13 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-const (
-	transactionsCollection = "transactions"
-)
+const transactionsCollection = "transactions"
+
+const monoBankName = "Mono Bank"
 
 // Repository defines method which inserts the transaction from monoAPI
 type Repository interface {
-	InsertOneHook(transaction *WebHook) error
+	InsertOneHook(transaction *models.WebHook) error
 }
 
 // WebHookRepository implements by methods which save the transaction to transactions collection
@@ -43,7 +43,7 @@ func NewWebHookRepository(db *mongo.Database, logger *zap.SugaredLogger) (*WebHo
 }
 
 // InsertOneHook insert one Transaction to MongoDB
-func (repo *WebHookRepository) InsertOneHook(webhook *WebHook) error {
+func (repo *WebHookRepository) InsertOneHook(webhook *models.WebHook) error {
 	_, err := repo.collection.InsertOne(context.Background(), repo.txnFromHook(webhook))
 	if err != nil {
 		repo.logger.Errorw("InsertOneHook failed", "Database", repo.collection.Database().Name(), "Collection", repo.collection.Name(), "webHook", webhook, "Error", err)
@@ -52,17 +52,18 @@ func (repo *WebHookRepository) InsertOneHook(webhook *WebHook) error {
 	return nil
 }
 
-func (repo *WebHookRepository) txnFromHook(webhook *WebHook) models.Transaction {
+func (repo *WebHookRepository) txnFromHook(webhook *models.WebHook) models.Transaction {
 	dest := models.Transaction{}
 
 	gTime := time.Unix(int64(webhook.StatementItem.Time), 0)
-	mTime := primitive.NewDateTimeFromTime(gTime)
+	mTime := primitive.NewDateTimeFromTime(gTime).Time()
 
 	dest.ID = primitive.NewObjectID()
-	dest.CategoryID = primitive.NilObjectID
 	dest.Amount = webhook.StatementItem.Amount
 	dest.Balance = webhook.StatementItem.Balance
 	dest.Description = webhook.StatementItem.Description
 	dest.Time = mTime
+	dest.Bank = monoBankName
+	dest.BankTransaction = *webhook
 	return dest
 }

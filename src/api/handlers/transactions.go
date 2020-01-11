@@ -17,7 +17,7 @@ import (
 )
 
 type patchCategoryRequest struct {
-	CategoryID string `json:"category_id" binding:"required"`
+	CategoryID string `json:"categoryId" binding:"required"`
 }
 
 type getTransactionsResponse struct {
@@ -95,7 +95,7 @@ func (handler *TransactionsHandler) HandlePatch(c *gin.Context) {
 		return
 	}
 
-	countModifiedDocs, err := handler.txnRepo.UpdateCategory(tObjID, ctg.ID)
+	countModifiedDocs, err := handler.txnRepo.UpdateCategory(tObjID, ctg)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errorResponse{Message: "Update failed", Error: err.Error()})
 		return

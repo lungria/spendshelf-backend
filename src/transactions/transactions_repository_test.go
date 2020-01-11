@@ -2,6 +2,7 @@ package transactions
 
 import (
 	"testing"
+	"time"
 
 	"github.com/lungria/spendshelf-backend/src/models"
 
@@ -12,7 +13,7 @@ import (
 
 var txn1 = models.Transaction{
 	ID:          primitive.NewObjectID(),
-	Time:        1578391653,
+	Time:        time.Unix(1578391653, 0),
 	Description: "Some Desc",
 	Amount:      -10,
 	Balance:     90,
@@ -20,11 +21,15 @@ var txn1 = models.Transaction{
 
 var txn2 = models.Transaction{
 	ID:          primitive.NewObjectID(),
-	Time:        1578391654,
+	Time:        time.Unix(1578391654, 0),
 	Description: "Test description",
-	CategoryID:  primitive.NewObjectID(),
-	Amount:      -90,
-	Balance:     0,
+	Category: &models.Category{
+		ID:             primitive.NewObjectID(),
+		Name:           "Category",
+		NormalizedName: "CATEGORY",
+	},
+	Amount:  -90,
+	Balance: 0,
 }
 
 func TestFindAll(t *testing.T) {
