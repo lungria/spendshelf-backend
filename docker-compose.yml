@@ -19,7 +19,7 @@ services:
     restart: always
     environment:
       - HTTP_ADDR=:80
-      - MONGO_URI=mongodb://${SPENDSHELF_MONGO_USER}:${SPENDSHELF_MONGO_PASSW}@mongod:27017
+      - SPENDSHELF_MONGO_URI=mongodb://${SPENDSHELF_MONGO_USER}:${SPENDSHELF_MONGO_PASSW}@mongod:27017
       - SPEND_SHELF_DB=spendShelf
       - GIN_MODE=release
     depends_on:
