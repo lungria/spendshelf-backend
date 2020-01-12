@@ -3,13 +3,15 @@ package webhooks
 import (
 	"testing"
 
+	"github.com/lungria/spendshelf-backend/src/models"
+
 	"github.com/stretchr/testify/assert"
 
 	"github.com/lungria/mono"
 )
 
 func TestInsertOneHook(t *testing.T) {
-	webhook := WebHook{
+	webhook := models.WebHook{
 		AccountID: "test_id",
 		StatementItem: mono.StatementItem{
 			ID:              "test_t_id",
