@@ -8,7 +8,7 @@ import (
 
 // Transaction represents a model of transactions in database
 type Transaction struct {
-	ID              primitive.ObjectID `json:"_id" bson:"_id,omitempty"`
+	ID              primitive.ObjectID `json:"id" bson:"_id,omitempty"`
 	Time            time.Time          `json:"dateTime" bson:"time"`
 	Description     string             `json:"description" bson:"description"`
 	Category        *Category          `json:"category,omitempty" bson:"category,omitempty"`
