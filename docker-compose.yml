@@ -10,8 +10,8 @@ services:
     container_name: mongod
     restart: always
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: toor
+      MONGO_INITDB_ROOT_USERNAME: ${SPENDSHELF_MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${SPENDSHELF_MONGO_PASSW}
   spendshelf:
     image: spendshelf
     build: ./src/
@@ -19,7 +19,7 @@ services:
     restart: always
     environment:
       - HTTP_ADDR=:80
-      - MONGO_URI=mongodb://root:toor@mongod:27017
+      - MONGO_URI=mongodb://${SPENDSHELF_MONGO_USER}:${SPENDSHELF_MONGO_PASSW}@mongod:27017
       - SPEND_SHELF_DB=spendShelf
       - GIN_MODE=release
     depends_on:
