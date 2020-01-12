@@ -10,11 +10,18 @@ All incoming transactions are being sent to categories - and each category has a
 
 ## Quick start
 ### Build with Docker
-* Set the mongoDB credentials to environment variables
+* Set the mongoDB credentials to environment variables. By default, mongoDB create directory `dbdata` on the root of the project and initiate a root user  
     * `SPENDSHELF_MONGO_USER="mongo_user"` 
     * `SPENDSHELF_MONGO_PASSW="mongo_password"` 
 * Build the app `docker-compose up -d --build`
-* Now you have access to the application on `localhost:80`
+* Now you have access to the application on `localhost:80`  
+
+### Build without Docker
+Also, you can build an application without docker but pay attention you should run remote or local the mongo DB and need to add the connection string to DB on environment variables as `SPENDSHELF_MONGO_URI`.  
+To build the application:  
+* Go to `src` directory
+* Build the application `make build`
+* Run the application `./spendshelf`
 
 ### API
 #### POST /webhook 
