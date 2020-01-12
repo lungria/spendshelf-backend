@@ -10,10 +10,9 @@ All incoming transactions are being sent to categories - and each category has a
 
 ## Quick start
 ### Build with Docker
-* Change the mongo DB credentials 
-    * `MONGO_INITDB_ROOT_USERNAME: some_user_name` 
-    * `MONGO_INITDB_ROOT_PASSWORD: some_password` 
-    * `MONGO_URI=mongodb://some_user_name:some_password@mongod:27017`
+* Set the mongoDB credentials to environment variables
+    * `SPENDSHELF_MONGO_USER="mongo_user"` 
+    * `SPENDSHELF_MONGO_PASSW="mongo_password"` 
 * Build the app `docker-compose up -d --build`
 * Now you have access to the application on `localhost:80`
 
