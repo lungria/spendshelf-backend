@@ -25,7 +25,7 @@ To build the application:
 
 ### API
 #### POST /webhook 
-Catch a transaction from the mono bank webhook and insert it into transactions collection.  
+Catch a transaction from the mono bank webhook and insert it into transactions collection. How to set webhook you can see on [Monobank Open API](https://api.monobank.ua/docs/)  
 
 e.g request:
 ```
