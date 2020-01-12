@@ -55,14 +55,13 @@ func (repo *WebHookRepository) InsertOneHook(webhook *models.WebHook) error {
 func (repo *WebHookRepository) txnFromHook(webhook *models.WebHook) models.Transaction {
 	dest := models.Transaction{}
 
-	gTime := time.Unix(int64(webhook.StatementItem.Time), 0)
-	mTime := primitive.NewDateTimeFromTime(gTime).Time()
+	dateTime := time.Unix(int64(webhook.StatementItem.Time), 0).UTC()
 
 	dest.ID = primitive.NewObjectID()
 	dest.Amount = webhook.StatementItem.Amount
 	dest.Balance = webhook.StatementItem.Balance
 	dest.Description = webhook.StatementItem.Description
-	dest.Time = mTime
+	dest.Time = dateTime
 	dest.Bank = monoBankName
 	dest.BankTransaction = *webhook
 	return dest
