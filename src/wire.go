@@ -5,6 +5,8 @@ package main
 import (
 	"time"
 
+	"github.com/lungria/spendshelf-backend/src/report"
+
 	"github.com/lungria/spendshelf-backend/src/transactions"
 
 	"github.com/gin-contrib/cors"
@@ -47,7 +49,7 @@ func defaultHeaders() gin.HandlerFunc {
 	}
 }
 
-func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ctgHandler *handlers.CategoriesHandler, txHandler *handlers.TransactionsHandler) *gin.Engine {
+func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ctgHandler *handlers.CategoriesHandler, txHandler *handlers.TransactionsHandler, rpHandler *handlers.ReportsHandler) *gin.Engine {
 	router := gin.New()
 	router.Use(gzap.Ginzap(logger, time.RFC3339, true))
 	router.Use(gzap.RecoveryWithZap(logger, true))
@@ -59,6 +61,7 @@ func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ct
 	router.GET("/categories", ctgHandler.HandleGet)
 	router.GET("/transactions", txHandler.HandleGet)
 	router.PATCH("/transactions/:transactionID", txHandler.HandlePatch)
+	router.GET("/reports", rpHandler.HandleGet)
 	return router
 }
 
@@ -68,9 +71,11 @@ func InitializeServer() (*config.Dependencies, error) {
 		categories.NewCachedRepository,
 		handlers.NewCategoriesHandler,
 		transactions.NewTransactionRepository,
+		report.NewSequentialReportGenerator,
 		handlers.NewTransactionsHandler,
 		webhooks.NewWebHookRepository,
 		handlers.NewWebHookHandler,
+		handlers.NewReportsHandler,
 		zapProvider,
 		sugarProvider,
 		routerProvider,
@@ -78,6 +83,7 @@ func InitializeServer() (*config.Dependencies, error) {
 		wire.Bind(new(transactions.Repository), new(*transactions.TransactionRepository)),
 		wire.Bind(new(webhooks.Repository), new(*webhooks.WebHookRepository)),
 		wire.Bind(new(categories.Repository), new(*categories.CachedRepository)),
+		wire.Bind(new(report.Generator), new(*report.SequentialReportGenerator)),
 		wire.Struct(new(config.Dependencies), "Logger", "Server"),
 	)
 	return &config.Dependencies{}, nil

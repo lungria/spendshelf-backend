@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/lungria/spendshelf-backend/src/categories"
@@ -33,14 +32,6 @@ type TransactionsHandler struct {
 
 // NewTransactionsHandler create a new instance of TransactionsHandler
 func NewTransactionsHandler(txnRepo transactions.Repository, ctgRepo categories.Repository, logger *zap.SugaredLogger) (*TransactionsHandler, error) {
-	if txnRepo == nil || ctgRepo == nil {
-		return nil, errors.New("repository must not be nil")
-	}
-
-	if logger == nil {
-		return nil, errors.New("logger must not be nil (Transactions)")
-	}
-
 	return &TransactionsHandler{
 		txnRepo: txnRepo,
 		ctgRepo: ctgRepo,
@@ -77,7 +68,7 @@ func (handler *TransactionsHandler) HandlePatch(c *gin.Context) {
 	var req patchCategoryRequest
 	err := c.BindJSON(&req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse{Message: "Bad request", Error: err.Error()})
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "Bad request", Error: err.Error()})
 		return
 	}
 
@@ -85,7 +76,7 @@ func (handler *TransactionsHandler) HandlePatch(c *gin.Context) {
 	tObjID, err := primitive.ObjectIDFromHex(transactionID)
 	if err != nil {
 		handler.logger.Errorw("Transaction ID wrong or invalid", "TransactionID", tObjID, "Error", err)
-		c.JSON(http.StatusBadRequest, errorResponse{"Unable to find the transaction", "TransactionID is wrong"})
+		c.JSON(http.StatusBadRequest, ErrorResponse{"Unable to find the transaction", "TransactionID is wrong"})
 		return
 	}
 
@@ -97,7 +88,7 @@ func (handler *TransactionsHandler) HandlePatch(c *gin.Context) {
 
 	countModifiedDocs, err := handler.txnRepo.UpdateCategory(tObjID, ctg)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse{Message: "Update failed", Error: err.Error()})
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: "Update failed", Error: err.Error()})
 		return
 	}
 	if countModifiedDocs == 0 {
@@ -110,7 +101,7 @@ func (handler *TransactionsHandler) HandlePatch(c *gin.Context) {
 func (handler *TransactionsHandler) allTransactions(c *gin.Context) {
 	t, err := handler.txnRepo.FindAll()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse{Message: "Unable to received all transactions", Error: err.Error()})
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: "Unable to received all transactions", Error: err.Error()})
 		return
 	}
 
@@ -121,7 +112,7 @@ func (handler *TransactionsHandler) allTransactions(c *gin.Context) {
 func (handler *TransactionsHandler) onlyCategorizedTransactions(c *gin.Context) {
 	t, err := handler.txnRepo.FindAllCategorized()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse{Message: "Unable to received categorized transactions", Error: err.Error()})
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: "Unable to received categorized transactions", Error: err.Error()})
 		return
 	}
 
@@ -132,7 +123,7 @@ func (handler *TransactionsHandler) onlyCategorizedTransactions(c *gin.Context) 
 func (handler *TransactionsHandler) onlyUncategorizedTransactions(c *gin.Context) {
 	t, err := handler.txnRepo.FindAllUncategorized()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse{Message: "Unable to received uncategorized transactions", Error: err.Error()})
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: "Unable to received uncategorized transactions", Error: err.Error()})
 		return
 	}
 
@@ -148,7 +139,7 @@ func (handler *TransactionsHandler) oneCategoryTransactions(c *gin.Context, cate
 	}
 	t, err := handler.txnRepo.FindAllByCategoryID(ctg.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse{Message: "Unable to received transactions for specify category " + ctg.ID.Hex(), Error: err.Error()})
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: "Unable to received transactions for specify category " + ctg.ID.Hex(), Error: err.Error()})
 		return
 	}
 
@@ -160,7 +151,7 @@ func (handler *TransactionsHandler) findCategoryByID(c *gin.Context, categoryID 
 	ctgObjID, err := primitive.ObjectIDFromHex(categoryID)
 	if err != nil {
 		handler.logger.Errorw("CategoryID wrong or invalid", "CategoryID", ctgObjID, "Error", err)
-		c.JSON(http.StatusBadRequest, errorResponse{"Unable to find the category by ID", "CategoryID is wrong"})
+		c.JSON(http.StatusBadRequest, ErrorResponse{"Unable to find the category by ID", "CategoryID is wrong"})
 		return false
 	}
 	ctg, exist := handler.ctgRepo.FindByID(ctgObjID)

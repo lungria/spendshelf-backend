@@ -1,14 +1,13 @@
 package handlers
 
 import (
-	"github.com/lungria/spendshelf-backend/src/models"
 	"net/http"
+
+	"github.com/lungria/spendshelf-backend/src/models"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"go.uber.org/zap"
-
-	"github.com/pkg/errors"
 
 	"github.com/lungria/spendshelf-backend/src/categories"
 
@@ -35,12 +34,6 @@ type CategoriesHandler struct {
 
 // NewCategoriesHandler create a new instance of CategoriesHandler
 func NewCategoriesHandler(repo categories.Repository, logger *zap.SugaredLogger) (*CategoriesHandler, error) {
-	if repo == nil {
-		return nil, errors.New("Repo must not be nil")
-	}
-	if logger == nil {
-		return nil, errors.New("Logger must not be nil")
-	}
 	return &CategoriesHandler{
 		repo:   repo,
 		logger: logger}, nil

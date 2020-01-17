@@ -14,6 +14,7 @@ import (
 	"github.com/lungria/spendshelf-backend/src/categories"
 	"github.com/lungria/spendshelf-backend/src/config"
 	"github.com/lungria/spendshelf-backend/src/db"
+	"github.com/lungria/spendshelf-backend/src/report"
 	"github.com/lungria/spendshelf-backend/src/transactions"
 	"github.com/lungria/spendshelf-backend/src/webhooks"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -61,7 +62,9 @@ func InitializeServer() (*config.Dependencies, error) {
 	if err != nil {
 		return nil, err
 	}
-	engine := routerProvider(logger, webHookHandler, categoriesHandler, transactionsHandler)
+	sequentialReportGenerator := report.NewSequentialReportGenerator(database, cachedRepository, sugaredLogger)
+	reportsHandler := handlers.NewReportsHandler(sequentialReportGenerator, sugaredLogger)
+	engine := routerProvider(logger, webHookHandler, categoriesHandler, transactionsHandler, reportsHandler)
 	server, err := api.NewAPI(environmentConfiguration, engine)
 	if err != nil {
 		return nil, err
@@ -94,7 +97,7 @@ func defaultHeaders() gin.HandlerFunc {
 	}
 }
 
-func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ctgHandler *handlers.CategoriesHandler, txHandler *handlers.TransactionsHandler) *gin.Engine {
+func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ctgHandler *handlers.CategoriesHandler, txHandler *handlers.TransactionsHandler, rpHandler *handlers.ReportsHandler) *gin.Engine {
 	router := gin.New()
 	router.Use(ginzap.Ginzap(logger, time.RFC3339, true))
 	router.Use(ginzap.RecoveryWithZap(logger, true))
@@ -106,5 +109,6 @@ func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ct
 	router.GET("/categories", ctgHandler.HandleGet)
 	router.GET("/transactions", txHandler.HandleGet)
 	router.PATCH("/transactions/:transactionID", txHandler.HandlePatch)
+	router.GET("/reports", rpHandler.HandleGet)
 	return router
 }
