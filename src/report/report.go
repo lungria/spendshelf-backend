@@ -35,7 +35,6 @@ func NewSequentialReportGenerator(db *mongo.Database, categories categories.Repo
 	return &SequentialReportGenerator{transactions: db.Collection(transactions.TransactionsCollection), categories: categories, logger: logger}
 }
 
-// TODO: filter by start/end
 func (s *SequentialReportGenerator) GetReport(ctx context.Context, start time.Time, end time.Time) ([]Element, error) {
 	s.logger.Infow("Generating report", "start", start.String(), "end", end.String())
 	pipeline := []bson.M{
