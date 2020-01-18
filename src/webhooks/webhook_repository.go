@@ -15,7 +15,7 @@ import (
 
 const transactionsCollection = "transactions"
 
-const monoBankName = "Mono Bank"
+const MonoBankName = "Mono Bank"
 
 // Repository defines method which inserts the transaction from monoAPI
 type Repository interface {
@@ -62,7 +62,7 @@ func (repo *WebHookRepository) txnFromHook(webhook *models.WebHook) models.Trans
 	dest.Balance = webhook.StatementItem.Balance
 	dest.Description = webhook.StatementItem.Description
 	dest.Time = dateTime
-	dest.Bank = monoBankName
+	dest.Bank = MonoBankName
 	dest.BankTransaction = *webhook
 	return dest
 }

@@ -26,6 +26,7 @@ type Repository interface {
 	FindAllUncategorized() ([]models.Transaction, error)
 	FindAllByCategoryID(categoryID primitive.ObjectID) ([]models.Transaction, error)
 	UpdateCategory(transactionID primitive.ObjectID, category models.Category) (int64, error)
+	InsertManyTransactions(txns []models.Transaction) error
 }
 
 // TransactionRepository implements by methods which define in Repository interface
@@ -118,6 +119,24 @@ func (repo *TransactionRepository) UpdateCategory(transactionID primitive.Object
 		return txn.ModifiedCount, errors.New(errMsg)
 	}
 	return txn.ModifiedCount, nil
+}
+
+func (repo *TransactionRepository) InsertManyTransactions(txns []models.Transaction) error {
+	txnInterface := make([]interface{}, len(txns))
+	for i := 0; i < len(txns); i++ {
+		txnInterface[i] = txns[i]
+	}
+
+	repo.logger.Info(txnInterface)
+
+	_, err := repo.collection.InsertMany(context.Background(), txnInterface)
+	if err != nil {
+		errMsg := "unable to insert transaction"
+		repo.logger.Errorw(errMsg, "Database", repo.collection.Database().Name(), "Collection", repo.collection.Name(), "Error", err)
+		return errors.New(errMsg)
+	}
+
+	return nil
 }
 
 func transactionsDecoder(ctx context.Context, cursor *mongo.Cursor, transactions []models.Transaction) []models.Transaction {

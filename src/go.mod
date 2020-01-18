@@ -15,6 +15,7 @@ require (
 	github.com/google/wire v0.4.0
 	github.com/lungria/mono v0.0.10
 	github.com/pkg/errors v0.8.1
+	github.com/shal/mono v0.1.3
 	github.com/stretchr/testify v1.4.0
 	github.com/tidwall/pretty v1.0.0 // indirect
 	github.com/vektra/mockery v0.0.0-20181123154057-e78b021dcbb5 // indirect
