@@ -29,7 +29,7 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	m, err := sync_mono.NewSync("", repo)
+	m, err := sync_mono.NewSync("uS9e4JRPxCykO7yz53cFUOQsIQ1BwzX5Est0TizsCNQI", repo)
 	if err != nil {
 		log.Fatalln(err)
 	}

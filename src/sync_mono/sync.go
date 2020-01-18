@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/lungria/spendshelf-backend/src/webhooks"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
@@ -16,24 +18,26 @@ import (
 	"github.com/lungria/spendshelf-backend/src/transactions"
 )
 
-type Sync struct {
+type MonoSync struct {
 	sync.RWMutex
 	txnRepo      transactions.Repository
-	client       *shalmono.Personal
+	monoClient   *shalmono.Personal
 	accountUAH   *shalmono.Account
+	logger       *zap.SugaredLogger
 	transactions chan []shalmono.Transaction
 	errChan      chan error
 }
 
-func NewSync(token string, txnRepo transactions.Repository) (*Sync, error) {
-	s := Sync{
-		client:       shalmono.NewPersonal(token),
+func NewSync(token string, txnRepo transactions.Repository, logger *zap.SugaredLogger) (*MonoSync, error) {
+	s := MonoSync{
+		monoClient:   shalmono.NewPersonal(token),
 		transactions: make(chan []shalmono.Transaction),
 		errChan:      make(chan error, 1),
 		txnRepo:      txnRepo,
+		logger:       logger,
 	}
 
-	accUAH, err := getAccount(*s.client)
+	accUAH, err := getAccount(*s.monoClient)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +48,7 @@ func NewSync(token string, txnRepo transactions.Repository) (*Sync, error) {
 	return &s, nil
 }
 
-func (s *Sync) Transactions(createdAtAccount time.Time) {
+func (s *MonoSync) Transactions(createdAtAccount time.Time) {
 	ctx := context.Background()
 	defer ctx.Done()
 
@@ -53,9 +57,9 @@ func (s *Sync) Transactions(createdAtAccount time.Time) {
 		to := from.Add(time.Hour * 744)
 		log.Println("Start", from.String())
 		log.Println("End", to.String())
-		txns, err := s.client.Transactions(ctx, s.accountUAH.ID, from, to)
+		txns, err := s.monoClient.Transactions(ctx, s.accountUAH.ID, from, to)
 		if err != nil {
-			log.Println(err)
+			s.logger.Errorw("Unable to fetch transactions from mono bank", "Error", err.Error())
 			s.errChan <- err
 		}
 		go func() {
@@ -87,7 +91,7 @@ func getAccount(monoPersonal shalmono.Personal) (*shalmono.Account, error) {
 	return &account, nil
 }
 
-func (s *Sync) run() {
+func (s *MonoSync) run() {
 	for {
 		select {
 		case err := <-s.errChan:
@@ -95,6 +99,10 @@ func (s *Sync) run() {
 			return
 		case txns := <-s.transactions:
 			toInsert := s.trimDuplicate(txns)
+			if len(toInsert) == 0 {
+				s.logger.Info("No transactions to insert into transactions collection")
+				continue
+			}
 			s.Lock()
 			err := s.txnRepo.InsertManyTransactions(toInsert)
 			s.Unlock()
@@ -103,13 +111,14 @@ func (s *Sync) run() {
 	}
 }
 
-func (s *Sync) trimDuplicate(syncTxns []shalmono.Transaction) []models.Transaction {
+func (s *MonoSync) trimDuplicate(syncTxns []shalmono.Transaction) []models.Transaction {
 	s.RLock()
 	defer s.RUnlock()
 	unique := []models.Transaction{}
 
 	currentTxns, err := s.txnRepo.FindAll()
 	if err != nil {
+		s.logger.Error("Unable to find transactions from transactions collection", "Error", err.Error())
 		s.errChan <- err
 	}
 	curr := make(map[string]models.Transaction, len(currentTxns))
@@ -128,7 +137,7 @@ func (s *Sync) trimDuplicate(syncTxns []shalmono.Transaction) []models.Transacti
 	return unique
 }
 
-func (s *Sync) txnFromSyncTxn(syncTxn shalmono.Transaction) models.Transaction {
+func (s *MonoSync) txnFromSyncTxn(syncTxn shalmono.Transaction) models.Transaction {
 	var txn models.Transaction
 
 	txn.ID = primitive.NewObjectID()
