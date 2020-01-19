@@ -36,24 +36,20 @@ func NewClient(m *MonoSync, l *zap.SugaredLogger) *client {
 }
 
 func (c *client) write() {
-	defer c.socket.Close()
-	for msg := range c.send {
-		if err := c.socket.WriteJSON(msg); err != nil {
-			errMsg := "unable to write transactions"
-			c.logger.Errorw(errMsg, "Error", err.Error())
-			c.sendErr <- err
+	for {
+		select {
+		case txn := <-c.send:
+			if err := c.socket.WriteJSON(txn); err != nil {
+				errMsg := "unable to write transactions"
+				c.logger.Errorw(errMsg, "Error", err.Error())
+				c.sendErr <- err
+			}
+		case errc := <-c.sendErr:
+			if err := c.socket.WriteJSON(socketError{Error: errc.Error()}); err != nil {
+				c.logger.Errorw("unable to write error", "Error", err.Error())
+			}
 		}
 	}
-}
-
-func (c *client) writeErr() {
-	defer c.socket.Close()
-	for e := range c.sendErr {
-		if err := c.socket.WriteJSON(socketError{Error: e.Error()}); err != nil {
-			c.logger.Errorw("unable to write error", "Error", err.Error())
-		}
-	}
-
 }
 
 func (c client) run() {
@@ -73,6 +69,7 @@ func (c client) run() {
 			if err != nil {
 				c.monoSync.errChan <- err
 			}
+			c.logger.Info("Transactions were saved.")
 		case err := <-c.monoSync.errChan:
 			c.logger.Error(err.Error())
 			c.sendErr <- err
@@ -96,7 +93,6 @@ func (c *client) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c.socket = socket
 
 	go c.write()
-	go c.writeErr()
 
 	c.monoSync.Transactions(time.Unix(1574158956, 0))
 }
