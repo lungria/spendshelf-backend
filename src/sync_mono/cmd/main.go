@@ -33,9 +33,9 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	p := sync_mono.NewPool(m)
+	c := sync_mono.NewClient(m)
 
-	http.Handle("/sync", p)
+	http.Handle("/sync", c)
 
 	log.Println("listening...")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
