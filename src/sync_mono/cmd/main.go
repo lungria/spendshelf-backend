@@ -33,7 +33,7 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	c := sync_mono.NewClient(m)
+	c := sync_mono.NewClient(m, logger.Sugar())
 
 	http.Handle("/sync", c)
 

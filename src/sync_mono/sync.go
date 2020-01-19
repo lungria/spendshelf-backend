@@ -32,7 +32,7 @@ func NewMonoSync(token string, txnRepo transactions.Repository, logger *zap.Suga
 	s := MonoSync{
 		monoClient:   shalmono.NewPersonal(token),
 		transactions: make(chan []shalmono.Transaction),
-		errChan:      make(chan error, 1),
+		errChan:      make(chan error),
 		txnRepo:      txnRepo,
 		logger:       logger,
 	}
