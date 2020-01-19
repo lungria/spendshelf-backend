@@ -2,7 +2,6 @@ package sync_mono
 
 import (
 	"context"
-	"log"
 	"sync"
 	"time"
 
@@ -53,8 +52,8 @@ func (s *MonoSync) Transactions(createdAtAccount time.Time) {
 	from := createdAtAccount
 	for from.Before(time.Now().UTC()) {
 		to := from.Add(time.Hour * 744)
-		log.Println("Start", from.String())
-		log.Println("End", to.String())
+		s.logger.Info("Getting transactions from monoAPI from ", from, " ,to ", to)
+
 		txns, err := s.monoClient.Transactions(ctx, s.accountUAH.ID, from, to)
 		if err != nil {
 			s.logger.Errorw("Unable to fetch transactions from mono bank", "Error", err.Error())
@@ -72,6 +71,7 @@ func (s *MonoSync) Transactions(createdAtAccount time.Time) {
 func getAccount(monoPersonal shalmono.Personal) (*shalmono.Account, error) {
 	ctx := context.Background()
 	defer ctx.Done()
+
 	user, err := monoPersonal.User(ctx)
 	if err != nil {
 		return nil, err

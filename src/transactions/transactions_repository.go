@@ -127,8 +127,6 @@ func (repo *TransactionRepository) InsertManyTransactions(txns []models.Transact
 		txnInterface[i] = txns[i]
 	}
 
-	repo.logger.Info(txnInterface)
-
 	_, err := repo.collection.InsertMany(context.Background(), txnInterface)
 	if err != nil {
 		errMsg := "unable to insert transaction"
