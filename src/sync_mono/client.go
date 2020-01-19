@@ -45,10 +45,8 @@ func (c client) run() {
 
 			c.send <- toInsert
 
-			c.monoSync.Lock()
 			err := c.monoSync.txnRepo.InsertManyTransactions(toInsert)
 			c.monoSync.errChan <- err
-			c.monoSync.Unlock()
 		}
 	}
 }

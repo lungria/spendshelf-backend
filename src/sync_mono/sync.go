@@ -90,8 +90,6 @@ func getAccount(monoPersonal shalmono.Personal) (*shalmono.Account, error) {
 }
 
 func (s *MonoSync) trimDuplicate(syncTxns []shalmono.Transaction) []models.Transaction {
-	s.RLock()
-	defer s.RUnlock()
 	unique := []models.Transaction{}
 
 	currentTxns, err := s.txnRepo.FindAll()
