@@ -2,7 +2,7 @@ package main
 
 import (
 	"log"
-	"time"
+	"net/http"
 
 	"github.com/lungria/spendshelf-backend/src/config"
 	"github.com/lungria/spendshelf-backend/src/db"
@@ -29,11 +29,17 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	m, err := sync_mono.NewSync("uS9e4JRPxCykO7yz53cFUOQsIQ1BwzX5Est0TizsCNQI", repo)
+	m, err := sync_mono.NewMonoSync("", repo, logger.Sugar())
 	if err != nil {
 		log.Fatalln(err)
 	}
-	tm := time.Unix(1574246567, 0).UTC()
-	m.Transactions(tm)
+	p := sync_mono.NewPool(m)
+
+	http.Handle("/sync", p)
+
+	log.Println("listening...")
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		log.Fatalln(err)
+	}
 
 }

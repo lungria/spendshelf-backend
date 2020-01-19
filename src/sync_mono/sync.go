@@ -28,7 +28,7 @@ type MonoSync struct {
 	errChan      chan error
 }
 
-func NewSync(token string, txnRepo transactions.Repository, logger *zap.SugaredLogger) (*MonoSync, error) {
+func NewMonoSync(token string, txnRepo transactions.Repository, logger *zap.SugaredLogger) (*MonoSync, error) {
 	s := MonoSync{
 		monoClient:   shalmono.NewPersonal(token),
 		transactions: make(chan []shalmono.Transaction),
@@ -42,8 +42,6 @@ func NewSync(token string, txnRepo transactions.Repository, logger *zap.SugaredL
 		return nil, err
 	}
 	s.accountUAH = accUAH
-
-	go s.run()
 
 	return &s, nil
 }
@@ -89,26 +87,6 @@ func getAccount(monoPersonal shalmono.Personal) (*shalmono.Account, error) {
 		}
 	}
 	return &account, nil
-}
-
-func (s *MonoSync) run() {
-	for {
-		select {
-		case err := <-s.errChan:
-			log.Println(err)
-			return
-		case txns := <-s.transactions:
-			toInsert := s.trimDuplicate(txns)
-			if len(toInsert) == 0 {
-				s.logger.Info("No transactions to insert into transactions collection")
-				continue
-			}
-			s.Lock()
-			err := s.txnRepo.InsertManyTransactions(toInsert)
-			s.Unlock()
-			s.errChan <- err
-		}
-	}
 }
 
 func (s *MonoSync) trimDuplicate(syncTxns []shalmono.Transaction) []models.Transaction {
