@@ -11,22 +11,22 @@ package sync_mono
 //)
 //
 //type pool struct {
-//	clients  map[*client]bool
-//	leave    chan *client
-//	join     chan *client
-//	monoSync *MonoSync
+//	clients  map[*SyncSocket]bool
+//	leave    chan *SyncSocket
+//	join     chan *SyncSocket
+//	MonoSync *MonoSync
 //}
 //
-//func NewPool(monoSync *MonoSync) *pool {
-//	clients := make(map[*client]bool)
-//	leave := make(chan *client)
-//	join := make(chan *client)
+//func NewPool(MonoSync *MonoSync) *pool {
+//	clients := make(map[*SyncSocket]bool)
+//	leave := make(chan *SyncSocket)
+//	join := make(chan *SyncSocket)
 //
 //	p := pool{
 //		clients:  clients,
 //		leave:    leave,
 //		join:     join,
-//		monoSync: monoSync,
+//		MonoSync: MonoSync,
 //	}
 //	go p.run()
 //	return &p
@@ -35,24 +35,24 @@ package sync_mono
 //func (p pool) run() {
 //	for {
 //		select {
-//		case client := <-p.leave:
-//			delete(p.clients, client)
-//		case client := <-p.join:
-//			p.clients[client] = true
-//		case txns := <-p.monoSync.transactions:
-//			toInsert := p.monoSync.trimDuplicate(txns)
+//		case SyncSocket := <-p.leave:
+//			delete(p.clients, SyncSocket)
+//		case SyncSocket := <-p.join:
+//			p.clients[SyncSocket] = true
+//		case txns := <-p.MonoSync.transactions:
+//			toInsert := p.MonoSync.trimDuplicate(txns)
 //			if len(toInsert) == 0 {
 //				continue
 //			}
 //
-//			for client := range p.clients {
-//				client.send <- toInsert
+//			for SyncSocket := range p.clients {
+//				SyncSocket.send <- toInsert
 //			}
 //
-//			p.monoSync.Lock()
-//			err := p.monoSync.txnRepo.InsertManyTransactions(toInsert)
-//			p.monoSync.errChan <- err
-//			p.monoSync.Unlock()
+//			p.MonoSync.Lock()
+//			err := p.MonoSync.txnRepo.InsertManyTransactions(toInsert)
+//			p.MonoSync.errChan <- err
+//			p.MonoSync.Unlock()
 //		}
 //	}
 //}
@@ -63,19 +63,19 @@ package sync_mono
 //		return true
 //	}
 //
-//	socket, err := upgrader.Upgrade(w, r, nil)
+//	Socket, err := upgrader.Upgrade(w, r, nil)
 //	if err != nil {
 //		log.Println("Socket serving failed", err)
 //		return
 //	}
-//	client := &client{
+//	SyncSocket := &SyncSocket{
 //		send:   make(chan []models.Transaction),
-//		socket: socket,
+//		Socket: Socket,
 //	}
 //
-//	p.join <- client
-//	defer func() { p.leave <- client }()
-//	go client.write()
+//	p.join <- SyncSocket
+//	defer func() { p.leave <- SyncSocket }()
+//	go SyncSocket.Write()
 //
-//	p.monoSync.Transactions(time.Unix(1574158956, 0))
+//	p.MonoSync.Transactions(time.Unix(1574158956, 0))
 //}

@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/lungria/spendshelf-backend/src/config"
+
 	"go.uber.org/zap"
 
 	"github.com/lungria/spendshelf-backend/src/webhooks"
@@ -17,7 +19,7 @@ import (
 	"github.com/lungria/spendshelf-backend/src/transactions"
 )
 
-type MonoSync struct {
+type monoSync struct {
 	sync.RWMutex
 	txnRepo      transactions.Repository
 	monoClient   *shalmono.Personal
@@ -27,9 +29,9 @@ type MonoSync struct {
 	errChan      chan error
 }
 
-func NewMonoSync(token string, txnRepo transactions.Repository, logger *zap.SugaredLogger) (*MonoSync, error) {
-	s := MonoSync{
-		monoClient:   shalmono.NewPersonal(token),
+func newMonoSync(cfg *config.EnvironmentConfiguration, logger *zap.SugaredLogger, txnRepo transactions.Repository) (*monoSync, error) {
+	s := monoSync{
+		monoClient:   shalmono.NewPersonal(cfg.MonoApiKey),
 		transactions: make(chan []shalmono.Transaction),
 		errChan:      make(chan error),
 		txnRepo:      txnRepo,
@@ -45,7 +47,7 @@ func NewMonoSync(token string, txnRepo transactions.Repository, logger *zap.Suga
 	return &s, nil
 }
 
-func (s *MonoSync) Transactions(createdAtAccount time.Time) {
+func (s *monoSync) Transactions(createdAtAccount time.Time) {
 	ctx := context.Background()
 	defer ctx.Done()
 
@@ -89,7 +91,7 @@ func getAccount(monoPersonal shalmono.Personal) (*shalmono.Account, error) {
 	return &account, nil
 }
 
-func (s *MonoSync) trimDuplicate(syncTxns []shalmono.Transaction) []models.Transaction {
+func (s *monoSync) trimDuplicate(syncTxns []shalmono.Transaction) []models.Transaction {
 	unique := []models.Transaction{}
 
 	currentTxns, err := s.txnRepo.FindAll()
@@ -113,7 +115,7 @@ func (s *MonoSync) trimDuplicate(syncTxns []shalmono.Transaction) []models.Trans
 	return unique
 }
 
-func (s *MonoSync) txnFromSyncTxn(syncTxn shalmono.Transaction) models.Transaction {
+func (s *monoSync) txnFromSyncTxn(syncTxn shalmono.Transaction) models.Transaction {
 	var txn models.Transaction
 
 	txn.ID = primitive.NewObjectID()
