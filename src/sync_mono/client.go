@@ -2,7 +2,6 @@ package sync_mono
 
 import (
 	"errors"
-	"log"
 	"net/http"
 	"time"
 
@@ -40,7 +39,9 @@ func (c *client) write() {
 	defer c.socket.Close()
 	for msg := range c.send {
 		if err := c.socket.WriteJSON(msg); err != nil {
-			log.Fatalln(err)
+			errMsg := "unable to write transactions"
+			c.logger.Errorw(errMsg, "Error", err.Error())
+			c.sendErr <- err
 		}
 	}
 }
@@ -49,7 +50,7 @@ func (c *client) writeErr() {
 	defer c.socket.Close()
 	for e := range c.sendErr {
 		if err := c.socket.WriteJSON(socketError{Error: e.Error()}); err != nil {
-			log.Println(err)
+			c.logger.Errorw("unable to write error", "Error", err.Error())
 		}
 	}
 
@@ -87,7 +88,9 @@ func (c *client) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	socket, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println("Socket serving failed", err)
+		errMsg := "Socket serving failed"
+		c.logger.Errorw(errMsg, "Error", err.Error())
+		c.sendErr <- err
 		return
 	}
 	c.socket = socket
