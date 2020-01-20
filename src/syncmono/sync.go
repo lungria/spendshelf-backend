@@ -1,8 +1,7 @@
-package sync_mono
+package syncmono
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	"github.com/lungria/spendshelf-backend/src/config"
@@ -19,20 +18,23 @@ import (
 	"github.com/lungria/spendshelf-backend/src/transactions"
 )
 
+type MonoSynchronizer interface {
+	Transactions(createdAtAccount time.Time)
+}
+
 type monoSync struct {
-	sync.RWMutex
 	txnRepo      transactions.Repository
 	monoClient   *shalmono.Personal
 	accountUAH   *shalmono.Account
 	logger       *zap.SugaredLogger
-	transactions chan []shalmono.Transaction
+	transactions chan []models.Transaction
 	errChan      chan error
 }
 
 func newMonoSync(cfg *config.EnvironmentConfiguration, logger *zap.SugaredLogger, txnRepo transactions.Repository) (*monoSync, error) {
 	s := monoSync{
 		monoClient:   shalmono.NewPersonal(cfg.MonoApiKey),
-		transactions: make(chan []shalmono.Transaction),
+		transactions: make(chan []models.Transaction),
 		errChan:      make(chan error),
 		txnRepo:      txnRepo,
 		logger:       logger,
@@ -61,8 +63,10 @@ func (s *monoSync) Transactions(createdAtAccount time.Time) {
 			s.logger.Errorw("Unable to fetch transactions from mono bank", "Error", err.Error())
 			s.errChan <- err
 		}
+
 		go func() {
-			s.transactions <- txns
+			trimmedTxns := s.trimDuplicate(txns)
+			s.transactions <- trimmedTxns
 		}()
 		from = to
 

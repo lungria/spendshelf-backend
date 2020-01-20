@@ -1,4 +1,4 @@
-package sync_mono
+package syncmono
 
 import (
 	"errors"
@@ -18,41 +18,42 @@ type socketError struct {
 }
 
 type SyncSocket struct {
+	MonoSynchronizer
 	send     chan []models.Transaction
 	SendErr  chan error
-	Socket   *websocket.Conn
-	MonoSync *monoSync
+	Conn     *websocket.Conn
+	monoSync *monoSync
 	logger   *zap.SugaredLogger
 }
 
-func NewClient(logger *zap.SugaredLogger, cfg *config.EnvironmentConfiguration, txnRepo transactions.Repository) (*SyncSocket, error) {
+func NewSyncSocket(logger *zap.SugaredLogger, cfg *config.EnvironmentConfiguration, txnRepo transactions.Repository) (*SyncSocket, error) {
 	m, err := newMonoSync(cfg, logger, txnRepo)
 	if err != nil {
 		return nil, err
 	}
 
-	client := SyncSocket{
+	syncSocket := SyncSocket{
 		send:     make(chan []models.Transaction),
 		SendErr:  make(chan error),
 		logger:   logger,
-		MonoSync: m,
+		monoSync: m,
 	}
-	go client.run()
+	go syncSocket.run()
 
-	return &client, nil
+	return &syncSocket, nil
 }
 
 func (c *SyncSocket) Write() {
 	for {
 		select {
 		case txn := <-c.send:
-			if err := c.Socket.WriteJSON(txn); err != nil {
+			if err := c.Conn.WriteJSON(txn); err != nil {
 				errMsg := "unable to Write transactions"
 				c.logger.Errorw(errMsg, "Error", err.Error())
 				c.SendErr <- err
 			}
-		case errc := <-c.SendErr:
-			if err := c.Socket.WriteJSON(socketError{Error: errc.Error()}); err != nil {
+		case sockErr := <-c.SendErr:
+			if err := c.Conn.WriteJSON(socketError{Error: sockErr.Error()}); err != nil {
 				c.logger.Errorw("unable to Write error", "Error", err.Error())
 			}
 		}
@@ -62,22 +63,21 @@ func (c *SyncSocket) Write() {
 func (c SyncSocket) run() {
 	for {
 		select {
-		case txns := <-c.MonoSync.transactions:
-			toInsert := c.MonoSync.trimDuplicate(txns)
-			if len(toInsert) == 0 {
+		case txns := <-c.monoSync.transactions:
+			if len(txns) == 0 {
 				c.logger.Info("no transactions to save for this period")
 				c.SendErr <- errors.New("no transactions to save for this period")
 				continue
 			}
 
-			c.send <- toInsert
+			c.send <- txns
 
-			err := c.MonoSync.txnRepo.InsertManyTransactions(toInsert)
+			err := c.monoSync.txnRepo.InsertManyTransactions(txns)
 			if err != nil {
-				c.MonoSync.errChan <- err
+				c.SendErr <- err
 			}
 			c.logger.Info("Transactions were saved.")
-		case err := <-c.MonoSync.errChan:
+		case err := <-c.monoSync.errChan:
 			c.logger.Error(err.Error())
 			c.SendErr <- err
 		}

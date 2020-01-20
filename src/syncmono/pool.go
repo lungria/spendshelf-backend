@@ -1,4 +1,4 @@
-package sync_mono
+package syncmono
 
 //
 //import (
@@ -14,10 +14,10 @@ package sync_mono
 //	clients  map[*SyncSocket]bool
 //	leave    chan *SyncSocket
 //	join     chan *SyncSocket
-//	MonoSync *MonoSync
+//	monoSync *monoSync
 //}
 //
-//func NewPool(MonoSync *MonoSync) *pool {
+//func NewPool(monoSync *monoSync) *pool {
 //	clients := make(map[*SyncSocket]bool)
 //	leave := make(chan *SyncSocket)
 //	join := make(chan *SyncSocket)
@@ -26,7 +26,7 @@ package sync_mono
 //		clients:  clients,
 //		leave:    leave,
 //		join:     join,
-//		MonoSync: MonoSync,
+//		monoSync: monoSync,
 //	}
 //	go p.run()
 //	return &p
@@ -39,8 +39,8 @@ package sync_mono
 //			delete(p.clients, SyncSocket)
 //		case SyncSocket := <-p.join:
 //			p.clients[SyncSocket] = true
-//		case txns := <-p.MonoSync.transactions:
-//			toInsert := p.MonoSync.trimDuplicate(txns)
+//		case txns := <-p.monoSync.transactions:
+//			toInsert := p.monoSync.trimDuplicate(txns)
 //			if len(toInsert) == 0 {
 //				continue
 //			}
@@ -49,10 +49,10 @@ package sync_mono
 //				SyncSocket.send <- toInsert
 //			}
 //
-//			p.MonoSync.Lock()
-//			err := p.MonoSync.txnRepo.InsertManyTransactions(toInsert)
-//			p.MonoSync.errChan <- err
-//			p.MonoSync.Unlock()
+//			p.monoSync.Lock()
+//			err := p.monoSync.txnRepo.InsertManyTransactions(toInsert)
+//			p.monoSync.errChan <- err
+//			p.monoSync.Unlock()
 //		}
 //	}
 //}
@@ -63,19 +63,19 @@ package sync_mono
 //		return true
 //	}
 //
-//	Socket, err := upgrader.Upgrade(w, r, nil)
+//	Conn, err := upgrader.Upgrade(w, r, nil)
 //	if err != nil {
-//		log.Println("Socket serving failed", err)
+//		log.Println("Conn serving failed", err)
 //		return
 //	}
 //	SyncSocket := &SyncSocket{
 //		send:   make(chan []models.Transaction),
-//		Socket: Socket,
+//		Conn: Conn,
 //	}
 //
 //	p.join <- SyncSocket
 //	defer func() { p.leave <- SyncSocket }()
 //	go SyncSocket.Write()
 //
-//	p.MonoSync.Transactions(time.Unix(1574158956, 0))
+//	p.monoSync.Transactions(time.Unix(1574158956, 0))
 //}

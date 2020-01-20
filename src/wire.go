@@ -5,10 +5,10 @@ package main
 import (
 	"time"
 
-	"github.com/lungria/spendshelf-backend/src/sync_mono"
 	"github.com/lungria/spendshelf-backend/src/transactions"
 
 	"github.com/gin-contrib/cors"
+	"github.com/lungria/spendshelf-backend/src/syncmono"
 	"github.com/lungria/spendshelf-backend/src/webhooks"
 
 	gzap "github.com/gin-contrib/zap"
@@ -73,7 +73,7 @@ func InitializeServer() (*config.Dependencies, error) {
 		handlers.NewTransactionsHandler,
 		webhooks.NewWebHookRepository,
 		handlers.NewWebHookHandler,
-		sync_mono.NewClient,
+		syncmono.NewSyncSocket,
 		handlers.NewSyncMonoHandler,
 		zapProvider,
 		sugarProvider,

@@ -14,7 +14,7 @@ import (
 	"github.com/lungria/spendshelf-backend/src/categories"
 	"github.com/lungria/spendshelf-backend/src/config"
 	"github.com/lungria/spendshelf-backend/src/db"
-	"github.com/lungria/spendshelf-backend/src/sync_mono"
+	"github.com/lungria/spendshelf-backend/src/syncmono"
 	"github.com/lungria/spendshelf-backend/src/transactions"
 	"github.com/lungria/spendshelf-backend/src/webhooks"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -62,11 +62,11 @@ func InitializeServer() (*config.Dependencies, error) {
 	if err != nil {
 		return nil, err
 	}
-	client, err := sync_mono.NewClient(sugaredLogger, environmentConfiguration, transactionRepository)
+	syncSocket, err := syncmono.NewSyncSocket(sugaredLogger, environmentConfiguration, transactionRepository)
 	if err != nil {
 		return nil, err
 	}
-	syncMonoHandler := handlers.NewSyncMonoHandler(sugaredLogger, client)
+	syncMonoHandler := handlers.NewSyncMonoHandler(sugaredLogger, syncSocket)
 	engine := routerProvider(logger, webHookHandler, categoriesHandler, transactionsHandler, syncMonoHandler)
 	server, err := api.NewAPI(environmentConfiguration, engine)
 	if err != nil {
