@@ -51,5 +51,5 @@ func (handler *SyncMonoHandler) HandleSocket(c *gin.Context) {
 
 	go handler.sync.Write()
 
-	handler.sync.Transactions(time.Unix(fromInt, 0))
+	handler.sync.MonoSync.Transactions(time.Unix(fromInt, 0))
 }

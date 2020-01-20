@@ -18,10 +18,6 @@ import (
 	"github.com/lungria/spendshelf-backend/src/transactions"
 )
 
-type MonoSynchronizer interface {
-	Transactions(createdAtAccount time.Time)
-}
-
 type monoSync struct {
 	txnRepo      transactions.Repository
 	monoClient   *shalmono.Personal

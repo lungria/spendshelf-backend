@@ -18,11 +18,10 @@ type socketError struct {
 }
 
 type SyncSocket struct {
-	MonoSynchronizer
 	send     chan []models.Transaction
 	SendErr  chan error
 	Conn     *websocket.Conn
-	monoSync *monoSync
+	MonoSync *monoSync
 	logger   *zap.SugaredLogger
 }
 
@@ -36,7 +35,7 @@ func NewSyncSocket(logger *zap.SugaredLogger, cfg *config.EnvironmentConfigurati
 		send:     make(chan []models.Transaction),
 		SendErr:  make(chan error),
 		logger:   logger,
-		monoSync: m,
+		MonoSync: m,
 	}
 	go syncSocket.run()
 
@@ -63,7 +62,7 @@ func (c *SyncSocket) Write() {
 func (c SyncSocket) run() {
 	for {
 		select {
-		case txns := <-c.monoSync.transactions:
+		case txns := <-c.MonoSync.transactions:
 			if len(txns) == 0 {
 				c.logger.Info("no transactions to save for this period")
 				c.SendErr <- errors.New("no transactions to save for this period")
@@ -72,12 +71,12 @@ func (c SyncSocket) run() {
 
 			c.send <- txns
 
-			err := c.monoSync.txnRepo.InsertManyTransactions(txns)
+			err := c.MonoSync.txnRepo.InsertManyTransactions(txns)
 			if err != nil {
 				c.SendErr <- err
 			}
 			c.logger.Info("Transactions were saved.")
-		case err := <-c.monoSync.errChan:
+		case err := <-c.MonoSync.errChan:
 			c.logger.Error(err.Error())
 			c.SendErr <- err
 		}
