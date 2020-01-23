@@ -1,12 +1,12 @@
 package handlers
 
-type ErrorResponse struct {
+type errorResponse struct {
 	Message string `json:"message"`
 	Error   string `json:"error"`
 }
 
-func ResponseFromError(err error) ErrorResponse {
-	return ErrorResponse{
+func ResponseFromError(err error) errorResponse {
+	return errorResponse{
 		Message: err.Error(),
 		Error:   err.Error(),
 	}
