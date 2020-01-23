@@ -46,7 +46,7 @@ func (s *SequentialReportGenerator) GetReport(ctx context.Context, start time.Ti
 		},
 		bson.M{
 			"$match": bson.M{"category._id": bson.D{
-				{"$exists", "true"},
+				{"$exists", true},
 				{"$ne", primitive.Null{}},
 			}},
 		},
@@ -64,6 +64,9 @@ func (s *SequentialReportGenerator) GetReport(ctx context.Context, start time.Ti
 	err = result.All(ctx, &report)
 	if err != nil {
 		return nil, err
+	}
+	if report == nil {
+		return []Element{}, nil
 	}
 	return report, nil
 }
