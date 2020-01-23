@@ -32,12 +32,12 @@ func (handler *ReportsHandler) HandleGet(c *gin.Context) {
 	var query GetQuery
 	err := c.BindQuery(&query)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, ResponseFromError(err))
+		c.JSON(http.StatusBadRequest, ResponseFromError(err, "Unable to parse query"))
 		return
 	}
 	reportResponse, err := handler.generator.GetReport(c, query.Start, query.End)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, ResponseFromError(err))
+		c.JSON(http.StatusBadRequest, ResponseFromError(err, "Unable to generate report"))
 		return
 	}
 	c.JSON(http.StatusOK, GetResponse{reportResponse})
