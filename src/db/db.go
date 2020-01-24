@@ -14,7 +14,8 @@ func NewDatabase(dbname, URI string) (*mongo.Database, error) {
 	if err != nil {
 		return nil, err
 	}
-	ctx, _ := context.WithTimeout(context.Background(), time.Millisecond*4999)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*4999)
+	defer cancel()
 	if err := client.Connect(ctx); err != nil {
 		return nil, err
 	}
