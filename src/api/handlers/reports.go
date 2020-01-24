@@ -37,7 +37,7 @@ func (handler *ReportsHandler) HandleGet(c *gin.Context) {
 		return
 	}
 	if query.To.Before(query.From) || query.To.Equal(query.From) {
-		c.JSON(http.StatusBadRequest, ResponseFromError(errors.New("wrong_dae_limits"), "To must be after start"))
+		c.JSON(http.StatusBadRequest, ResponseFromError(errors.New("wrong_date_limits"), "To must be after From"))
 	}
 	reportResponse, err := handler.generator.GetReport(c, query.From, query.To)
 	if err != nil {
