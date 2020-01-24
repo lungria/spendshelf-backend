@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -15,8 +16,8 @@ type ReportsHandler struct {
 }
 
 type GetQuery struct {
-	Start time.Time `form:"start" time_format:"unix"`
-	End   time.Time `form:"end" time_format:"unix"`
+	From time.Time `form:"from" time_format:"unix"`
+	To   time.Time `form:"to" time_format:"unix"`
 }
 
 type GetResponse struct {
@@ -35,7 +36,10 @@ func (handler *ReportsHandler) HandleGet(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, ResponseFromError(err, "Unable to parse query"))
 		return
 	}
-	reportResponse, err := handler.generator.GetReport(c, query.Start, query.End)
+	if query.To.Before(query.From) || query.To.Equal(query.From) {
+		c.JSON(http.StatusBadRequest, ResponseFromError(errors.New("wrong_dae_limits"), "To must be after start"))
+	}
+	reportResponse, err := handler.generator.GetReport(c, query.From, query.To)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, ResponseFromError(err, "Unable to generate report"))
 		return

@@ -22,7 +22,7 @@ type Element struct {
 }
 
 type Generator interface {
-	GetReport(ctx context.Context, start time.Time, end time.Time) ([]Element, error)
+	GetReport(ctx context.Context, from time.Time, to time.Time) ([]Element, error)
 }
 
 type SequentialReportGenerator struct {
@@ -35,13 +35,13 @@ func NewSequentialReportGenerator(db *mongo.Database, categories categories.Repo
 	return &SequentialReportGenerator{transactions: db.Collection(transactions.TransactionsCollection), categories: categories, logger: logger}
 }
 
-func (s *SequentialReportGenerator) GetReport(ctx context.Context, start time.Time, end time.Time) ([]Element, error) {
-	s.logger.Infow("Generating report", "start", start.String(), "end", end.String())
+func (s *SequentialReportGenerator) GetReport(ctx context.Context, from time.Time, to time.Time) ([]Element, error) {
+	s.logger.Infow("Generating report", "from", from.String(), "to", to.String())
 	pipeline := []bson.M{
 		bson.M{
 			"$match": bson.M{"time": bson.D{
-				{"$gte", start},
-				{"$lt", end},
+				{"$gte", from},
+				{"$lt", to},
 			}},
 		},
 		bson.M{
