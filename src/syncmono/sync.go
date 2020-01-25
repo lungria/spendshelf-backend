@@ -13,15 +13,15 @@ import (
 
 	"github.com/lungria/spendshelf-backend/src/models"
 
-	shalmono "github.com/shal/mono"
+	"github.com/shal/mono"
 
 	"github.com/lungria/spendshelf-backend/src/transactions"
 )
 
 type monoSync struct {
 	txnRepo      transactions.Repository
-	monoClient   *shalmono.Personal
-	accountUAH   *shalmono.Account
+	monoClient   *mono.Personal
+	accountUAH   *mono.Account
 	logger       *zap.SugaredLogger
 	transactions chan []models.Transaction
 	errChan      chan error
@@ -29,7 +29,7 @@ type monoSync struct {
 
 func newMonoSync(cfg *config.EnvironmentConfiguration, logger *zap.SugaredLogger, txnRepo transactions.Repository) (*monoSync, error) {
 	s := monoSync{
-		monoClient:   shalmono.NewPersonal(cfg.MonoApiKey),
+		monoClient:   mono.NewPersonal(cfg.MonoApiKey),
 		transactions: make(chan []models.Transaction),
 		errChan:      make(chan error),
 		txnRepo:      txnRepo,
@@ -70,7 +70,7 @@ func (s *monoSync) Transactions(createdAtAccount time.Time) {
 	}
 }
 
-func getAccount(monoPersonal shalmono.Personal) (*shalmono.Account, error) {
+func getAccount(monoPersonal mono.Personal) (*mono.Account, error) {
 	ctx := context.Background()
 	defer ctx.Done()
 
@@ -79,10 +79,10 @@ func getAccount(monoPersonal shalmono.Personal) (*shalmono.Account, error) {
 		return nil, err
 	}
 
-	var account shalmono.Account
+	var account mono.Account
 
 	for _, acc := range user.Accounts {
-		ccy, _ := shalmono.CurrencyFromISO4217(acc.CurrencyCode)
+		ccy, _ := mono.CurrencyFromISO4217(acc.CurrencyCode)
 		if ccy.Code == "UAH" {
 			account = acc
 			break
@@ -91,7 +91,7 @@ func getAccount(monoPersonal shalmono.Personal) (*shalmono.Account, error) {
 	return &account, nil
 }
 
-func (s *monoSync) trimDuplicate(syncTxns []shalmono.Transaction) []models.Transaction {
+func (s *monoSync) trimDuplicate(syncTxns []mono.Transaction) []models.Transaction {
 	unique := []models.Transaction{}
 
 	currentTxns, err := s.txnRepo.FindAll()
@@ -115,7 +115,7 @@ func (s *monoSync) trimDuplicate(syncTxns []shalmono.Transaction) []models.Trans
 	return unique
 }
 
-func (s *monoSync) txnFromSyncTxn(syncTxn shalmono.Transaction) models.Transaction {
+func (s *monoSync) txnFromSyncTxn(syncTxn mono.Transaction) models.Transaction {
 	var txn models.Transaction
 
 	txn.ID = primitive.NewObjectID()
