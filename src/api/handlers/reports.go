@@ -15,12 +15,12 @@ type ReportsHandler struct {
 	logger    *zap.SugaredLogger
 }
 
-type GetQuery struct {
+type getQuery struct {
 	From time.Time `form:"from" time_format:"unix"`
 	To   time.Time `form:"to" time_format:"unix"`
 }
 
-type GetResponse struct {
+type getResponse struct {
 	Report []report.Element `json:"report"`
 }
 
@@ -30,19 +30,19 @@ func NewReportsHandler(generator report.Generator, logger *zap.SugaredLogger) *R
 
 // HandleGet return all existing categories
 func (handler *ReportsHandler) HandleGet(c *gin.Context) {
-	var query GetQuery
+	var query getQuery
 	err := c.BindQuery(&query)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, ResponseFromError(err, "Unable to parse query"))
+		c.JSON(http.StatusBadRequest, responseFromError(err, "Unable to parse query"))
 		return
 	}
 	if query.To.Before(query.From) || query.To.Equal(query.From) {
-		c.JSON(http.StatusBadRequest, ResponseFromError(errors.New("wrong_date_limits"), "To must be after From"))
+		c.JSON(http.StatusBadRequest, responseFromError(errors.New("wrong_date_limits"), "To must be after From"))
 	}
 	reportResponse, err := handler.generator.GetReport(c, query.From, query.To)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, ResponseFromError(err, "Unable to generate report"))
+		c.JSON(http.StatusBadRequest, responseFromError(err, "Unable to generate report"))
 		return
 	}
-	c.JSON(http.StatusOK, GetResponse{reportResponse})
+	c.JSON(http.StatusOK, getResponse{reportResponse})
 }

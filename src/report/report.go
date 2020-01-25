@@ -21,10 +21,12 @@ type Element struct {
 	TotalAmount int                `json:"totalAmount" bson:"totalAmount"`
 }
 
+// Generator allows to create financial report for specified period
 type Generator interface {
 	GetReport(ctx context.Context, from time.Time, to time.Time) ([]Element, error)
 }
 
+// SequentialReportGenerator is the default Generator implementation
 type SequentialReportGenerator struct {
 	transactions *mongo.Collection
 	categories   categories.Repository
