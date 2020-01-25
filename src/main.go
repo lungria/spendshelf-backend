@@ -21,7 +21,7 @@ func main() {
 	go func() {
 		<-sigChan
 		services.Logger.Info("Shutting down")
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, cancel := context.WithTimeout(services.Context, 5*time.Second)
 		defer cancel()
 
 		services.Server.SetKeepAlivesEnabled(false)

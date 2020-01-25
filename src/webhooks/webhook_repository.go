@@ -26,10 +26,11 @@ type Repository interface {
 type WebHookRepository struct {
 	collection *mongo.Collection
 	logger     *zap.SugaredLogger
+	context    context.Context
 }
 
 // NewWebHookRepository create a new repository
-func NewWebHookRepository(db *mongo.Database, logger *zap.SugaredLogger) (*WebHookRepository, error) {
+func NewWebHookRepository(ctx context.Context, db *mongo.Database, logger *zap.SugaredLogger) (*WebHookRepository, error) {
 	if db == nil {
 		return nil, errors.New("DB must not be nil")
 	}
@@ -39,12 +40,16 @@ func NewWebHookRepository(db *mongo.Database, logger *zap.SugaredLogger) (*WebHo
 	return &WebHookRepository{
 		collection: db.Collection(transactionsCollection),
 		logger:     logger,
+		context:    ctx,
 	}, nil
 }
 
 // InsertOneHook insert one Transaction to MongoDB
 func (repo *WebHookRepository) InsertOneHook(webhook *models.WebHook) error {
-	_, err := repo.collection.InsertOne(context.Background(), repo.txnFromHook(webhook))
+	ctx, cancel := context.WithCancel(repo.context)
+	defer cancel()
+
+	_, err := repo.collection.InsertOne(ctx, repo.txnFromHook(webhook))
 	if err != nil {
 		repo.logger.Errorw("InsertOneHook failed", "Database", repo.collection.Database().Name(), "Collection", repo.collection.Name(), "webHook", webhook, "Error", err)
 		return errors.New("save webHook to database failed")

@@ -1,6 +1,7 @@
 package syncmono
 
 import (
+	"context"
 	"errors"
 
 	"github.com/lungria/spendshelf-backend/src/config"
@@ -23,9 +24,10 @@ type SyncSocket struct {
 	Conn     *websocket.Conn
 	MonoSync *monoSync
 	logger   *zap.SugaredLogger
+	context  context.Context
 }
 
-func NewSyncSocket(logger *zap.SugaredLogger, cfg *config.EnvironmentConfiguration, txnRepo transactions.Repository) (*SyncSocket, error) {
+func NewSyncSocket(ctx context.Context, logger *zap.SugaredLogger, cfg *config.EnvironmentConfiguration, txnRepo transactions.Repository) (*SyncSocket, error) {
 	m, err := newMonoSync(cfg, logger, txnRepo)
 	if err != nil {
 		return nil, err
@@ -36,6 +38,7 @@ func NewSyncSocket(logger *zap.SugaredLogger, cfg *config.EnvironmentConfigurati
 		SendErr:  make(chan error),
 		logger:   logger,
 		MonoSync: m,
+		context:  ctx,
 	}
 	go syncSocket.run()
 
@@ -79,6 +82,8 @@ func (c SyncSocket) run() {
 		case err := <-c.MonoSync.errChan:
 			c.logger.Error(err.Error())
 			c.SendErr <- err
+		case <-c.context.Done():
+			return
 		}
 	}
 }

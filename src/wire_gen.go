@@ -6,6 +6,7 @@
 package main
 
 import (
+	"context"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
@@ -34,11 +35,12 @@ func InitializeServer() (*config.Dependencies, error) {
 	if err != nil {
 		return nil, err
 	}
-	database, err := mongoDbProvider(environmentConfiguration)
+	context := ctxProvider()
+	database, err := mongoDbProvider(context, environmentConfiguration)
 	if err != nil {
 		return nil, err
 	}
-	webHookRepository, err := webhooks.NewWebHookRepository(database, sugaredLogger)
+	webHookRepository, err := webhooks.NewWebHookRepository(context, database, sugaredLogger)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +48,7 @@ func InitializeServer() (*config.Dependencies, error) {
 	if err != nil {
 		return nil, err
 	}
-	cachedRepository, err := categories.NewCachedRepository(database)
+	cachedRepository, err := categories.NewCachedRepository(context, database)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +56,7 @@ func InitializeServer() (*config.Dependencies, error) {
 	if err != nil {
 		return nil, err
 	}
-	transactionRepository, err := transactions.NewTransactionRepository(database, sugaredLogger)
+	transactionRepository, err := transactions.NewTransactionRepository(context, database, sugaredLogger)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +64,7 @@ func InitializeServer() (*config.Dependencies, error) {
 	if err != nil {
 		return nil, err
 	}
-	syncSocket, err := syncmono.NewSyncSocket(sugaredLogger, environmentConfiguration, transactionRepository)
+	syncSocket, err := syncmono.NewSyncSocket(context, sugaredLogger, environmentConfiguration, transactionRepository)
 	if err != nil {
 		return nil, err
 	}
@@ -73,16 +75,17 @@ func InitializeServer() (*config.Dependencies, error) {
 		return nil, err
 	}
 	dependencies := &config.Dependencies{
-		Logger: sugaredLogger,
-		Server: server,
+		Logger:  sugaredLogger,
+		Server:  server,
+		Context: context,
 	}
 	return dependencies, nil
 }
 
 // wire.go:
 
-func mongoDbProvider(cfg *config.EnvironmentConfiguration) (*mongo.Database, error) {
-	return db.NewDatabase(cfg.DBName, cfg.MongoURI)
+func mongoDbProvider(ctx context.Context, cfg *config.EnvironmentConfiguration) (*mongo.Database, error) {
+	return db.NewDatabase(ctx, cfg.DBName, cfg.MongoURI)
 }
 
 func sugarProvider(logger *zap.Logger) *zap.SugaredLogger {
@@ -91,6 +94,10 @@ func sugarProvider(logger *zap.Logger) *zap.SugaredLogger {
 
 func zapProvider() (*zap.Logger, error) {
 	return zap.NewProduction()
+}
+
+func ctxProvider() context.Context {
+	return context.Background()
 }
 
 func defaultHeaders() gin.HandlerFunc {

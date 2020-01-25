@@ -3,6 +3,7 @@
 package main
 
 import (
+	"context"
 	"time"
 
 	"github.com/lungria/spendshelf-backend/src/transactions"
@@ -29,8 +30,8 @@ import (
 	"github.com/google/wire"
 )
 
-func mongoDbProvider(cfg *config.EnvironmentConfiguration) (*mongo.Database, error) {
-	return db.NewDatabase(cfg.DBName, cfg.MongoURI)
+func mongoDbProvider(ctx context.Context, cfg *config.EnvironmentConfiguration) (*mongo.Database, error) {
+	return db.NewDatabase(ctx, cfg.DBName, cfg.MongoURI)
 }
 
 func sugarProvider(logger *zap.Logger) *zap.SugaredLogger {
@@ -39,6 +40,10 @@ func sugarProvider(logger *zap.Logger) *zap.SugaredLogger {
 
 func zapProvider() (*zap.Logger, error) {
 	return zap.NewProduction()
+}
+
+func ctxProvider() context.Context {
+	return context.Background()
 }
 
 func defaultHeaders() gin.HandlerFunc {
@@ -78,11 +83,12 @@ func InitializeServer() (*config.Dependencies, error) {
 		zapProvider,
 		sugarProvider,
 		routerProvider,
+		ctxProvider,
 		api.NewAPI,
 		wire.Bind(new(transactions.Repository), new(*transactions.TransactionRepository)),
 		wire.Bind(new(webhooks.Repository), new(*webhooks.WebHookRepository)),
 		wire.Bind(new(categories.Repository), new(*categories.CachedRepository)),
-		wire.Struct(new(config.Dependencies), "Logger", "Server"),
+		wire.Struct(new(config.Dependencies), "Logger", "Server", "Context"),
 	)
 	return &config.Dependencies{}, nil
 }

@@ -33,10 +33,11 @@ type Repository interface {
 type TransactionRepository struct {
 	logger     *zap.SugaredLogger
 	collection *mongo.Collection
+	context    context.Context
 }
 
 // NewTransactionRepository creates a new instance of TransactionRepository
-func NewTransactionRepository(db *mongo.Database, logger *zap.SugaredLogger) (*TransactionRepository, error) {
+func NewTransactionRepository(ctx context.Context, db *mongo.Database, logger *zap.SugaredLogger) (*TransactionRepository, error) {
 	if db == nil {
 		return nil, errors.New("database must not be nil")
 	}
@@ -47,13 +48,15 @@ func NewTransactionRepository(db *mongo.Database, logger *zap.SugaredLogger) (*T
 	return &TransactionRepository{
 		logger:     logger,
 		collection: db.Collection(transactionsCollection),
+		context:    ctx,
 	}, nil
 }
 
 // FindAllUncategorized returns all uncategorized transactions
 func (repo *TransactionRepository) FindAllUncategorized() ([]models.Transaction, error) {
 	var transactions []models.Transaction
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(repo.context)
+	defer cancel()
 
 	optProjections := options.Find().SetProjection(bson.M{"_id": 1, "time": 1, "description": 1, "category": 1, "amount": 1, "balance": 1, "bank": 1})
 	filter := bson.M{"$or": bson.A{bson.M{"category": bson.M{"$exists": false}}, bson.M{"category": nil}}}
@@ -71,7 +74,10 @@ func (repo *TransactionRepository) FindAllUncategorized() ([]models.Transaction,
 // FindAll returns all transactions
 func (repo *TransactionRepository) FindAll() ([]models.Transaction, error) {
 	var transactions []models.Transaction
-	ctx := context.Background()
+
+	ctx, cancel := context.WithCancel(repo.context)
+	defer cancel()
+
 	cur, err := repo.collection.Find(ctx, bson.M{})
 	if err != nil {
 		errMsg := "unable to received transactions with all categories"
@@ -85,7 +91,10 @@ func (repo *TransactionRepository) FindAll() ([]models.Transaction, error) {
 // FindAllByCategoryID returns all transactions which relate with specify category
 func (repo *TransactionRepository) FindAllByCategoryID(categoryID primitive.ObjectID) ([]models.Transaction, error) {
 	var transactions []models.Transaction
-	ctx := context.Background()
+
+	ctx, cancel := context.WithCancel(repo.context)
+	defer cancel()
+
 	cur, err := repo.collection.Find(ctx, bson.M{"category._id": categoryID})
 	if err != nil {
 		errMsg := "unable to received transactions with category"
@@ -99,7 +108,10 @@ func (repo *TransactionRepository) FindAllByCategoryID(categoryID primitive.Obje
 // FindAllCategorized returns all categorized transactions
 func (repo *TransactionRepository) FindAllCategorized() ([]models.Transaction, error) {
 	var transactions []models.Transaction
-	ctx := context.Background()
+
+	ctx, cancel := context.WithCancel(repo.context)
+	defer cancel()
+
 	cur, err := repo.collection.Find(ctx, bson.M{"$and": bson.A{bson.M{"category": bson.M{"$exists": true}}, bson.M{"category": bson.M{"$ne": nil}}}})
 	if err != nil {
 		errMsg := "unable to received transactions with category"
@@ -112,7 +124,10 @@ func (repo *TransactionRepository) FindAllCategorized() ([]models.Transaction, e
 
 // UpdateCategory changes the category for appropriate transaction
 func (repo *TransactionRepository) UpdateCategory(transactionID primitive.ObjectID, category models.Category) (int64, error) {
-	txn, err := repo.collection.UpdateOne(context.Background(), bson.M{"_id": transactionID}, bson.M{"$set": bson.M{"category": category}})
+	ctx, cancel := context.WithCancel(repo.context)
+	defer cancel()
+
+	txn, err := repo.collection.UpdateOne(ctx, bson.M{"_id": transactionID}, bson.M{"$set": bson.M{"category": category}})
 	if err != nil {
 		errMsg := "unable to update transaction"
 		repo.logger.Errorw(errMsg, "TransactionID", transactionID, "Category", category, "Database", repo.collection.Database().Name(), "Collection", repo.collection.Name(), "Error", err)
@@ -122,12 +137,15 @@ func (repo *TransactionRepository) UpdateCategory(transactionID primitive.Object
 }
 
 func (repo *TransactionRepository) InsertManyTransactions(txns []models.Transaction) error {
+	ctx, cancel := context.WithCancel(repo.context)
+	defer cancel()
+
 	txnInterface := make([]interface{}, len(txns))
 	for i := 0; i < len(txns); i++ {
 		txnInterface[i] = txns[i]
 	}
 
-	_, err := repo.collection.InsertMany(context.Background(), txnInterface)
+	_, err := repo.collection.InsertMany(ctx, txnInterface)
 	if err != nil {
 		errMsg := "unable to insert transaction"
 		repo.logger.Errorw(errMsg, "Database", repo.collection.Database().Name(), "Collection", repo.collection.Name(), "Error", err)

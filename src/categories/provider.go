@@ -23,7 +23,7 @@ type inMemoryProvider struct {
 	mutex       *sync.RWMutex
 }
 
-func newProvider(context context.Context, seed []models.Category, updates <-chan models.Category) (*inMemoryProvider, error) {
+func newProvider(ctx context.Context, seed []models.Category, updates <-chan models.Category) (*inMemoryProvider, error) {
 	if seed == nil {
 		return nil, errors.New("seed map must not be nil")
 	}
@@ -38,7 +38,7 @@ func newProvider(context context.Context, seed []models.Category, updates <-chan
 	provider := &inMemoryProvider{
 		categories:  categories,
 		updatesChan: updates,
-		context:     context,
+		context:     ctx,
 		mutex:       &sync.RWMutex{},
 	}
 	go provider.runSync()
