@@ -61,7 +61,11 @@ func (s *monoSync) Transactions(createdAtAccount time.Time) {
 		}
 
 		go func() {
-			trimmedTxns := s.trimDuplicate(txns)
+			currTxns, err := s.txnRepo.FindAll()
+			if err != nil {
+				s.errChan <- err
+			}
+			trimmedTxns := s.trimDuplicate(txns, currTxns)
 			s.transactions <- trimmedTxns
 		}()
 		from = to
@@ -91,14 +95,9 @@ func getAccount(monoPersonal mono.Personal) (*mono.Account, error) {
 	return &account, nil
 }
 
-func (s *monoSync) trimDuplicate(syncTxns []mono.Transaction) []models.Transaction {
+func (s *monoSync) trimDuplicate(syncTxns []mono.Transaction, currentTxns []models.Transaction) []models.Transaction {
 	unique := []models.Transaction{}
 
-	currentTxns, err := s.txnRepo.FindAll()
-	if err != nil {
-		s.logger.Error("Unable to find transactions from transactions collection", "Error", err.Error())
-		s.errChan <- err
-	}
 	curr := make(map[string]models.Transaction, len(currentTxns))
 
 	for i := 0; i < len(currentTxns); i++ {
