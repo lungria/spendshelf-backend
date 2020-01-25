@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/lungria/spendshelf-backend/src/categories"
@@ -33,14 +32,6 @@ type TransactionsHandler struct {
 
 // NewTransactionsHandler create a new instance of TransactionsHandler
 func NewTransactionsHandler(txnRepo transactions.Repository, ctgRepo categories.Repository, logger *zap.SugaredLogger) (*TransactionsHandler, error) {
-	if txnRepo == nil || ctgRepo == nil {
-		return nil, errors.New("repository must not be nil")
-	}
-
-	if logger == nil {
-		return nil, errors.New("logger must not be nil (Transactions)")
-	}
-
 	return &TransactionsHandler{
 		txnRepo: txnRepo,
 		ctgRepo: ctgRepo,
