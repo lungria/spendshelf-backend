@@ -38,7 +38,10 @@ func TestTrimDuplicate(t *testing.T) {
 	syncTxn := []mono.Transaction{monoTxn2, monoTxn3}
 
 	actualTxn := s.trimDuplicate(syncTxn, txnFromDB)
+
 	modelTxn3.ID = actualTxn[0].ID
+	modelTxn3.BankTransaction.AccountID = s.accountUAH.ID
+
 	expectedTxn := []models.Transaction{modelTxn3}
 
 	for i := 0; i < len(expectedTxn); i++ {
