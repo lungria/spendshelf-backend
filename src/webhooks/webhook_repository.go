@@ -5,6 +5,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/lungria/spendshelf-backend/src/transactions"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/lungria/spendshelf-backend/src/models"
@@ -13,8 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-const transactionsCollection = "transactions"
-
+// MonoBankName name of mono bank, which using in transactions
 const MonoBankName = "Mono Bank"
 
 // Repository defines method which inserts the transaction from monoAPI
@@ -38,7 +39,7 @@ func NewWebHookRepository(ctx context.Context, db *mongo.Database, logger *zap.S
 		return nil, errors.New("logger must not be nil")
 	}
 	return &WebHookRepository{
-		collection: db.Collection(transactionsCollection),
+		collection: db.Collection(transactions.TransactionsCollection),
 		logger:     logger,
 		context:    ctx,
 	}, nil

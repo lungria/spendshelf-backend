@@ -9,7 +9,7 @@ type EnvironmentConfiguration struct {
 	HTTPAddr   string `env:"HTTP_ADDR" envDefault:":8080"`
 	MongoURI   string `env:"SPENDSHELF_MONGO_URI" envDefault:"mongodb://root:toor@localhost:27017"`
 	DBName     string `env:"SPEND_SHELF_DB" envDefault:"spendShelf"`
-	MonoApiKey string `env:"SPEND_SHELF_MONO_APIKEY" envDefault:"MONO_API"`
+	MonoAPIKey string `env:"SPEND_SHELF_MONO_APIKEY" envDefault:"MONO_API"`
 }
 
 // NewConfig is parsing environment variables and returns filled EnvironmentConfiguration

@@ -136,6 +136,7 @@ func (repo *TransactionRepository) UpdateCategory(transactionID primitive.Object
 	return txn.ModifiedCount, nil
 }
 
+// InsertManyTransactions inserts slice of transactions to transactions collection
 func (repo *TransactionRepository) InsertManyTransactions(txns []models.Transaction) error {
 	ctx, cancel := context.WithCancel(repo.context)
 	defer cancel()

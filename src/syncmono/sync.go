@@ -29,7 +29,7 @@ type monoSync struct {
 
 func newMonoSync(cfg *config.EnvironmentConfiguration, logger *zap.SugaredLogger, txnRepo transactions.Repository) (*monoSync, error) {
 	s := monoSync{
-		monoClient:   mono.NewPersonal(cfg.MonoApiKey),
+		monoClient:   mono.NewPersonal(cfg.MonoAPIKey),
 		transactions: make(chan []models.Transaction),
 		errChan:      make(chan error),
 		txnRepo:      txnRepo,

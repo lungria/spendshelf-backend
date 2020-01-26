@@ -24,6 +24,7 @@ type responseSuccess struct {
 	Result []models.Transaction `json:"result"`
 }
 
+// SyncSocket contains the channels for transactions and error which read from MonoSyncalso contains WebSocket connection
 type SyncSocket struct {
 	send     chan []models.Transaction
 	SendErr  chan error
@@ -33,6 +34,7 @@ type SyncSocket struct {
 	context  context.Context
 }
 
+// NewSyncSocket creates a new SyncSocket
 func NewSyncSocket(ctx context.Context, logger *zap.SugaredLogger, cfg *config.EnvironmentConfiguration, txnRepo transactions.Repository) (*SyncSocket, error) {
 	m, err := newMonoSync(cfg, logger, txnRepo)
 	if err != nil {
@@ -51,6 +53,7 @@ func NewSyncSocket(ctx context.Context, logger *zap.SugaredLogger, cfg *config.E
 	return &syncSocket, nil
 }
 
+// Write reads from channels transactions and errors then parsed as JSON and write to websocket
 func (c *SyncSocket) Write() {
 	for {
 		select {

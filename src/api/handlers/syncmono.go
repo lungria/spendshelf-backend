@@ -13,11 +13,13 @@ import (
 	"go.uber.org/zap"
 )
 
+// SyncMonoHandler is struct for sync socket handler
 type SyncMonoHandler struct {
 	logger *zap.SugaredLogger
 	sync   *syncmono.SyncSocket
 }
 
+// NewSyncMonoHandler creates a new SyncMonoHandler
 func NewSyncMonoHandler(logger *zap.SugaredLogger, syncClient *syncmono.SyncSocket) *SyncMonoHandler {
 	return &SyncMonoHandler{
 		logger: logger,
@@ -25,6 +27,7 @@ func NewSyncMonoHandler(logger *zap.SugaredLogger, syncClient *syncmono.SyncSock
 	}
 }
 
+// HandleSocket triggers the sync transactions from monoAPI and returns the result via websocket. ws://base_url/sync?from=1574153172
 func (handler *SyncMonoHandler) HandleSocket(c *gin.Context) {
 	from, exist := c.GetQuery("from")
 	if !exist {
