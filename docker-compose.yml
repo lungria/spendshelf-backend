@@ -21,6 +21,7 @@ services:
       - HTTP_ADDR=:80
       - SPENDSHELF_MONGO_URI=mongodb://${SPENDSHELF_MONGO_USER}:${SPENDSHELF_MONGO_PASSW}@mongod:27017
       - SPEND_SHELF_DB=spendShelf
+      - SPEND_SHELF_MONO_APIKEY=${SPEND_SHELF_MONO_APIKEY}
       - GIN_MODE=release
     depends_on:
       - mongod
