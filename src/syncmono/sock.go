@@ -14,8 +14,14 @@ import (
 	"github.com/lungria/spendshelf-backend/src/models"
 )
 
-type socketError struct {
-	Error string `json:"error"`
+type responseError struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}
+
+type responseSuccess struct {
+	Status string               `json:"status"`
+	Result []models.Transaction `json:"result"`
 }
 
 type SyncSocket struct {
@@ -49,13 +55,21 @@ func (c *SyncSocket) Write() {
 	for {
 		select {
 		case txn := <-c.send:
-			if err := c.Conn.WriteJSON(txn); err != nil {
+			resp := responseSuccess{
+				Status: "Success",
+				Result: txn,
+			}
+			if err := c.Conn.WriteJSON(resp); err != nil {
 				errMsg := "unable to Write transactions"
 				c.logger.Errorw(errMsg, "Error", err.Error())
 				c.SendErr <- err
 			}
 		case sockErr := <-c.SendErr:
-			if err := c.Conn.WriteJSON(socketError{Error: sockErr.Error()}); err != nil {
+			resp := responseError{
+				Status:  "Error",
+				Message: sockErr.Error(),
+			}
+			if err := c.Conn.WriteJSON(resp); err != nil {
 				c.logger.Errorw("unable to Write error", "Error", err.Error())
 			}
 		}
