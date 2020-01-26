@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	transactionsCollection = "transactions"
+	TransactionsCollection = "transactions"
 )
 
 // Repository defines methods which find the transactions and update the category
@@ -47,7 +47,7 @@ func NewTransactionRepository(ctx context.Context, db *mongo.Database, logger *z
 
 	return &TransactionRepository{
 		logger:     logger,
-		collection: db.Collection(transactionsCollection),
+		collection: db.Collection(TransactionsCollection),
 		context:    ctx,
 	}, nil
 }
