@@ -6,6 +6,7 @@
 package main
 
 import (
+	"context"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
@@ -15,6 +16,7 @@ import (
 	"github.com/lungria/spendshelf-backend/src/config"
 	"github.com/lungria/spendshelf-backend/src/db"
 	"github.com/lungria/spendshelf-backend/src/report"
+	"github.com/lungria/spendshelf-backend/src/syncmono"
 	"github.com/lungria/spendshelf-backend/src/transactions"
 	"github.com/lungria/spendshelf-backend/src/webhooks"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -34,11 +36,12 @@ func InitializeServer() (*config.Dependencies, error) {
 	if err != nil {
 		return nil, err
 	}
-	database, err := mongoDbProvider(environmentConfiguration)
+	context := ctxProvider()
+	database, err := mongoDbProvider(context, environmentConfiguration)
 	if err != nil {
 		return nil, err
 	}
-	webHookRepository, err := webhooks.NewWebHookRepository(database, sugaredLogger)
+	webHookRepository, err := webhooks.NewWebHookRepository(context, database, sugaredLogger)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +49,7 @@ func InitializeServer() (*config.Dependencies, error) {
 	if err != nil {
 		return nil, err
 	}
-	cachedRepository, err := categories.NewCachedRepository(database)
+	cachedRepository, err := categories.NewCachedRepository(context, database)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +57,7 @@ func InitializeServer() (*config.Dependencies, error) {
 	if err != nil {
 		return nil, err
 	}
-	transactionRepository, err := transactions.NewTransactionRepository(database, sugaredLogger)
+	transactionRepository, err := transactions.NewTransactionRepository(context, database, sugaredLogger)
 	if err != nil {
 		return nil, err
 	}
@@ -62,24 +65,30 @@ func InitializeServer() (*config.Dependencies, error) {
 	if err != nil {
 		return nil, err
 	}
+	syncSocket, err := syncmono.NewSyncSocket(context, sugaredLogger, environmentConfiguration, transactionRepository)
+	if err != nil {
+		return nil, err
+	}
+	syncMonoHandler := handlers.NewSyncMonoHandler(sugaredLogger, syncSocket)
 	sequentialReportGenerator := report.NewSequentialReportGenerator(database, cachedRepository, sugaredLogger)
 	reportsHandler := handlers.NewReportsHandler(sequentialReportGenerator, sugaredLogger)
-	engine := routerProvider(logger, webHookHandler, categoriesHandler, transactionsHandler, reportsHandler)
+	engine := routerProvider(logger, webHookHandler, categoriesHandler, transactionsHandler, syncMonoHandler, reportsHandler)
 	server, err := api.NewAPI(environmentConfiguration, engine)
 	if err != nil {
 		return nil, err
 	}
 	dependencies := &config.Dependencies{
-		Logger: sugaredLogger,
-		Server: server,
+		Logger:  sugaredLogger,
+		Server:  server,
+		Context: context,
 	}
 	return dependencies, nil
 }
 
 // wire.go:
 
-func mongoDbProvider(cfg *config.EnvironmentConfiguration) (*mongo.Database, error) {
-	return db.NewDatabase(cfg.DBName, cfg.MongoURI)
+func mongoDbProvider(ctx context.Context, cfg *config.EnvironmentConfiguration) (*mongo.Database, error) {
+	return db.NewDatabase(ctx, cfg.DBName, cfg.MongoURI)
 }
 
 func sugarProvider(logger *zap.Logger) *zap.SugaredLogger {
@@ -90,6 +99,10 @@ func zapProvider() (*zap.Logger, error) {
 	return zap.NewProduction()
 }
 
+func ctxProvider() context.Context {
+	return context.Background()
+}
+
 func defaultHeaders() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Header("content-type", "application/json")
@@ -97,7 +110,7 @@ func defaultHeaders() gin.HandlerFunc {
 	}
 }
 
-func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ctgHandler *handlers.CategoriesHandler, txHandler *handlers.TransactionsHandler, rpHandler *handlers.ReportsHandler) *gin.Engine {
+func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ctgHandler *handlers.CategoriesHandler, txnHandler *handlers.TransactionsHandler, syncHandler *handlers.SyncMonoHandler, rpHandler *handlers.ReportsHandler) *gin.Engine {
 	router := gin.New()
 	router.Use(ginzap.Ginzap(logger, time.RFC3339, true))
 	router.Use(ginzap.RecoveryWithZap(logger, true))
@@ -107,8 +120,9 @@ func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ct
 	router.POST("/webhook", hookHandler.HandlePost)
 	router.POST("/categories", ctgHandler.HandlePost)
 	router.GET("/categories", ctgHandler.HandleGet)
-	router.GET("/transactions", txHandler.HandleGet)
-	router.PATCH("/transactions/:transactionID", txHandler.HandlePatch)
+	router.GET("/transactions", txnHandler.HandleGet)
+	router.PATCH("/transactions/:transactionID", txnHandler.HandlePatch)
+	router.GET("/sync", syncHandler.HandleSocket)
 	router.GET("/reports", rpHandler.HandleGet)
 	return router
 }

@@ -34,9 +34,8 @@ type CachedRepository struct {
 }
 
 // NewCachedRepository is creating a new CachedRepository
-func NewCachedRepository(db *mongo.Database) (*CachedRepository, error) {
+func NewCachedRepository(ctx context.Context, db *mongo.Database) (*CachedRepository, error) {
 	//todo get shutdown context
-	ctx := context.Background()
 	collection := db.Collection(categoriesCollection)
 	cursor, err := collection.Find(ctx, bson.D{})
 	if err != nil {

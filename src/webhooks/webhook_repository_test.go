@@ -7,13 +7,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/lungria/mono"
+	"github.com/shal/mono"
 )
 
 func TestInsertOneHook(t *testing.T) {
 	webhook := models.WebHook{
 		AccountID: "test_id",
-		StatementItem: mono.StatementItem{
+		StatementItem: mono.Transaction{
 			ID:              "test_t_id",
 			Time:            1577011328,
 			Description:     "Some desc",
@@ -23,7 +23,6 @@ func TestInsertOneHook(t *testing.T) {
 			OperationAmount: 100,
 			CurrencyCode:    826,
 			CommissionRate:  0,
-			CashbackAmount:  0,
 			Balance:         45000,
 		},
 	}
