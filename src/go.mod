@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/DataDog/zstd v1.4.4 // indirect
 	github.com/caarlos0/env v3.5.0+incompatible
+	github.com/eclipse/paho.mqtt.golang v1.2.0
 	github.com/gin-contrib/cors v1.3.0
 	github.com/gin-contrib/zap v0.0.0-20191128031730-d12829f8f61b
 	github.com/gin-gonic/gin v1.5.0
@@ -13,7 +14,6 @@ require (
 	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/google/wire v0.4.0
 	github.com/gorilla/websocket v1.4.1
-	github.com/lungria/mono v0.0.10
 	github.com/pkg/errors v0.8.1
 	github.com/shal/mono v0.1.3
 	github.com/stretchr/objx v0.1.1 // indirect
