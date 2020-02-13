@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/lungria/spendshelf-backend/src/models"
@@ -45,12 +46,12 @@ func (handler *WebHookHandler) HandlePost(c *gin.Context) {
 
 	err = c.BindJSON(&req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, errorResponse{Message: "Bad request", Error: err.Error()})
+		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
 	err = handler.repo.InsertOneHook(req.Data)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, errorResponse{Message: "Saving Transaction failed", Error: err.Error()})
+		c.JSON(http.StatusInternalServerError, fmt.Errorf("unable save transaction: %w", err.Error()))
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Success"})

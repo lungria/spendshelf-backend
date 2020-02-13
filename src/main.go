@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"github.com/lungria/spendshelf-backend/src/topic"
 	"log"
 	"net/http"
 	"os"
@@ -14,13 +13,6 @@ func main() {
 	services, err := InitializeServer()
 	if err != nil {
 		log.Fatalf("Unable to initialize server: %+v", err)
-	}
-	err = topic.Listen(context.TODO(), topic.ListenerConfig{
-		Topic:      "transactions/privat",
-		BrokerHost: "tcp://localhost",
-	})
-	if err != nil {
-		log.Fatalf("Unable to initialize MQTT: %+v", err)
 	}
 
 	done := make(chan bool, 1)

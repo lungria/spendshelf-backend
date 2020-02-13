@@ -28,12 +28,12 @@ type insertCategoryResponse struct {
 
 // CategoriesHandler is a struct which implemented by categories handler
 type CategoriesHandler struct {
-	repo   categories.Repository
+	repo   *categories.Repository
 	logger *zap.SugaredLogger
 }
 
 // NewCategoriesHandler create a new instance of CategoriesHandler
-func NewCategoriesHandler(repo categories.Repository, logger *zap.SugaredLogger) (*CategoriesHandler, error) {
+func NewCategoriesHandler(repo *categories.Repository, logger *zap.SugaredLogger) (*CategoriesHandler, error) {
 	return &CategoriesHandler{
 		repo:   repo,
 		logger: logger}, nil
@@ -41,7 +41,12 @@ func NewCategoriesHandler(repo categories.Repository, logger *zap.SugaredLogger)
 
 // HandleGet return all existing categories
 func (handler *CategoriesHandler) HandleGet(c *gin.Context) {
-	c.JSON(http.StatusOK, getAllCategoriesResponse{handler.repo.GetAll()})
+	ctg, err := handler.repo.GetAll(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+	c.JSON(http.StatusOK, getAllCategoriesResponse{ctg})
 	return
 }
 
@@ -50,12 +55,12 @@ func (handler *CategoriesHandler) HandlePost(c *gin.Context) {
 	var req createCategoryRequest
 	err := c.BindJSON(&req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, "Unable to parse body as JSON")
+		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
 	id, err := handler.repo.Insert(c, req.Name)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, "Unable to save category to DB")
+		c.JSON(http.StatusBadRequest, err.Error())
 		handler.logger.Error(err)
 		return
 	}

@@ -11,7 +11,6 @@ import (
 	"github.com/lungria/spendshelf-backend/src/transactions"
 
 	"github.com/gin-contrib/cors"
-	"github.com/lungria/spendshelf-backend/src/syncmono"
 	"github.com/lungria/spendshelf-backend/src/webhooks"
 
 	gzap "github.com/gin-contrib/zap"
@@ -55,7 +54,7 @@ func defaultHeaders() gin.HandlerFunc {
 	}
 }
 
-func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ctgHandler *handlers.CategoriesHandler, txnHandler *handlers.TransactionsHandler, syncHandler *handlers.SyncMonoHandler, rpHandler *handlers.ReportsHandler) *gin.Engine {
+func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ctgHandler *handlers.CategoriesHandler, txnHandler *handlers.TransactionsHandler, rpHandler *handlers.ReportsHandler) *gin.Engine {
 	router := gin.New()
 	router.Use(gzap.Ginzap(logger, time.RFC3339, true))
 	router.Use(gzap.RecoveryWithZap(logger, true))
@@ -67,7 +66,6 @@ func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ct
 	router.GET("/categories", ctgHandler.HandleGet)
 	router.GET("/transactions", txnHandler.HandleGet)
 	router.PATCH("/transactions/:transactionID", txnHandler.HandlePatch)
-	router.GET("/sync", syncHandler.HandleSocket)
 	router.GET("/reports", rpHandler.HandleGet)
 	return router
 }
@@ -75,15 +73,13 @@ func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ct
 func InitializeServer() (*config.Dependencies, error) {
 	wire.Build(config.NewConfig,
 		mongoDbProvider,
-		categories.NewCachedRepository,
+		categories.NewRepository,
 		handlers.NewCategoriesHandler,
 		transactions.NewTransactionRepository,
 		report.NewSequentialReportGenerator,
 		handlers.NewTransactionsHandler,
 		webhooks.NewWebHookRepository,
 		handlers.NewWebHookHandler,
-		syncmono.NewSyncSocket,
-		handlers.NewSyncMonoHandler,
 		handlers.NewReportsHandler,
 		zapProvider,
 		sugarProvider,
@@ -92,7 +88,6 @@ func InitializeServer() (*config.Dependencies, error) {
 		api.NewAPI,
 		wire.Bind(new(transactions.Repository), new(*transactions.TransactionRepository)),
 		wire.Bind(new(webhooks.Repository), new(*webhooks.WebHookRepository)),
-		wire.Bind(new(categories.Repository), new(*categories.CachedRepository)),
 		wire.Bind(new(report.Generator), new(*report.SequentialReportGenerator)),
 		wire.Struct(new(config.Dependencies), "Logger", "Server", "Context"),
 	)

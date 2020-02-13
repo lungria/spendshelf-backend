@@ -16,7 +16,6 @@ import (
 	"github.com/lungria/spendshelf-backend/src/config"
 	"github.com/lungria/spendshelf-backend/src/db"
 	"github.com/lungria/spendshelf-backend/src/report"
-	"github.com/lungria/spendshelf-backend/src/syncmono"
 	"github.com/lungria/spendshelf-backend/src/transactions"
 	"github.com/lungria/spendshelf-backend/src/webhooks"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -49,11 +48,8 @@ func InitializeServer() (*config.Dependencies, error) {
 	if err != nil {
 		return nil, err
 	}
-	cachedRepository, err := categories.NewCachedRepository(context, database)
-	if err != nil {
-		return nil, err
-	}
-	categoriesHandler, err := handlers.NewCategoriesHandler(cachedRepository, sugaredLogger)
+	repository := categories.NewRepository(database)
+	categoriesHandler, err := handlers.NewCategoriesHandler(repository, sugaredLogger)
 	if err != nil {
 		return nil, err
 	}
@@ -61,18 +57,13 @@ func InitializeServer() (*config.Dependencies, error) {
 	if err != nil {
 		return nil, err
 	}
-	transactionsHandler, err := handlers.NewTransactionsHandler(transactionRepository, cachedRepository, sugaredLogger)
+	transactionsHandler, err := handlers.NewTransactionsHandler(transactionRepository, repository, sugaredLogger)
 	if err != nil {
 		return nil, err
 	}
-	syncSocket, err := syncmono.NewSyncSocket(context, sugaredLogger, environmentConfiguration, transactionRepository)
-	if err != nil {
-		return nil, err
-	}
-	syncMonoHandler := handlers.NewSyncMonoHandler(sugaredLogger, syncSocket)
-	sequentialReportGenerator := report.NewSequentialReportGenerator(database, cachedRepository, sugaredLogger)
+	sequentialReportGenerator := report.NewSequentialReportGenerator(database, repository, sugaredLogger)
 	reportsHandler := handlers.NewReportsHandler(sequentialReportGenerator, sugaredLogger)
-	engine := routerProvider(logger, webHookHandler, categoriesHandler, transactionsHandler, syncMonoHandler, reportsHandler)
+	engine := routerProvider(logger, webHookHandler, categoriesHandler, transactionsHandler, reportsHandler)
 	server, err := api.NewAPI(environmentConfiguration, engine)
 	if err != nil {
 		return nil, err
@@ -110,7 +101,7 @@ func defaultHeaders() gin.HandlerFunc {
 	}
 }
 
-func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ctgHandler *handlers.CategoriesHandler, txnHandler *handlers.TransactionsHandler, syncHandler *handlers.SyncMonoHandler, rpHandler *handlers.ReportsHandler) *gin.Engine {
+func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ctgHandler *handlers.CategoriesHandler, txnHandler *handlers.TransactionsHandler, rpHandler *handlers.ReportsHandler) *gin.Engine {
 	router := gin.New()
 	router.Use(ginzap.Ginzap(logger, time.RFC3339, true))
 	router.Use(ginzap.RecoveryWithZap(logger, true))
@@ -122,7 +113,6 @@ func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ct
 	router.GET("/categories", ctgHandler.HandleGet)
 	router.GET("/transactions", txnHandler.HandleGet)
 	router.PATCH("/transactions/:transactionID", txnHandler.HandlePatch)
-	router.GET("/sync", syncHandler.HandleSocket)
 	router.GET("/reports", rpHandler.HandleGet)
 	return router
 }

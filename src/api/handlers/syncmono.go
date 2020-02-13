@@ -31,11 +31,11 @@ func NewSyncMonoHandler(logger *zap.SugaredLogger, syncClient *syncmono.SyncSock
 func (handler *SyncMonoHandler) HandleSocket(c *gin.Context) {
 	from, exist := c.GetQuery("from")
 	if !exist {
-		c.JSON(http.StatusBadRequest, messageResponse{Message: "Query from is required"})
+		c.JSON(http.StatusBadRequest, "'from' query parameter required: %w")
 	}
 	fromInt, err := strconv.ParseInt(from, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, messageResponse{Message: err.Error()})
+		c.JSON(http.StatusBadRequest, err.Error())
 	}
 	upgrader := websocket.Upgrader{WriteBufferSize: 1024, ReadBufferSize: 1024}
 	upgrader.CheckOrigin = func(r *http.Request) bool {
