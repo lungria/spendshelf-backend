@@ -1,5 +1,5 @@
-/*//+build wireinject
- */
+//+build wireinject
+
 package main
 
 import (
@@ -54,7 +54,7 @@ func InitializeServer() (*api.Server, error) {
 		wire.Bind(new(webhooks.Repository), new(*webhooks.WebHookRepository)),
 		wire.Bind(new(report.Generator), new(*report.SequentialReportGenerator)),
 		api.RoutesProvider,
-		api.NewAPI,
+		api.NewServer,
 	)
 	return &api.Server{}, nil
 }

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -27,20 +26,15 @@ type ServerConfig interface {
 	GetHTTPAddr() string
 }
 
-type Binder struct {
-	All []RouterBinder
-}
-
 // NewAPI create a new WebHookAPI with DB, logger and router
-func NewAPI(cfg ServerConfig, logger *zap.Logger, bt []byte) (*Server, error) {
-	fmt.Printf("%s", bt)
+func NewServer(cfg ServerConfig, logger *zap.Logger, routes []RouterBinder) (*Server, error) {
 	server := &Server{
 		&http.Server{
 			Addr: cfg.GetHTTPAddr(),
 		},
 		configureMiddleware(logger),
 	}
-	server.bindRoutes(&Binder{})
+	server.bindRoutes(routes)
 	return server, nil
 }
 
@@ -60,8 +54,8 @@ func defaultHeaders() gin.HandlerFunc {
 	}
 }
 
-func (s *Server) bindRoutes(binders *Binder) {
-	for _, v := range binders.All {
-		v.BindRoutes(s.router)
+func (s *Server) bindRoutes(routes []RouterBinder) {
+	for _, r := range routes {
+		r.BindRoutes(s.router)
 	}
 }

@@ -122,7 +122,7 @@ func (repo *TransactionRepository) FindAllCategorized() ([]models.Transaction, e
 
 // UpdateCategory changes the category for appropriate transaction
 func (repo *TransactionRepository) UpdateCategory(transactionID primitive.ObjectID, category models.Category) (int64, error) {
-	ctx, cancel := context.WithCancel(repo.context)
+	ctx, cancel := context.WithCancel(context.TODO())
 	defer cancel()
 
 	txn, err := repo.collection.UpdateOne(ctx, bson.M{"_id": transactionID}, bson.M{"$set": bson.M{"category": category}})
