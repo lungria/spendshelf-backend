@@ -91,7 +91,7 @@ func (c SyncSocket) run() {
 
 			c.send <- txns
 
-			err := c.MonoSync.txnRepo.InsertManyTransactions(txns)
+			err := c.MonoSync.txnRepo.InsertMany(context.TODO(), txns)
 			if err != nil {
 				c.SendErr <- err
 			}

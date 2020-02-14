@@ -26,7 +26,7 @@ type Repository interface {
 	FindAllUncategorized(ctx context.Context) ([]models.Transaction, error)
 	FindAllByCategoryID(ctx context.Context, categoryID primitive.ObjectID) ([]models.Transaction, error)
 	UpdateCategory(ctx context.Context, transactionID primitive.ObjectID, category models.Category) (int64, error)
-	InsertManyTransactions(ctx context.Context, txns []models.Transaction) error
+	InsertMany(ctx context.Context, txns []models.Transaction) error
 }
 
 // TransactionRepository implements by methods which define in Repository interface
@@ -110,8 +110,8 @@ func (repo *TransactionRepository) UpdateCategory(ctx context.Context, transacti
 	return txn.ModifiedCount, nil
 }
 
-// InsertManyTransactions inserts slice of transactions to transactions collection
-func (repo *TransactionRepository) InsertManyTransactions(ctx context.Context, txns []models.Transaction) error {
+// InsertMany inserts slice of transactions to transactions collection
+func (repo *TransactionRepository) InsertMany(ctx context.Context, txns []models.Transaction) error {
 	txnInterface := make([]interface{}, len(txns))
 	for i := 0; i < len(txns); i++ {
 		txnInterface[i] = txns[i]
