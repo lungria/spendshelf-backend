@@ -84,6 +84,7 @@ func (handler *TransactionsHandler) HandlePatch(c *gin.Context) {
 	var ctg models.Category
 	ok := handler.findCategoryByID(c, req.CategoryID, &ctg)
 	if !ok {
+		c.JSON(http.StatusInternalServerError, "update failed: category not found")
 		return
 	}
 

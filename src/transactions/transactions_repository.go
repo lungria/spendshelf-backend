@@ -21,12 +21,12 @@ const (
 
 // Repository defines methods which find the transactions and update the category
 type Repository interface {
-	FindAll() ([]models.Transaction, error)
-	FindAllCategorized() ([]models.Transaction, error)
-	FindAllUncategorized() ([]models.Transaction, error)
-	FindAllByCategoryID(categoryID primitive.ObjectID) ([]models.Transaction, error)
-	UpdateCategory(transactionID primitive.ObjectID, category models.Category) (int64, error)
-	InsertManyTransactions(txns []models.Transaction) error
+	FindAll(ctx context.Context) ([]models.Transaction, error)
+	FindAllCategorized(ctx context.Context) ([]models.Transaction, error)
+	FindAllUncategorized(ctx context.Context) ([]models.Transaction, error)
+	FindAllByCategoryID(ctx context.Context, categoryID primitive.ObjectID) ([]models.Transaction, error)
+	UpdateCategory(ctx context.Context, transactionID primitive.ObjectID, category models.Category) (int64, error)
+	InsertManyTransactions(ctx context.Context, txns []models.Transaction) error
 }
 
 // TransactionRepository implements by methods which define in Repository interface
@@ -44,11 +44,8 @@ func NewTransactionRepository(db *mongo.Database, logger *zap.SugaredLogger) *Tr
 }
 
 // FindAllUncategorized returns all uncategorized transactions
-func (repo *TransactionRepository) FindAllUncategorized() ([]models.Transaction, error) {
+func (repo *TransactionRepository) FindAllUncategorized(ctx context.Context) ([]models.Transaction, error) {
 	var transactions []models.Transaction
-	ctx, cancel := context.WithCancel(context.TODO())
-	defer cancel()
-
 	optProjections := options.Find().SetProjection(bson.M{"_id": 1, "time": 1, "description": 1, "category": 1, "amount": 1, "balance": 1, "bank": 1})
 	filter := bson.M{"$or": bson.A{bson.M{"category": bson.M{"$exists": false}}, bson.M{"category": nil}}}
 	cur, err := repo.collection.Find(ctx, filter, optProjections)
@@ -63,12 +60,8 @@ func (repo *TransactionRepository) FindAllUncategorized() ([]models.Transaction,
 }
 
 // FindAll returns all transactions
-func (repo *TransactionRepository) FindAll() ([]models.Transaction, error) {
+func (repo *TransactionRepository) FindAll(ctx context.Context) ([]models.Transaction, error) {
 	var transactions []models.Transaction
-
-	ctx, cancel := context.WithCancel(context.TODO())
-	defer cancel()
-
 	cur, err := repo.collection.Find(ctx, bson.M{})
 	if err != nil {
 		errMsg := "unable to received transactions with all categories"
@@ -80,12 +73,8 @@ func (repo *TransactionRepository) FindAll() ([]models.Transaction, error) {
 }
 
 // FindAllByCategoryID returns all transactions which relate with specify category
-func (repo *TransactionRepository) FindAllByCategoryID(categoryID primitive.ObjectID) ([]models.Transaction, error) {
+func (repo *TransactionRepository) FindAllByCategoryID(ctx context.Context, categoryID primitive.ObjectID) ([]models.Transaction, error) {
 	var transactions []models.Transaction
-
-	ctx, cancel := context.WithCancel(context.TODO())
-	defer cancel()
-
 	cur, err := repo.collection.Find(ctx, bson.M{"category._id": categoryID})
 	if err != nil {
 		errMsg := "unable to received transactions with category"
@@ -97,11 +86,8 @@ func (repo *TransactionRepository) FindAllByCategoryID(categoryID primitive.Obje
 }
 
 // FindAllCategorized returns all categorized transactions
-func (repo *TransactionRepository) FindAllCategorized() ([]models.Transaction, error) {
+func (repo *TransactionRepository) FindAllCategorized(ctx context.Context) ([]models.Transaction, error) {
 	var transactions []models.Transaction
-
-	ctx, cancel := context.WithCancel(context.TODO())
-	defer cancel()
 
 	cur, err := repo.collection.Find(ctx, bson.M{"$and": bson.A{bson.M{"category": bson.M{"$exists": true}}, bson.M{"category": bson.M{"$ne": nil}}}})
 	if err != nil {
@@ -114,10 +100,7 @@ func (repo *TransactionRepository) FindAllCategorized() ([]models.Transaction, e
 }
 
 // UpdateCategory changes the category for appropriate transaction
-func (repo *TransactionRepository) UpdateCategory(transactionID primitive.ObjectID, category models.Category) (int64, error) {
-	ctx, cancel := context.WithCancel(context.TODO())
-	defer cancel()
-
+func (repo *TransactionRepository) UpdateCategory(ctx context.Context, transactionID primitive.ObjectID, category models.Category) (int64, error) {
 	txn, err := repo.collection.UpdateOne(ctx, bson.M{"_id": transactionID}, bson.M{"$set": bson.M{"category": category}})
 	if err != nil {
 		errMsg := "unable to update transaction"
@@ -128,10 +111,7 @@ func (repo *TransactionRepository) UpdateCategory(transactionID primitive.Object
 }
 
 // InsertManyTransactions inserts slice of transactions to transactions collection
-func (repo *TransactionRepository) InsertManyTransactions(txns []models.Transaction) error {
-	ctx, cancel := context.WithCancel(context.TODO())
-	defer cancel()
-
+func (repo *TransactionRepository) InsertManyTransactions(ctx context.Context, txns []models.Transaction) error {
 	txnInterface := make([]interface{}, len(txns))
 	for i := 0; i < len(txns); i++ {
 		txnInterface[i] = txns[i]
