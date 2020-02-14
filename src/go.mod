@@ -14,6 +14,7 @@ require (
 	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/google/wire v0.4.0
 	github.com/gorilla/websocket v1.4.1
+	github.com/pkg/errors v0.8.1
 	github.com/shal/mono v0.1.3
 	github.com/stretchr/objx v0.1.1 // indirect
 	github.com/stretchr/testify v1.4.0

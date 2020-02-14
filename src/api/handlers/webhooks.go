@@ -61,3 +61,8 @@ func (handler *WebHookHandler) HandlePost(c *gin.Context) {
 func (handler *WebHookHandler) HandleGet(c *gin.Context) {
 	c.String(http.StatusOK, "")
 }
+
+func (handler *WebHookHandler) BindRoutes(router *gin.Engine) {
+	router.GET("/webhook", handler.HandleGet)
+	router.POST("/webhook", handler.HandlePost)
+}

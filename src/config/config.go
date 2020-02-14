@@ -22,3 +22,7 @@ func NewConfig() (*EnvironmentConfiguration, error) {
 
 	return &c, nil
 }
+
+func (c *EnvironmentConfiguration) GetHTTPAddr() string {
+	return c.HTTPAddr
+}

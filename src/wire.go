@@ -1,20 +1,13 @@
-//+build wireinject
-
+/*//+build wireinject
+ */
 package main
 
 import (
-	"context"
-	"time"
-
 	"github.com/lungria/spendshelf-backend/src/report"
 
 	"github.com/lungria/spendshelf-backend/src/transactions"
 
-	"github.com/gin-contrib/cors"
 	"github.com/lungria/spendshelf-backend/src/webhooks"
-
-	gzap "github.com/gin-contrib/zap"
-	"github.com/gin-gonic/gin"
 
 	"go.uber.org/zap"
 
@@ -31,8 +24,8 @@ import (
 	"github.com/google/wire"
 )
 
-func mongoDbProvider(ctx context.Context, cfg *config.EnvironmentConfiguration) (*mongo.Database, error) {
-	return db.NewDatabase(ctx, cfg.DBName, cfg.MongoURI)
+func mongoDbProvider(cfg *config.EnvironmentConfiguration) (*mongo.Database, error) {
+	return db.NewDatabase(cfg.DBName, cfg.MongoURI)
 }
 
 func sugarProvider(logger *zap.Logger) *zap.SugaredLogger {
@@ -43,34 +36,7 @@ func zapProvider() (*zap.Logger, error) {
 	return zap.NewProduction()
 }
 
-func ctxProvider() context.Context {
-	return context.Background()
-}
-
-func defaultHeaders() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Header("content-type", "application/json")
-		c.Next()
-	}
-}
-
-func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ctgHandler *handlers.CategoriesHandler, txnHandler *handlers.TransactionsHandler, rpHandler *handlers.ReportsHandler) *gin.Engine {
-	router := gin.New()
-	router.Use(gzap.Ginzap(logger, time.RFC3339, true))
-	router.Use(gzap.RecoveryWithZap(logger, true))
-	router.Use(defaultHeaders())
-	router.Use(cors.Default())
-	router.GET("/webhook", hookHandler.HandleGet)
-	router.POST("/webhook", hookHandler.HandlePost)
-	router.POST("/categories", ctgHandler.HandlePost)
-	router.GET("/categories", ctgHandler.HandleGet)
-	router.GET("/transactions", txnHandler.HandleGet)
-	router.PATCH("/transactions/:transactionID", txnHandler.HandlePatch)
-	router.GET("/reports", rpHandler.HandleGet)
-	return router
-}
-
-func InitializeServer() (*config.Dependencies, error) {
+func InitializeServer() (*api.Server, error) {
 	wire.Build(config.NewConfig,
 		mongoDbProvider,
 		categories.NewRepository,
@@ -83,13 +49,12 @@ func InitializeServer() (*config.Dependencies, error) {
 		handlers.NewReportsHandler,
 		zapProvider,
 		sugarProvider,
-		routerProvider,
-		ctxProvider,
-		api.NewAPI,
+		wire.Bind(new(api.ServerConfig), new(*config.EnvironmentConfiguration)),
 		wire.Bind(new(transactions.Repository), new(*transactions.TransactionRepository)),
 		wire.Bind(new(webhooks.Repository), new(*webhooks.WebHookRepository)),
 		wire.Bind(new(report.Generator), new(*report.SequentialReportGenerator)),
-		wire.Struct(new(config.Dependencies), "Logger", "Server", "Context"),
+		api.RoutesProvider,
+		api.NewAPI,
 	)
-	return &config.Dependencies{}, nil
+	return &api.Server{}, nil
 }

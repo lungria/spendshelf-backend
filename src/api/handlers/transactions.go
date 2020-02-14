@@ -164,3 +164,8 @@ func (handler *TransactionsHandler) findCategoryByID(c *gin.Context, categoryID 
 
 	return true
 }
+
+func (handler *TransactionsHandler) BindRoutes(router *gin.Engine) {
+	router.GET("/transactions", handler.HandleGet)
+	router.PATCH("/transactions/:transactionID", handler.HandlePatch)
+}

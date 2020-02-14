@@ -66,3 +66,8 @@ func (handler *CategoriesHandler) HandlePost(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, insertCategoryResponse{id})
 }
+
+func (handler *CategoriesHandler) BindRoutes(router *gin.Engine) {
+	router.POST("/categories", handler.HandlePost)
+	router.GET("/categories", handler.HandleGet)
+}

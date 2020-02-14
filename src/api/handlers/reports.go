@@ -45,3 +45,7 @@ func (handler *ReportsHandler) HandleGet(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, getResponse{reportResponse})
 }
+
+func (handler *ReportsHandler) BindRoutes(router *gin.Engine) {
+	router.GET("/reports", handler.HandleGet)
+}
