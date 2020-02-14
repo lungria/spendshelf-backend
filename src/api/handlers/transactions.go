@@ -32,12 +32,12 @@ type TransactionsHandler struct {
 }
 
 // NewTransactionsHandler create a new instance of TransactionsHandler
-func NewTransactionsHandler(txnRepo transactions.Repository, ctgRepo *categories.Repository, logger *zap.SugaredLogger) (*TransactionsHandler, error) {
+func NewTransactionsHandler(txnRepo transactions.Repository, ctgRepo *categories.Repository, logger *zap.SugaredLogger) *TransactionsHandler {
 	return &TransactionsHandler{
 		txnRepo: txnRepo,
 		ctgRepo: ctgRepo,
 		logger:  logger,
-	}, nil
+	}
 }
 
 // HandleGet can return all transactions, only categorized transactions, only uncategorized transactions and transactions interrelated with one category.

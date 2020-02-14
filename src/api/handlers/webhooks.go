@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -26,17 +25,11 @@ type WebHookHandler struct {
 }
 
 // NewWebHookHandler create a new instance of WebHookHandler
-func NewWebHookHandler(repo webhooks.Repository, logger *zap.SugaredLogger) (*WebHookHandler, error) {
-	if repo == nil {
-		return nil, errors.New("repo must not be nil")
-	}
-	if logger == nil {
-		return nil, errors.New("logger must not be nil")
-	}
+func NewWebHookHandler(repo webhooks.Repository, logger *zap.SugaredLogger) *WebHookHandler {
 	return &WebHookHandler{
 		repo:   repo,
 		Logger: logger,
-	}, nil
+	}
 }
 
 // HandlePost catch the request from monoAPI and save to DB

@@ -36,18 +36,11 @@ type TransactionRepository struct {
 }
 
 // NewTransactionRepository creates a new instance of TransactionRepository
-func NewTransactionRepository(db *mongo.Database, logger *zap.SugaredLogger) (*TransactionRepository, error) {
-	if db == nil {
-		return nil, errors.New("database must not be nil")
-	}
-	if logger == nil {
-		return nil, errors.New("logger must not be nil")
-	}
-
+func NewTransactionRepository(db *mongo.Database, logger *zap.SugaredLogger) *TransactionRepository {
 	return &TransactionRepository{
 		logger:     logger,
 		collection: db.Collection(TransactionsCollection),
-	}, nil
+	}
 }
 
 // FindAllUncategorized returns all uncategorized transactions

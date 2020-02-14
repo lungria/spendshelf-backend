@@ -34,27 +34,12 @@ func InitializeServer() (*api.Server, error) {
 		return nil, err
 	}
 	sugaredLogger := sugarProvider(logger)
-	webHookRepository, err := webhooks.NewWebHookRepository(database, sugaredLogger)
-	if err != nil {
-		return nil, err
-	}
-	webHookHandler, err := handlers.NewWebHookHandler(webHookRepository, sugaredLogger)
-	if err != nil {
-		return nil, err
-	}
+	webHookRepository := webhooks.NewWebHookRepository(database, sugaredLogger)
+	webHookHandler := handlers.NewWebHookHandler(webHookRepository, sugaredLogger)
 	repository := categories.NewRepository(database)
-	categoriesHandler, err := handlers.NewCategoriesHandler(repository, sugaredLogger)
-	if err != nil {
-		return nil, err
-	}
-	transactionRepository, err := transactions.NewTransactionRepository(database, sugaredLogger)
-	if err != nil {
-		return nil, err
-	}
-	transactionsHandler, err := handlers.NewTransactionsHandler(transactionRepository, repository, sugaredLogger)
-	if err != nil {
-		return nil, err
-	}
+	categoriesHandler := handlers.NewCategoriesHandler(repository, sugaredLogger)
+	transactionRepository := transactions.NewTransactionRepository(database, sugaredLogger)
+	transactionsHandler := handlers.NewTransactionsHandler(transactionRepository, repository, sugaredLogger)
 	sequentialReportGenerator := report.NewSequentialReportGenerator(database, repository, sugaredLogger)
 	reportsHandler := handlers.NewReportsHandler(sequentialReportGenerator, sugaredLogger)
 	v := api.RoutesProvider(webHookHandler, categoriesHandler, transactionsHandler, reportsHandler)

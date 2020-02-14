@@ -30,17 +30,11 @@ type WebHookRepository struct {
 }
 
 // NewWebHookRepository create a new repository
-func NewWebHookRepository(db *mongo.Database, logger *zap.SugaredLogger) (*WebHookRepository, error) {
-	if db == nil {
-		return nil, errors.New("DB must not be nil")
-	}
-	if logger == nil {
-		return nil, errors.New("logger must not be nil")
-	}
+func NewWebHookRepository(db *mongo.Database, logger *zap.SugaredLogger) *WebHookRepository {
 	return &WebHookRepository{
 		collection: db.Collection(transactions.TransactionsCollection),
 		logger:     logger,
-	}, nil
+	}
 }
 
 // InsertOneHook insert one Transaction to MongoDB

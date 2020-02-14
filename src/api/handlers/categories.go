@@ -33,10 +33,11 @@ type CategoriesHandler struct {
 }
 
 // NewCategoriesHandler create a new instance of CategoriesHandler
-func NewCategoriesHandler(repo *categories.Repository, logger *zap.SugaredLogger) (*CategoriesHandler, error) {
+func NewCategoriesHandler(repo *categories.Repository, logger *zap.SugaredLogger) *CategoriesHandler {
 	return &CategoriesHandler{
 		repo:   repo,
-		logger: logger}, nil
+		logger: logger,
+	}
 }
 
 // HandleGet return all existing categories
