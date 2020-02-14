@@ -58,10 +58,8 @@ func InitializeServer() (*api.Server, error) {
 	sequentialReportGenerator := report.NewSequentialReportGenerator(database, repository, sugaredLogger)
 	reportsHandler := handlers.NewReportsHandler(sequentialReportGenerator, sugaredLogger)
 	v := api.RoutesProvider(webHookHandler, categoriesHandler, transactionsHandler, reportsHandler)
-	server, err := api.NewServer(environmentConfiguration, logger, v)
-	if err != nil {
-		return nil, err
-	}
+	pipelineBuilder := api.NewPipelineBuilder(logger, v)
+	server := api.NewServer(environmentConfiguration, logger, pipelineBuilder)
 	return server, nil
 }
 
