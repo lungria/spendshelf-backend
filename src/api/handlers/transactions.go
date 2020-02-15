@@ -88,7 +88,7 @@ func (handler *TransactionsHandler) HandlePatch(c *gin.Context) {
 		return
 	}
 
-	countModifiedDocs, err := handler.txnRepo.UpdateCategory(tObjID, ctg)
+	countModifiedDocs, err := handler.txnRepo.UpdateCategory(c, tObjID, ctg)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, fmt.Errorf("update failed: %w", err).Error())
 		return
@@ -101,7 +101,7 @@ func (handler *TransactionsHandler) HandlePatch(c *gin.Context) {
 }
 
 func (handler *TransactionsHandler) allTransactions(c *gin.Context) {
-	t, err := handler.txnRepo.FindAll()
+	t, err := handler.txnRepo.FindAll(c)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, fmt.Errorf("unable to received all transactions: %w", err))
 		return
@@ -112,7 +112,7 @@ func (handler *TransactionsHandler) allTransactions(c *gin.Context) {
 }
 
 func (handler *TransactionsHandler) onlyCategorizedTransactions(c *gin.Context) {
-	t, err := handler.txnRepo.FindAllCategorized()
+	t, err := handler.txnRepo.FindAllCategorized(c)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, fmt.Errorf("unable to received categorized transactions: %w", err))
 		return
@@ -123,7 +123,7 @@ func (handler *TransactionsHandler) onlyCategorizedTransactions(c *gin.Context) 
 }
 
 func (handler *TransactionsHandler) onlyUncategorizedTransactions(c *gin.Context) {
-	t, err := handler.txnRepo.FindAllUncategorized()
+	t, err := handler.txnRepo.FindAllUncategorized(c)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, fmt.Errorf("unable to received uncategorized transactions: %w", err))
 		return
@@ -139,7 +139,7 @@ func (handler *TransactionsHandler) oneCategoryTransactions(c *gin.Context, cate
 	if !ok {
 		return
 	}
-	t, err := handler.txnRepo.FindAllByCategoryID(ctg.ID)
+	t, err := handler.txnRepo.FindAllByCategoryID(c, ctg.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, fmt.Errorf("unable to received transactions for specify category: %w", err))
 		return
