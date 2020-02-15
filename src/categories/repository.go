@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/lungria/spendshelf-backend/src/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"golang.org/x/text/unicode/norm"
@@ -31,12 +30,12 @@ func NewRepository(db *mongo.Database) *Repository {
 }
 
 // GetAll return all categories
-func (repo *Repository) GetAll(ctx context.Context) ([]models.Category, error) {
+func (repo *Repository) GetAll(ctx context.Context) ([]Category, error) {
 	result, err := repo.collection.Find(ctx, bson.D{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all transactions: %w", err)
 	}
-	var categories []models.Category
+	var categories []Category
 	err = result.All(ctx, &categories)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all transactions: %w", err)
@@ -45,14 +44,14 @@ func (repo *Repository) GetAll(ctx context.Context) ([]models.Category, error) {
 }
 
 // Find is returning preferred category
-func (repo *Repository) FindByNormalizedName(ctx context.Context, name string) *models.Category {
+func (repo *Repository) FindByNormalizedName(ctx context.Context, name string) *Category {
 	query := bson.M{"normalizedName": name}
 	result := repo.collection.FindOne(ctx, query)
 	err := result.Err()
 	if err != nil {
 		return nil
 	}
-	model := &models.Category{}
+	model := &Category{}
 	err = result.Decode(model)
 	if err != nil {
 		return nil
@@ -62,14 +61,14 @@ func (repo *Repository) FindByNormalizedName(ctx context.Context, name string) *
 }
 
 // FindByID returns the category which was found by ObjectID
-func (repo *Repository) FindByID(ctx context.Context, id primitive.ObjectID) *models.Category {
+func (repo *Repository) FindByID(ctx context.Context, id primitive.ObjectID) *Category {
 	query := bson.M{"_id": id}
 	result := repo.collection.FindOne(ctx, query)
 	err := result.Err()
 	if err != nil {
 		return nil
 	}
-	model := &models.Category{}
+	model := &Category{}
 	err = result.Decode(model)
 	if err != nil {
 		return nil
@@ -87,7 +86,7 @@ func (repo *Repository) Insert(ctx context.Context, name string) (primitive.Obje
 		return ctg.ID, nil
 	}
 
-	newCtg := models.Category{
+	newCtg := Category{
 		NormalizedName: normalized,
 		Name:           trimmed,
 	}

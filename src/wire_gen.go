@@ -7,14 +7,10 @@ package main
 
 import (
 	"github.com/lungria/spendshelf-backend/src/api"
-	"github.com/lungria/spendshelf-backend/src/api/handlers"
 	"github.com/lungria/spendshelf-backend/src/categories"
 	"github.com/lungria/spendshelf-backend/src/config"
 	"github.com/lungria/spendshelf-backend/src/db"
-	"github.com/lungria/spendshelf-backend/src/report"
 	"github.com/lungria/spendshelf-backend/src/transactions"
-	"github.com/lungria/spendshelf-backend/src/webhooks"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
 )
 
@@ -29,30 +25,22 @@ func InitializeServer() (*api.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	database, err := mongoDbProvider(environmentConfiguration)
+	database, err := db.NewDatabase(environmentConfiguration)
 	if err != nil {
 		return nil, err
 	}
-	sugaredLogger := sugarProvider(logger)
-	webHookRepository := webhooks.NewWebHookRepository(database, sugaredLogger)
-	webHookHandler := handlers.NewWebHookHandler(webHookRepository, sugaredLogger)
 	repository := categories.NewRepository(database)
-	categoriesHandler := handlers.NewCategoriesHandler(repository, sugaredLogger)
-	transactionRepository := transactions.NewTransactionRepository(database, sugaredLogger)
-	transactionsHandler := handlers.NewTransactionsHandler(transactionRepository, repository, sugaredLogger)
-	sequentialReportGenerator := report.NewSequentialReportGenerator(database, repository, sugaredLogger)
-	reportsHandler := handlers.NewReportsHandler(sequentialReportGenerator, sugaredLogger)
-	v := api.RoutesProvider(webHookHandler, categoriesHandler, transactionsHandler, reportsHandler)
+	sugaredLogger := sugarProvider(logger)
+	handler := categories.NewHandler(repository, sugaredLogger)
+	transactionsRepository := transactions.NewRepository(database, sugaredLogger)
+	transactionsHandler := transactions.NewHandler(transactionsRepository, sugaredLogger)
+	v := api.RoutesProvider(handler, transactionsHandler)
 	pipelineBuilder := api.NewPipelineBuilder(logger, v)
 	server := api.NewServer(environmentConfiguration, logger, pipelineBuilder)
 	return server, nil
 }
 
 // wire.go:
-
-func mongoDbProvider(cfg *config.EnvironmentConfiguration) (*mongo.Database, error) {
-	return db.NewDatabase(cfg.DBName, cfg.MongoURI)
-}
 
 func sugarProvider(logger *zap.Logger) *zap.SugaredLogger {
 	return logger.Sugar()

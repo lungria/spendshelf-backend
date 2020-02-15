@@ -1,13 +1,9 @@
-//+build wireinject
-
+/*//+build wireinject
+ */
 package main
 
 import (
-	"github.com/lungria/spendshelf-backend/src/report"
-
 	"github.com/lungria/spendshelf-backend/src/transactions"
-
-	"github.com/lungria/spendshelf-backend/src/webhooks"
 
 	"go.uber.org/zap"
 
@@ -15,18 +11,11 @@ import (
 
 	"github.com/lungria/spendshelf-backend/src/config"
 
-	"github.com/lungria/spendshelf-backend/src/api/handlers"
 	"github.com/lungria/spendshelf-backend/src/categories"
 
-	"github.com/lungria/spendshelf-backend/src/db"
-	"go.mongodb.org/mongo-driver/mongo"
-
 	"github.com/google/wire"
+	"github.com/lungria/spendshelf-backend/src/db"
 )
-
-func mongoDbProvider(cfg *config.EnvironmentConfiguration) (*mongo.Database, error) {
-	return db.NewDatabase(cfg.DBName, cfg.MongoURI)
-}
 
 func sugarProvider(logger *zap.Logger) *zap.SugaredLogger {
 	return logger.Sugar()
@@ -37,22 +26,17 @@ func zapProvider() (*zap.Logger, error) {
 }
 
 func InitializeServer() (*api.Server, error) {
-	wire.Build(config.NewConfig,
-		mongoDbProvider,
-		categories.NewRepository,
-		handlers.NewCategoriesHandler,
-		transactions.NewTransactionRepository,
-		report.NewSequentialReportGenerator,
-		handlers.NewTransactionsHandler,
-		webhooks.NewWebHookRepository,
-		handlers.NewWebHookHandler,
-		handlers.NewReportsHandler,
+	wire.Build(
+		config.NewConfig,
+		wire.Bind(new(api.ServerConfig), new(*config.EnvironmentConfiguration)),
+		wire.Bind(new(db.Config), new(*config.EnvironmentConfiguration)),
+		db.NewDatabase,
 		zapProvider,
 		sugarProvider,
-		wire.Bind(new(api.ServerConfig), new(*config.EnvironmentConfiguration)),
-		wire.Bind(new(transactions.Repository), new(*transactions.TransactionRepository)),
-		wire.Bind(new(webhooks.Repository), new(*webhooks.WebHookRepository)),
-		wire.Bind(new(report.Generator), new(*report.SequentialReportGenerator)),
+		categories.NewRepository,
+		categories.NewHandler,
+		transactions.NewRepository,
+		transactions.NewHandler,
 		api.RoutesProvider,
 		api.NewPipelineBuilder,
 		api.NewServer,

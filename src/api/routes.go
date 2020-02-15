@@ -1,9 +1,12 @@
 package api
 
-import "github.com/lungria/spendshelf-backend/src/api/handlers"
+import (
+	"github.com/lungria/spendshelf-backend/src/categories"
+	"github.com/lungria/spendshelf-backend/src/transactions"
+)
 
-func RoutesProvider(w *handlers.WebHookHandler, c *handlers.CategoriesHandler, t *handlers.TransactionsHandler, r *handlers.ReportsHandler) []RouterBinder {
+func RoutesProvider(c *categories.Handler, t *transactions.Handler) []RouterBinder {
 	return []RouterBinder{
-		w, c, t, r,
+		c, t,
 	}
 }

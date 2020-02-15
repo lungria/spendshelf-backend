@@ -8,9 +8,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+type Config interface {
+	GetDBName() string
+	GetMongoURI() string
+}
+
 // NewDatabase is create a new database connection
-func NewDatabase(dbname, URI string) (*mongo.Database, error) {
-	client, err := mongo.NewClient(options.Client().ApplyURI(URI), options.Client().SetMaxPoolSize(50))
+func NewDatabase(config Config) (*mongo.Database, error) {
+	client, err := mongo.NewClient(options.Client().ApplyURI(config.GetMongoURI()), options.Client().SetMaxPoolSize(50))
 	if err != nil {
 		return nil, err
 	}
@@ -19,6 +24,6 @@ func NewDatabase(dbname, URI string) (*mongo.Database, error) {
 	if err := client.Connect(databaseCtx); err != nil {
 		return nil, err
 	}
-	database := client.Database(dbname)
+	database := client.Database(config.GetDBName())
 	return database, nil
 }
