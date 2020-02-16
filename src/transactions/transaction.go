@@ -52,10 +52,10 @@ func (repo *Store) ReadUncategorized() ([]Transaction, error) {
 	err := repo.db.View(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte(db.UncategorizedTransactionsBucket))
 		list = make([]Transaction, b.Stats().KeyN)
-		buf := bytes.NewBuffer(make([]byte, 0))
 		i := 0
 		err := b.ForEach(func(k, v []byte) error {
 			var t Transaction
+			buf := bytes.NewBuffer(v)
 			decoder := gob.NewDecoder(buf)
 			err := decoder.Decode(&t)
 			if err != nil {
@@ -63,7 +63,6 @@ func (repo *Store) ReadUncategorized() ([]Transaction, error) {
 			}
 			list[i] = t
 			i++
-			buf.Reset()
 			return nil
 		})
 		if err != nil {
