@@ -32,7 +32,7 @@ func InitializeServer() (*app.App, error) {
 	v := app.RoutesProvider(handler)
 	pipelineBuilder := app.NewPipelineBuilder(logger, v)
 	server := app.NewServer(environmentConfiguration, logger, pipelineBuilder, connection)
-	listener := mqtt.NewListener(environmentConfiguration, sugaredLogger)
+	listener := mqtt.NewListener(environmentConfiguration, sugaredLogger, store)
 	appApp := app.NewApp(server, listener, connection, sugaredLogger)
 	return appApp, nil
 }

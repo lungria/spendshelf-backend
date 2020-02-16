@@ -2,6 +2,9 @@ package mqtt
 
 import (
 	"context"
+	"encoding/json"
+
+	"github.com/lungria/spendshelf-backend/src/transactions"
 
 	"go.uber.org/zap"
 
@@ -15,16 +18,18 @@ type ListenerConfig interface {
 	GetBrokerHost() string
 }
 
+const qos = 1
+
 type Listener struct {
 	topic  string
 	client MQTT.Client
-	qos    byte
 	logger *zap.SugaredLogger
 	// message contains topic at [0] and message at [1]
 	message chan [2]string
+	store   *transactions.Store
 }
 
-func NewListener(config ListenerConfig, logger *zap.SugaredLogger) *Listener {
+func NewListener(config ListenerConfig, logger *zap.SugaredLogger, store *transactions.Store) *Listener {
 	opts := MQTT.NewClientOptions()
 	opts.AddBroker(config.GetBrokerHost())
 
@@ -38,26 +43,37 @@ func NewListener(config ListenerConfig, logger *zap.SugaredLogger) *Listener {
 	return &Listener{
 		client:  client,
 		topic:   config.GetTopic(),
-		qos:     0,
 		logger:  logger,
-		message: message}
+		message: message,
+		store:   store,
+	}
 }
 
 // Listen MQTT messages until ctx cancelled. This method is blocking.
 func (l *Listener) Listen(ctx context.Context) error {
 
 	if token := l.client.Connect(); token.Wait() && token.Error() != nil {
-		return errors.Wrap(token.Error(), "unable to connect to MQTT")
+		return errors.Wrap(token.Error(), "connect to MQTT")
 	}
 
-	if token := l.client.Subscribe(l.topic, l.qos, nil); token.Wait() && token.Error() != nil {
-		return errors.Wrap(token.Error(), "unable to subscribe to MQTT")
+	if token := l.client.Subscribe(l.topic, qos, nil); token.Wait() && token.Error() != nil {
+		return errors.Wrap(token.Error(), "subscribe to MQTT")
 	}
 
 	for {
 		select {
 		case incoming := <-l.message:
-			l.logger.Info("received message", zap.String("topic", incoming[0]), zap.String("message", incoming[1]))
+			l.logger.Info("received message", zap.String("topic", incoming[0]))
+			var t transactions.Transaction
+			err := json.Unmarshal([]byte(incoming[1]), &t)
+			if err != nil {
+				l.logger.Error("unable to unmarshal json: ", zap.Error(err))
+				continue
+			}
+			err = l.store.Insert(&t)
+			if err != nil {
+				l.logger.Error("unable to save transaction: ", zap.Error(err))
+			}
 		case <-ctx.Done():
 			close(l.message)
 			return nil
