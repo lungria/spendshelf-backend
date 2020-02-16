@@ -41,15 +41,6 @@ func (handler *Handler) GetUncategorized(c *gin.Context) {
 	c.JSON(http.StatusOK, getResponse{Transactions: transactions})
 }
 
-// GetUncategorized can return uncategorized transactions.
-func (handler *Handler) GetCategorized(c *gin.Context) {
-	transactions, err := handler.store.ReadUncategorized()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, err.Error())
-	}
-	c.JSON(http.StatusOK, getResponse{Transactions: transactions})
-}
-
 // Patch is setting or changing a category for specify transactionResponse
 func (handler *Handler) Patch(c *gin.Context) {
 	var req patchRequest
