@@ -1,8 +1,9 @@
-//+build wireinject
-
+/*//+build wireinject
+ */
 package main
 
 import (
+	"github.com/lungria/spendshelf-backend/src/mqtt"
 	"github.com/lungria/spendshelf-backend/src/transactions"
 
 	"go.uber.org/zap"
@@ -23,12 +24,13 @@ func zapProvider() (*zap.Logger, error) {
 	return zap.NewProduction()
 }
 
-func InitializeServer() (*app.Server, error) {
+func InitializeServer() (*app.App, error) {
 	wire.Build(
 		config.NewConfig,
 		wire.Bind(new(app.ServerConfig), new(*config.EnvironmentConfiguration)),
 		wire.Bind(new(db.Config), new(*config.EnvironmentConfiguration)),
-		db.OpenConnection,
+		wire.Bind(new(mqtt.ListenerConfig), new(*config.EnvironmentConfiguration)),
+		db.NewConnection,
 		zapProvider,
 		sugarProvider,
 		transactions.NewStore,
@@ -36,6 +38,8 @@ func InitializeServer() (*app.Server, error) {
 		app.RoutesProvider,
 		app.NewPipelineBuilder,
 		app.NewServer,
+		mqtt.NewListener,
+		app.NewApp,
 	)
-	return &app.Server{}, nil
+	return &app.App{}, nil
 }

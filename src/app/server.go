@@ -3,8 +3,6 @@ package app
 import (
 	"context"
 	"net/http"
-	"os"
-	"os/signal"
 	"time"
 
 	"github.com/lungria/spendshelf-backend/src/db"
@@ -41,34 +39,20 @@ func NewServer(cfg ServerConfig, logger *zap.Logger, routerBuilder *PipelineBuil
 	return server
 }
 
-// Run app and block on this method until os.Interrupt or os.Kill received
-func (s *Server) Run() {
-	done := make(chan bool, 1)
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt, os.Kill)
-
+// Listen app and block on this method until os.Interrupt or os.Kill received
+func (s *Server) Listen(ctx context.Context) error {
 	go func() {
-		<-sigChan
-		s.logger.Info("Shutting down")
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-
-		s.server.SetKeepAlivesEnabled(false)
-		if err := s.server.Shutdown(ctx); err != nil {
-			s.logger.Fatal("Couldn't gracefully shutdown the app.go: %+v\n", zap.Error(err))
+		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			s.logger.Fatal("Couldn't listen: %+v\n", zap.Error(err))
 		}
-
-		ctx, cancelDb := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancelDb()
-		s.db.CloseWithTimeout(ctx)
-		close(done)
 	}()
-
-	if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		s.logger.Fatal("Couldn't listen: %+v\n", zap.Error(err))
-	}
-
-	<-done
+	<-ctx.Done()
+	s.logger.Info("Shutting down")
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	s.server.SetKeepAlivesEnabled(false)
+	// ignore error since it will be "Err shutting down server : context canceled"
+	return s.server.Shutdown(shutdownCtx)
 }
 
 type PipelineBuilder struct {

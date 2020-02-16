@@ -49,7 +49,7 @@ func NewStore(bolt *db.Connection, logger *zap.SugaredLogger) *Store {
 // ReadUncategorized returns all uncategorized transactions
 func (repo *Store) ReadUncategorized() ([]Transaction, error) {
 	var list []Transaction
-	err := repo.db.View(func(tx *bbolt.Tx) error {
+	err := repo.db.DB.View(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte(db.UncategorizedTransactionsBucket))
 		list = make([]Transaction, b.Stats().KeyN)
 		i := 0

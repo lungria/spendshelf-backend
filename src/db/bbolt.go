@@ -20,57 +20,48 @@ var (
 )
 
 type Connection struct {
+	cfg Config
 	*bbolt.DB
 	logger *zap.SugaredLogger
 }
 
-func OpenConnection(cfg Config, logger *zap.SugaredLogger) (*Connection, error) {
-	db, err := bbolt.Open(cfg.GetDBName(), 0666, nil)
-	if err != nil {
-		return nil, err
-	}
-	connection := &Connection{db, logger}
+func NewConnection(cfg Config, logger *zap.SugaredLogger) *Connection {
+	return &Connection{cfg: cfg, logger: logger}
+}
 
-	err = connection.Update(func(tx *bbolt.Tx) error {
+// KeepConnected keeps connection to db until ctx is cancelled. This method is blocking.
+func (db *Connection) KeepConnected(ctx context.Context) error {
+	bolt, err := bbolt.Open(db.cfg.GetDBName(), 0666, nil)
+	if err != nil {
+		db.logger.Fatal("unable connect to db", zap.Error(err))
+	}
+	db.DB = bolt
+	err = db.ensureBucketsCreated()
+	if err != nil {
+		db.logger.Fatal("unable connect to db", zap.Error(err))
+	}
+	<-ctx.Done()
+	return db.Close()
+}
+
+func (db *Connection) ensureBucketsCreated() error {
+	return db.Update(func(tx *bbolt.Tx) error {
 		_, err := tx.CreateBucketIfNotExists([]byte(TransactionsBucket))
 		if err != nil {
-			connection.logger.Error("create bucket: %s", zap.Error(err))
+			db.logger.Error("create bucket: %s", zap.Error(err))
 			return err
 		}
 		_, err = tx.CreateBucketIfNotExists([]byte(UncategorizedTransactionsBucket))
 		if err != nil {
-			connection.logger.Error("create bucket: %s", zap.Error(err))
+			db.logger.Error("create bucket: %s", zap.Error(err))
 			return err
 		}
 		_, err = tx.CreateBucketIfNotExists([]byte(CategoriesBucket))
 		if err != nil {
-			connection.logger.Error("create bucket: %s", zap.Error(err))
+			db.logger.Error("create bucket: %s", zap.Error(err))
 			return err
 		}
 
 		return nil
 	})
-	if err != nil {
-		return nil, err
-	}
-	return connection, err
-}
-
-func (db *Connection) CloseWithTimeout(ctx context.Context) {
-	done := make(chan struct{})
-	go func() {
-		err := db.Close()
-		if err != nil {
-			db.logger.Error("unable to close db connection", zap.Error(err))
-		}
-		done <- struct{}{}
-	}()
-	select {
-	case <-ctx.Done():
-		db.logger.Error("unable to gracefully close db connection")
-		return
-	case <-done:
-		db.logger.Info("db connection closed successfully")
-		return
-	}
 }

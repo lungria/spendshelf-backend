@@ -5,9 +5,9 @@ import (
 )
 
 func main() {
-	server, err := InitializeServer()
+	a, err := InitializeServer()
 	if err != nil {
 		log.Fatalf("Unable to initialize app.go: %+v", err)
 	}
-	server.Run()
+	a.Run()
 }
