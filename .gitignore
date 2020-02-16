@@ -4,3 +4,4 @@ src/spendshelf
 dbdata/
 # Path to binary
 src/src
+src/spendshelf.db

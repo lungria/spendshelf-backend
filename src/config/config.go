@@ -7,8 +7,7 @@ import (
 // EnvironmentConfiguration is struct for all configuration params of the project
 type EnvironmentConfiguration struct {
 	HTTPAddr   string `env:"SPENDSHELF_HTTP_ADDR" envDefault:":8081"`
-	MongoURI   string `env:"SPENDSHELF_MONGO_URI" envDefault:"mongodb://root:toor@localhost:27017"`
-	DBName     string `env:"SPENDSHELF_DB_NAME" envDefault:"spendShelf"`
+	DBName     string `env:"SPENDSHELF_DB_NAME" envDefault:"spendshelf.db"`
 	MonoAPIKey string `env:"SPENDSHELF_MONO_API_KEY" envDefault:"MONO_API"`
 }
 
@@ -29,8 +28,4 @@ func (c *EnvironmentConfiguration) GetHTTPAddr() string {
 
 func (c *EnvironmentConfiguration) GetDBName() string {
 	return c.DBName
-}
-
-func (c *EnvironmentConfiguration) GetMongoURI() string {
-	return c.MongoURI
 }

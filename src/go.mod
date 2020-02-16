@@ -10,8 +10,7 @@ require (
 	github.com/gin-gonic/gin v1.5.0
 	github.com/google/wire v0.4.0
 	github.com/pkg/errors v0.9.1
-	github.com/shal/mono v0.1.3
-	github.com/stretchr/testify v1.4.0
+	go.etcd.io/bbolt v1.3.3
 	go.mongodb.org/mongo-driver v1.3.0
 	go.uber.org/zap v1.13.0
 	golang.org/x/text v0.3.2

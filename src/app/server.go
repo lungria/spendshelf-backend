@@ -1,4 +1,4 @@
-package api
+package app
 
 import (
 	"context"
@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/signal"
 	"time"
+
+	"github.com/lungria/spendshelf-backend/src/db"
 
 	"go.uber.org/zap"
 
@@ -17,28 +19,29 @@ import (
 
 type Server struct {
 	server *http.Server
-	router *gin.Engine
 	logger *zap.Logger
+	db     *db.Connection
 }
 
 type ServerConfig interface {
 	GetHTTPAddr() string
 }
 
-// NewAPI create a new WebHookAPI with DB, logger and router
-func NewServer(cfg ServerConfig, logger *zap.Logger, routerBuilder *PipelineBuilder) *Server {
+// NewAPI create a new WebHookAPI with Connection, logger and router
+func NewServer(cfg ServerConfig, logger *zap.Logger, routerBuilder *PipelineBuilder, db *db.Connection) *Server {
 	server := &Server{
 		server: &http.Server{
-			Addr: cfg.GetHTTPAddr(),
+			Addr:    cfg.GetHTTPAddr(),
+			Handler: routerBuilder.AddMiddleware().AddRoutes().Build(),
 		},
 		logger: logger,
-		router: routerBuilder.AddMiddleware().AddRoutes().Build(),
+		db:     db,
 	}
 
 	return server
 }
 
-// Run server and block on this method until os.Interrupt or os.Kill received
+// Run app and block on this method until os.Interrupt or os.Kill received
 func (s *Server) Run() {
 	done := make(chan bool, 1)
 	sigChan := make(chan os.Signal, 1)
@@ -47,13 +50,17 @@ func (s *Server) Run() {
 	go func() {
 		<-sigChan
 		s.logger.Info("Shutting down")
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
 		s.server.SetKeepAlivesEnabled(false)
 		if err := s.server.Shutdown(ctx); err != nil {
-			s.logger.Fatal("Couldn't gracefully shutdown the server.go: %+v\n", zap.Error(err))
+			s.logger.Fatal("Couldn't gracefully shutdown the app.go: %+v\n", zap.Error(err))
 		}
+
+		ctx, cancelDb := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancelDb()
+		s.db.CloseWithTimeout(ctx)
 		close(done)
 	}()
 

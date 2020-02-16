@@ -1,5 +1,5 @@
-/*//+build wireinject
- */
+//+build wireinject
+
 package main
 
 import (
@@ -7,11 +7,9 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/lungria/spendshelf-backend/src/api"
+	"github.com/lungria/spendshelf-backend/src/app"
 
 	"github.com/lungria/spendshelf-backend/src/config"
-
-	"github.com/lungria/spendshelf-backend/src/categories"
 
 	"github.com/google/wire"
 	"github.com/lungria/spendshelf-backend/src/db"
@@ -25,21 +23,19 @@ func zapProvider() (*zap.Logger, error) {
 	return zap.NewProduction()
 }
 
-func InitializeServer() (*api.Server, error) {
+func InitializeServer() (*app.Server, error) {
 	wire.Build(
 		config.NewConfig,
-		wire.Bind(new(api.ServerConfig), new(*config.EnvironmentConfiguration)),
+		wire.Bind(new(app.ServerConfig), new(*config.EnvironmentConfiguration)),
 		wire.Bind(new(db.Config), new(*config.EnvironmentConfiguration)),
-		db.NewDatabase,
+		db.OpenConnection,
 		zapProvider,
 		sugarProvider,
-		categories.NewRepository,
-		categories.NewHandler,
-		transactions.NewRepository,
+		transactions.NewStore,
 		transactions.NewHandler,
-		api.RoutesProvider,
-		api.NewPipelineBuilder,
-		api.NewServer,
+		app.RoutesProvider,
+		app.NewPipelineBuilder,
+		app.NewServer,
 	)
-	return &api.Server{}, nil
+	return &app.Server{}, nil
 }

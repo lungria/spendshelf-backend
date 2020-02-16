@@ -6,8 +6,7 @@
 package main
 
 import (
-	"github.com/lungria/spendshelf-backend/src/api"
-	"github.com/lungria/spendshelf-backend/src/categories"
+	"github.com/lungria/spendshelf-backend/src/app"
 	"github.com/lungria/spendshelf-backend/src/config"
 	"github.com/lungria/spendshelf-backend/src/db"
 	"github.com/lungria/spendshelf-backend/src/transactions"
@@ -16,7 +15,7 @@ import (
 
 // Injectors from wire.go:
 
-func InitializeServer() (*api.Server, error) {
+func InitializeServer() (*app.Server, error) {
 	environmentConfiguration, err := config.NewConfig()
 	if err != nil {
 		return nil, err
@@ -25,18 +24,16 @@ func InitializeServer() (*api.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	database, err := db.NewDatabase(environmentConfiguration)
+	sugaredLogger := sugarProvider(logger)
+	connection, err := db.OpenConnection(environmentConfiguration, sugaredLogger)
 	if err != nil {
 		return nil, err
 	}
-	repository := categories.NewRepository(database)
-	sugaredLogger := sugarProvider(logger)
-	handler := categories.NewHandler(repository, sugaredLogger)
-	transactionsRepository := transactions.NewRepository(database, sugaredLogger)
-	transactionsHandler := transactions.NewHandler(transactionsRepository, sugaredLogger)
-	v := api.RoutesProvider(handler, transactionsHandler)
-	pipelineBuilder := api.NewPipelineBuilder(logger, v)
-	server := api.NewServer(environmentConfiguration, logger, pipelineBuilder)
+	store := transactions.NewStore(connection, sugaredLogger)
+	handler := transactions.NewHandler(store, sugaredLogger)
+	v := app.RoutesProvider(handler)
+	pipelineBuilder := app.NewPipelineBuilder(logger, v)
+	server := app.NewServer(environmentConfiguration, logger, pipelineBuilder, connection)
 	return server, nil
 }
 
