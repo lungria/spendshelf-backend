@@ -17,7 +17,6 @@ import (
 
 type Server struct {
 	server *http.Server
-	router *gin.Engine
 	logger *zap.Logger
 }
 
@@ -29,10 +28,10 @@ type ServerConfig interface {
 func NewServer(cfg ServerConfig, logger *zap.Logger, routerBuilder *PipelineBuilder) *Server {
 	server := &Server{
 		server: &http.Server{
-			Addr: cfg.GetHTTPAddr(),
+			Addr:    cfg.GetHTTPAddr(),
+			Handler: routerBuilder.AddMiddleware().AddRoutes().Build(),
 		},
 		logger: logger,
-		router: routerBuilder.AddMiddleware().AddRoutes().Build(),
 	}
 
 	return server
