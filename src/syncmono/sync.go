@@ -61,7 +61,7 @@ func (s *monoSync) Transactions(createdAtAccount time.Time) {
 		}
 
 		go func() {
-			currTxns, err := s.txnRepo.FindAll()
+			currTxns, err := s.txnRepo.FindAll(context.TODO())
 			if err != nil {
 				s.errChan <- err
 			}

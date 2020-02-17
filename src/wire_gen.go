@@ -6,89 +6,52 @@
 package main
 
 import (
-	"context"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-contrib/zap"
-	"github.com/gin-gonic/gin"
 	"github.com/lungria/spendshelf-backend/src/api"
 	"github.com/lungria/spendshelf-backend/src/api/handlers"
 	"github.com/lungria/spendshelf-backend/src/categories"
 	"github.com/lungria/spendshelf-backend/src/config"
 	"github.com/lungria/spendshelf-backend/src/db"
 	"github.com/lungria/spendshelf-backend/src/report"
-	"github.com/lungria/spendshelf-backend/src/syncmono"
 	"github.com/lungria/spendshelf-backend/src/transactions"
 	"github.com/lungria/spendshelf-backend/src/webhooks"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
-	"time"
 )
 
 // Injectors from wire.go:
 
-func InitializeServer() (*config.Dependencies, error) {
-	logger, err := zapProvider()
-	if err != nil {
-		return nil, err
-	}
-	sugaredLogger := sugarProvider(logger)
+func InitializeServer() (*api.Server, error) {
 	environmentConfiguration, err := config.NewConfig()
 	if err != nil {
 		return nil, err
 	}
-	context := ctxProvider()
-	database, err := mongoDbProvider(context, environmentConfiguration)
+	logger, err := zapProvider()
 	if err != nil {
 		return nil, err
 	}
-	webHookRepository, err := webhooks.NewWebHookRepository(context, database, sugaredLogger)
+	database, err := mongoDbProvider(environmentConfiguration)
 	if err != nil {
 		return nil, err
 	}
-	webHookHandler, err := handlers.NewWebHookHandler(webHookRepository, sugaredLogger)
-	if err != nil {
-		return nil, err
-	}
-	cachedRepository, err := categories.NewCachedRepository(context, database)
-	if err != nil {
-		return nil, err
-	}
-	categoriesHandler, err := handlers.NewCategoriesHandler(cachedRepository, sugaredLogger)
-	if err != nil {
-		return nil, err
-	}
-	transactionRepository, err := transactions.NewTransactionRepository(context, database, sugaredLogger)
-	if err != nil {
-		return nil, err
-	}
-	transactionsHandler, err := handlers.NewTransactionsHandler(transactionRepository, cachedRepository, sugaredLogger)
-	if err != nil {
-		return nil, err
-	}
-	syncSocket, err := syncmono.NewSyncSocket(context, sugaredLogger, environmentConfiguration, transactionRepository)
-	if err != nil {
-		return nil, err
-	}
-	syncMonoHandler := handlers.NewSyncMonoHandler(sugaredLogger, syncSocket)
-	sequentialReportGenerator := report.NewSequentialReportGenerator(database, cachedRepository, sugaredLogger)
+	sugaredLogger := sugarProvider(logger)
+	webHookRepository := webhooks.NewWebHookRepository(database, sugaredLogger)
+	webHookHandler := handlers.NewWebHookHandler(webHookRepository, sugaredLogger)
+	repository := categories.NewRepository(database)
+	categoriesHandler := handlers.NewCategoriesHandler(repository, sugaredLogger)
+	transactionRepository := transactions.NewTransactionRepository(database, sugaredLogger)
+	transactionsHandler := handlers.NewTransactionsHandler(transactionRepository, repository, sugaredLogger)
+	sequentialReportGenerator := report.NewSequentialReportGenerator(database, repository, sugaredLogger)
 	reportsHandler := handlers.NewReportsHandler(sequentialReportGenerator, sugaredLogger)
-	engine := routerProvider(logger, webHookHandler, categoriesHandler, transactionsHandler, syncMonoHandler, reportsHandler)
-	server, err := api.NewAPI(environmentConfiguration, engine)
-	if err != nil {
-		return nil, err
-	}
-	dependencies := &config.Dependencies{
-		Logger:  sugaredLogger,
-		Server:  server,
-		Context: context,
-	}
-	return dependencies, nil
+	v := api.RoutesProvider(webHookHandler, categoriesHandler, transactionsHandler, reportsHandler)
+	pipelineBuilder := api.NewPipelineBuilder(logger, v)
+	server := api.NewServer(environmentConfiguration, logger, pipelineBuilder)
+	return server, nil
 }
 
 // wire.go:
 
-func mongoDbProvider(ctx context.Context, cfg *config.EnvironmentConfiguration) (*mongo.Database, error) {
-	return db.NewDatabase(ctx, cfg.DBName, cfg.MongoURI)
+func mongoDbProvider(cfg *config.EnvironmentConfiguration) (*mongo.Database, error) {
+	return db.NewDatabase(cfg.DBName, cfg.MongoURI)
 }
 
 func sugarProvider(logger *zap.Logger) *zap.SugaredLogger {
@@ -97,32 +60,4 @@ func sugarProvider(logger *zap.Logger) *zap.SugaredLogger {
 
 func zapProvider() (*zap.Logger, error) {
 	return zap.NewProduction()
-}
-
-func ctxProvider() context.Context {
-	return context.Background()
-}
-
-func defaultHeaders() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Header("content-type", "application/json")
-		c.Next()
-	}
-}
-
-func routerProvider(logger *zap.Logger, hookHandler *handlers.WebHookHandler, ctgHandler *handlers.CategoriesHandler, txnHandler *handlers.TransactionsHandler, syncHandler *handlers.SyncMonoHandler, rpHandler *handlers.ReportsHandler) *gin.Engine {
-	router := gin.New()
-	router.Use(ginzap.Ginzap(logger, time.RFC3339, true))
-	router.Use(ginzap.RecoveryWithZap(logger, true))
-	router.Use(defaultHeaders())
-	router.Use(cors.Default())
-	router.GET("/webhook", hookHandler.HandleGet)
-	router.POST("/webhook", hookHandler.HandlePost)
-	router.POST("/categories", ctgHandler.HandlePost)
-	router.GET("/categories", ctgHandler.HandleGet)
-	router.GET("/transactions", txnHandler.HandleGet)
-	router.PATCH("/transactions/:transactionID", txnHandler.HandlePatch)
-	router.GET("/sync", syncHandler.HandleSocket)
-	router.GET("/reports", rpHandler.HandleGet)
-	return router
 }

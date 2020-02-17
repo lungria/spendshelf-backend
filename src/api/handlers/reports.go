@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"errors"
 	"net/http"
 	"time"
 
@@ -33,16 +32,20 @@ func (handler *ReportsHandler) HandleGet(c *gin.Context) {
 	var query getQuery
 	err := c.BindQuery(&query)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, responseFromError(err, "Unable to parse query"))
+		c.JSON(http.StatusBadRequest, "Unable to parse query")
 		return
 	}
 	if query.To.Before(query.From) || query.To.Equal(query.From) {
-		c.JSON(http.StatusBadRequest, responseFromError(errors.New("wrong_date_limits"), "To must be after From"))
+		c.JSON(http.StatusBadRequest, "To must be after From")
 	}
 	reportResponse, err := handler.generator.GetReport(c, query.From, query.To)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, responseFromError(err, "Unable to generate report"))
+		c.JSON(http.StatusBadRequest, "Unable to generate report")
 		return
 	}
 	c.JSON(http.StatusOK, getResponse{reportResponse})
+}
+
+func (handler *ReportsHandler) BindRoutes(router *gin.Engine) {
+	router.GET("/reports", handler.HandleGet)
 }

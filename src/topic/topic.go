@@ -41,10 +41,10 @@ func Listen(ctx context.Context, config ListenerConfig) error {
 				fmt.Printf("RECEIVED TOPIC: %s MESSAGE: %s\n", incoming[0], incoming[1])
 				receiveCount++
 				fmt.Printf("%v\n", receiveCount)
-			case _ <- ctx.Done():
+/*			case _ <- ctx.Done():
 				close(choke)
 				return
-			}
+*/			}
 		}
 	}()
 

@@ -9,12 +9,12 @@ import (
 )
 
 // NewDatabase is create a new database connection
-func NewDatabase(ctx context.Context, dbname, URI string) (*mongo.Database, error) {
+func NewDatabase(dbname, URI string) (*mongo.Database, error) {
 	client, err := mongo.NewClient(options.Client().ApplyURI(URI), options.Client().SetMaxPoolSize(50))
 	if err != nil {
 		return nil, err
 	}
-	databaseCtx, cancel := context.WithTimeout(ctx, time.Millisecond*4999)
+	databaseCtx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 	if err := client.Connect(databaseCtx); err != nil {
 		return nil, err

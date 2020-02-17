@@ -29,11 +29,11 @@ type Generator interface {
 // SequentialReportGenerator is the default Generator implementation
 type SequentialReportGenerator struct {
 	transactions *mongo.Collection
-	categories   categories.Repository
+	categories   *categories.Repository
 	logger       *zap.SugaredLogger
 }
 
-func NewSequentialReportGenerator(db *mongo.Database, categories categories.Repository, logger *zap.SugaredLogger) *SequentialReportGenerator {
+func NewSequentialReportGenerator(db *mongo.Database, categories *categories.Repository, logger *zap.SugaredLogger) *SequentialReportGenerator {
 	return &SequentialReportGenerator{transactions: db.Collection(transactions.TransactionsCollection), categories: categories, logger: logger}
 }
 
