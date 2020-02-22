@@ -74,11 +74,17 @@ func (s *Repository) Insert(ctx context.Context, t *Transaction) error {
 
 // Insert multiple transaction to database.
 func (s *Repository) InsertMany(ctx context.Context, t []Transaction) error {
-	d := make([]interface{}, len(t))
-	for i := range t {
-		d[i] = t[i]
+	data := make([]interface{}, len(t))
+	for i, v := range t {
+		y, m, d := v.Time.Date()
+		v.LocalDate = ShortDate{
+			Day:   int8(d),
+			Month: int8(m),
+			Year:  int16(y),
+		}
+		data[i] = v
 	}
-	_, err := s.db.InsertMany(ctx, d)
+	_, err := s.db.InsertMany(ctx, data)
 	return err
 }
 
@@ -133,7 +139,7 @@ func (s *Repository) BuildDailyReport(ctx context.Context, from time.Time, to ti
 			"sum": bson.M{"$sum": "$amount"},
 		}},
 		bson.M{"$project": bson.M{"_id": bson.M{"$concat": bson.A{bson.M{"$toString": "$_id.day"}, ".", bson.M{"$toString": "$_id.month"}, ".", bson.M{"$toString": "$_id.year"}}}, "sum": "$sum"}},
-		bson.M{"$sort": bson.M{"_id": 1}},
+		bson.M{"$sort": bson.M{"_id": 1}}, // TODO: FIX SORTING!
 	}
 	cursor, err := s.db.Aggregate(ctx, filter)
 	if err != nil {
