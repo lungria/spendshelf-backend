@@ -138,8 +138,8 @@ func (s *Repository) BuildDailyReport(ctx context.Context, from time.Time, to ti
 			"_id": "$localDate",
 			"sum": bson.M{"$sum": "$amount"},
 		}},
+		bson.M{"$sort": bson.M{"_id.year": 1, "_id.month": 1, "_id.day": 1}},
 		bson.M{"$project": bson.M{"_id": bson.M{"$concat": bson.A{bson.M{"$toString": "$_id.day"}, ".", bson.M{"$toString": "$_id.month"}, ".", bson.M{"$toString": "$_id.year"}}}, "sum": "$sum"}},
-		bson.M{"$sort": bson.M{"_id": 1}}, // TODO: FIX SORTING!
 	}
 	cursor, err := s.db.Aggregate(ctx, filter)
 	if err != nil {
