@@ -18,7 +18,7 @@ import (
 
 // Transaction represents a model of transactions in database
 type Transaction struct {
-	ID   primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	ID   primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
 	Time time.Time          `json:"time" bson:"time"`
 	// LocalDate describes transaction date in local timezone of the user.
 	// Used for reporting purposes, so we can aggregate using it.
@@ -119,7 +119,7 @@ type ReportEntry struct {
 	EndDayBalance int32  `json:"endDayBalance" bson:"-"`
 }
 
-// BuildDailyReport returns report with spendings per day. // todo from, to
+// BuildDailyReport returns report with spendings per day.
 func (s *Repository) BuildDailyReport(ctx context.Context, from time.Time, to time.Time, balance int32) ([]ReportEntry, error) {
 	var list []ReportEntry
 	filter := bson.A{
