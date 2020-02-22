@@ -86,7 +86,29 @@ func (handler *Handler) Post(c *gin.Context) {
 	c.Status(http.StatusCreated)
 }
 
+type DailyReportRequest struct {
+	InitialBalance int32 `json:"balance"`
+}
+
+// DailyReport allows to get daily spendings report.
+func (handler *Handler) DailyReport(c *gin.Context) {
+	var req DailyReportRequest
+	err := c.BindJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, err.Error())
+		return
+	}
+
+	r, err := handler.repo.BuildDailyReport(c, req.InitialBalance)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+	c.JSON(http.StatusOK, r)
+}
+
 func (handler *Handler) BindRoutes(router *gin.Engine) {
+	router.POST("/transactions/daily", handler.DailyReport)
 	router.GET("/transactions/uncategorized", handler.GetUncategorized)
 	router.PATCH("/transactions/:transactionID", handler.Patch)
 	router.POST("/transactions", handler.Post)

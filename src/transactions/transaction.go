@@ -22,12 +22,17 @@ type Transaction struct {
 	Time time.Time          `json:"time" bson:"time"`
 	// LocalDate describes transaction date in local timezone of the user.
 	// Used for reporting purposes, so we can aggregate using it.
-	// Timezone is stored as UTC, but must not be considered or used for any purpose.
-	LocalDate   time.Time `json:"-" bson:"localDate"`
+	LocalDate   ShortDate `json:"-" bson:"localDate"`
 	Description string    `json:"description" bson:"description"`
 	CategoryID  uint8     `json:"categoryId,omitempty" bson:"categoryId,omitempty"`
 	Amount      int32     `json:"amount" json:"amount"`
 	BankId      Bank      `json:"bankId" json:"bankId"`
+}
+
+type ShortDate struct {
+	Day   int8  `bson:"day"`
+	Month int8  `bson:"month"`
+	Year  int16 `bson:"year"`
 }
 
 type Bank uint8
@@ -58,7 +63,11 @@ func NewRepository(mongo *mongo.Database, logger *zap.SugaredLogger, categories 
 // Insert transaction to database.
 func (s *Repository) Insert(ctx context.Context, t *Transaction) error {
 	y, m, d := t.Time.Date()
-	t.LocalDate = time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
+	t.LocalDate = ShortDate{
+		Day:   int8(d),
+		Month: int8(m),
+		Year:  int16(y),
+	}
 	_, err := s.db.InsertOne(ctx, t)
 	return err
 }
@@ -100,6 +109,39 @@ func (s *Repository) ReadUncategorized(ctx context.Context) ([]Transaction, erro
 	err = cursor.All(ctx, &list)
 	if err != nil {
 		return nil, err
+	}
+	return list, err
+}
+
+type ReportEntry struct {
+	Date          string `json:"date" bson:"_id"`
+	Sum           int32  `json:"sum" bson:"sum"`
+	EndDayBalance int32  `json:"endDayBalance" bson:"-"`
+}
+
+// BuildDailyReport returns report with spendings per day. // todo from, to
+func (s *Repository) BuildDailyReport(ctx context.Context, balance int32) ([]ReportEntry, error) {
+	var list []ReportEntry
+	filter := bson.A{
+		bson.M{"$group": bson.M{
+			"_id": "$localDate",
+			"sum": bson.M{"$sum": "$amount"},
+		}},
+		bson.M{"$project": bson.M{"_id": bson.M{"$concat": bson.A{bson.M{"$toString": "$_id.day"}, ".", bson.M{"$toString": "$_id.month"}, ".", bson.M{"$toString": "$_id.year"}}}, "sum": "$sum"}},
+		bson.M{"$sort": bson.M{"_id": 1}},
+	}
+	cursor, err := s.db.Aggregate(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	err = cursor.All(ctx, &list)
+	if err != nil {
+		return nil, err
+	}
+
+	for i, v := range list {
+		balance = balance + v.Sum
+		list[i].EndDayBalance = balance
 	}
 	return list, err
 }
