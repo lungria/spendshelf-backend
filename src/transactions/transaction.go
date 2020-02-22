@@ -22,11 +22,11 @@ type Transaction struct {
 	Time time.Time          `json:"time" bson:"time"`
 	// LocalDate describes transaction date in local timezone of the user.
 	// Used for reporting purposes, so we can aggregate using it.
-	LocalDate   ShortDate `json:"-" bson:"localDate"`
-	Description string    `json:"description" bson:"description"`
-	CategoryID  uint8     `json:"categoryId,omitempty" bson:"categoryId,omitempty"`
-	Amount      int32     `json:"amount" json:"amount"`
-	BankId      Bank      `json:"bankId" json:"bankId"`
+	LocalDate   ShortDate          `json:"-" bson:"localDate"`
+	Description string             `json:"description" bson:"description"`
+	CategoryID  primitive.ObjectID `json:"categoryId,omitempty" bson:"categoryId,omitempty"`
+	Amount      int32              `json:"amount" json:"amount"`
+	BankId      Bank               `json:"bankId" json:"bankId"`
 }
 
 type ShortDate struct {
@@ -120,9 +120,14 @@ type ReportEntry struct {
 }
 
 // BuildDailyReport returns report with spendings per day. // todo from, to
-func (s *Repository) BuildDailyReport(ctx context.Context, balance int32) ([]ReportEntry, error) {
+func (s *Repository) BuildDailyReport(ctx context.Context, from time.Time, to time.Time, balance int32) ([]ReportEntry, error) {
 	var list []ReportEntry
 	filter := bson.A{
+
+		bson.M{"$match": bson.M{"time": bson.M{
+			"$lte": to,
+			"$gte": from}},
+		},
 		bson.M{"$group": bson.M{
 			"_id": "$localDate",
 			"sum": bson.M{"$sum": "$amount"},

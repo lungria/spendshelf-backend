@@ -2,6 +2,7 @@ package transactions
 
 import (
 	"net/http"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
@@ -87,7 +88,9 @@ func (handler *Handler) Post(c *gin.Context) {
 }
 
 type DailyReportRequest struct {
-	InitialBalance int32 `json:"balance"`
+	InitialBalance int32     `json:"balance"`
+	From           time.Time `json:"from"`
+	To             time.Time `json:"to"`
 }
 
 // DailyReport allows to get daily spendings report.
@@ -99,7 +102,7 @@ func (handler *Handler) DailyReport(c *gin.Context) {
 		return
 	}
 
-	r, err := handler.repo.BuildDailyReport(c, req.InitialBalance)
+	r, err := handler.repo.BuildDailyReport(c, req.From, req.To, req.InitialBalance)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
