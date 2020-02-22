@@ -18,18 +18,22 @@ import (
 
 // Transaction represents a model of transactions in database
 type Transaction struct {
-	ID          primitive.ObjectID `json:"id" bson:"_id,omitempty"`
-	Time        time.Time          `json:"time" bson:"time"`
-	Description string             `json:"description" bson:"description"`
-	CategoryID  uint8              `json:"categoryId,omitempty" bson:"categoryId,omitempty"`
-	Amount      int32              `json:"amount" json:"amount"`
-	BankId      Bank               `json:"bankId" json:"bankId"`
+	ID   primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	Time time.Time          `json:"time" bson:"time"`
+	// LocalDate describes transaction date in local timezone of the user.
+	// Used for reporting purposes, so we can aggregate using it.
+	// Timezone is stored as UTC, but must not be considered or used for any purpose.
+	LocalDate   time.Time `json:"-" bson:"localDate"`
+	Description string    `json:"description" bson:"description"`
+	CategoryID  uint8     `json:"categoryId,omitempty" bson:"categoryId,omitempty"`
+	Amount      int32     `json:"amount" json:"amount"`
+	BankId      Bank      `json:"bankId" json:"bankId"`
 }
 
 type Bank uint8
 
 const (
-	collectionName = "transactions"
+	CollectionName = "transactions"
 
 	Mono Bank = iota + 1
 	Privat
@@ -46,15 +50,15 @@ type Repository struct {
 func NewRepository(mongo *mongo.Database, logger *zap.SugaredLogger, categories *categories.Repository) *Repository {
 	return &Repository{
 		logger:     logger,
-		db:         mongo.Collection(collectionName),
+		db:         mongo.Collection(CollectionName),
 		categories: categories,
 	}
 }
 
 // Insert transaction to database.
 func (s *Repository) Insert(ctx context.Context, t *Transaction) error {
-	// todo: deduplication
-	//  failed transactions on save must be saved to another collection
+	y, m, d := t.Time.Date()
+	t.LocalDate = time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
 	_, err := s.db.InsertOne(ctx, t)
 	return err
 }
