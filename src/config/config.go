@@ -9,7 +9,7 @@ type EnvironmentConfiguration struct {
 	HTTPAddr   string `env:"SPENDSHELF_HTTP_ADDR" envDefault:":8081"`
 	DBName     string `env:"SPENDSHELF_DB_NAME" envDefault:"spendshelf"`
 	MongoURI   string `env:"SPENDSHELF_MONGO_URI" envDefault:"mongodb://root:toor@localhost:27017"`
-	Topic      string `env:"SPENDSHELF_MQTT_TOPIC" envDefault:"spendshelf/transactions"`
+	Topic      string `env:"SPENDSHELF_MQTT_TOPIC" envDefault:"/transactions/privat"`
 	BrokerHost string `env:"SPENDSHELF_MQTT_HOST" envDefault:"localhost:1883"`
 }
 

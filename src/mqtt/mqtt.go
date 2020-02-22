@@ -62,13 +62,13 @@ func (l *Listener) Listen(ctx context.Context) error {
 		select {
 		case incoming := <-l.message:
 			l.logger.Info("received message", zap.String("topic", incoming[0]))
-			var t transactions.Transaction
+			var t []transactions.Transaction
 			err := json.Unmarshal([]byte(incoming[1]), &t)
 			if err != nil {
 				l.logger.Error("unable to unmarshal json: ", zap.Error(err))
 				continue
 			}
-			err = l.repo.Insert(ctx, &t)
+			err = l.repo.InsertMany(ctx, t)
 			if err != nil {
 				l.logger.Error("unable to save transaction: ", zap.Error(err))
 			}
