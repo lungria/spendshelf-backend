@@ -55,9 +55,10 @@ func (handler *Handler) Post(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
+
 	id, err := handler.repo.Insert(c, req.Name)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, err.Error())
+		c.JSON(http.StatusInternalServerError, err.Error())
 		handler.logger.Error(err)
 		return
 	}

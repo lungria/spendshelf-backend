@@ -2,7 +2,8 @@ package transactions
 
 import (
 	"net/http"
-	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/gin-gonic/gin"
 
@@ -10,8 +11,7 @@ import (
 )
 
 type patchRequest struct {
-	CategoryID    uint8     `json:"categoryId" binding:"required"`
-	TransactionID time.Time `json:"transactionId" binding:"required"`
+	CategoryID primitive.ObjectID `json:"categoryId" binding:"required"`
 }
 
 type getResponse struct {
@@ -20,37 +20,48 @@ type getResponse struct {
 
 // Handler is a struct which implemented by transactions handler
 type Handler struct {
-	store  *Store
+	repo   *Repository
 	logger *zap.SugaredLogger
 }
 
 // NewHandler create a new instance of Handler
-func NewHandler(store *Store, logger *zap.SugaredLogger) *Handler {
+func NewHandler(repo *Repository, logger *zap.SugaredLogger) *Handler {
 	return &Handler{
-		store:  store,
+		repo:   repo,
 		logger: logger,
 	}
 }
 
 // GetUncategorized can return uncategorized transactions.
 func (handler *Handler) GetUncategorized(c *gin.Context) {
-	transactions, err := handler.store.ReadUncategorized()
+	transactions, err := handler.repo.ReadUncategorized(c)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
+	}
+	if transactions == nil {
+		c.Status(http.StatusNoContent)
+		return
 	}
 	c.JSON(http.StatusOK, getResponse{Transactions: transactions})
 }
 
 // Patch is setting or changing a category for specify transactionResponse
 func (handler *Handler) Patch(c *gin.Context) {
-	var req patchRequest
-	err := c.BindJSON(&req)
+	param := c.Param("transactionID")
+	transactionID, err := primitive.ObjectIDFromHex(param)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
 
-	err = handler.store.SetCategory(req.TransactionID, req.CategoryID)
+	var req patchRequest
+	err = c.BindJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, err.Error())
+		return
+	}
+
+	err = handler.repo.SetCategory(c, transactionID, req.CategoryID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
@@ -67,7 +78,7 @@ func (handler *Handler) Post(c *gin.Context) {
 		return
 	}
 
-	err = handler.store.Insert(&req)
+	err = handler.repo.Insert(c, &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
@@ -79,5 +90,4 @@ func (handler *Handler) BindRoutes(router *gin.Engine) {
 	router.GET("/transactions/uncategorized", handler.GetUncategorized)
 	router.PATCH("/transactions/:transactionID", handler.Patch)
 	router.POST("/transactions", handler.Post)
-	router.GET("/transactions/categorized", handler.GetCategorized)
 }

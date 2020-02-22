@@ -8,8 +8,6 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/pkg/errors"
-
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 )
 
@@ -26,10 +24,10 @@ type Listener struct {
 	logger *zap.SugaredLogger
 	// message contains topic at [0] and message at [1]
 	message chan [2]string
-	store   *transactions.Store
+	repo    *transactions.Repository
 }
 
-func NewListener(config ListenerConfig, logger *zap.SugaredLogger, store *transactions.Store) *Listener {
+func NewListener(config ListenerConfig, logger *zap.SugaredLogger, repo *transactions.Repository) *Listener {
 	opts := MQTT.NewClientOptions()
 	opts.AddBroker(config.GetBrokerHost())
 
@@ -45,7 +43,7 @@ func NewListener(config ListenerConfig, logger *zap.SugaredLogger, store *transa
 		topic:   config.GetTopic(),
 		logger:  logger,
 		message: message,
-		store:   store,
+		repo:    repo,
 	}
 }
 
@@ -53,11 +51,11 @@ func NewListener(config ListenerConfig, logger *zap.SugaredLogger, store *transa
 func (l *Listener) Listen(ctx context.Context) error {
 
 	if token := l.client.Connect(); token.Wait() && token.Error() != nil {
-		return errors.Wrap(token.Error(), "connect to MQTT")
+		l.logger.Fatal("mqtt connection failed", zap.Error(token.Error()))
 	}
 
 	if token := l.client.Subscribe(l.topic, qos, nil); token.Wait() && token.Error() != nil {
-		return errors.Wrap(token.Error(), "subscribe to MQTT")
+		l.logger.Fatal("mqtt subscription failed", zap.Error(token.Error()))
 	}
 
 	for {
@@ -70,7 +68,7 @@ func (l *Listener) Listen(ctx context.Context) error {
 				l.logger.Error("unable to unmarshal json: ", zap.Error(err))
 				continue
 			}
-			err = l.store.Insert(&t)
+			err = l.repo.Insert(ctx, &t)
 			if err != nil {
 				l.logger.Error("unable to save transaction: ", zap.Error(err))
 			}

@@ -7,6 +7,7 @@ package main
 
 import (
 	"github.com/lungria/spendshelf-backend/src/app"
+	"github.com/lungria/spendshelf-backend/src/categories"
 	"github.com/lungria/spendshelf-backend/src/config"
 	"github.com/lungria/spendshelf-backend/src/db"
 	"github.com/lungria/spendshelf-backend/src/mqtt"
@@ -25,15 +26,20 @@ func InitializeServer() (*app.App, error) {
 	if err != nil {
 		return nil, err
 	}
+	database, err := db.NewDbConnection(environmentConfiguration)
+	if err != nil {
+		return nil, err
+	}
 	sugaredLogger := sugarProvider(logger)
-	connection := db.NewConnection(environmentConfiguration, sugaredLogger)
-	store := transactions.NewStore(connection, sugaredLogger)
-	handler := transactions.NewHandler(store, sugaredLogger)
-	v := app.RoutesProvider(handler)
+	repository := categories.NewRepository(database, sugaredLogger)
+	transactionsRepository := transactions.NewRepository(database, sugaredLogger, repository)
+	handler := transactions.NewHandler(transactionsRepository, sugaredLogger)
+	categoriesHandler := categories.NewHandler(repository, sugaredLogger)
+	v := app.RoutesProvider(handler, categoriesHandler)
 	pipelineBuilder := app.NewPipelineBuilder(logger, v)
-	server := app.NewServer(environmentConfiguration, logger, pipelineBuilder, connection)
-	listener := mqtt.NewListener(environmentConfiguration, sugaredLogger, store)
-	appApp := app.NewApp(server, listener, connection, sugaredLogger)
+	server := app.NewServer(environmentConfiguration, logger, pipelineBuilder, database)
+	listener := mqtt.NewListener(environmentConfiguration, sugaredLogger, transactionsRepository)
+	appApp := app.NewApp(server, listener, database, sugaredLogger)
 	return appApp, nil
 }
 

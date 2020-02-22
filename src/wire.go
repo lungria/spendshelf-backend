@@ -3,6 +3,7 @@
 package main
 
 import (
+	"github.com/lungria/spendshelf-backend/src/categories"
 	"github.com/lungria/spendshelf-backend/src/mqtt"
 	"github.com/lungria/spendshelf-backend/src/transactions"
 
@@ -30,10 +31,12 @@ func InitializeServer() (*app.App, error) {
 		wire.Bind(new(app.ServerConfig), new(*config.EnvironmentConfiguration)),
 		wire.Bind(new(db.Config), new(*config.EnvironmentConfiguration)),
 		wire.Bind(new(mqtt.ListenerConfig), new(*config.EnvironmentConfiguration)),
-		db.NewConnection,
+		db.NewDbConnection,
 		zapProvider,
 		sugarProvider,
-		transactions.NewStore,
+		categories.NewRepository,
+		categories.NewHandler,
+		transactions.NewRepository,
 		transactions.NewHandler,
 		app.RoutesProvider,
 		app.NewPipelineBuilder,

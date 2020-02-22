@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/lungria/spendshelf-backend/src/db"
+	"go.mongodb.org/mongo-driver/mongo"
 
 	"go.uber.org/zap"
 
@@ -18,7 +18,7 @@ import (
 type Server struct {
 	server *http.Server
 	logger *zap.Logger
-	db     *db.Connection
+	db     *mongo.Database
 }
 
 type ServerConfig interface {
@@ -26,7 +26,7 @@ type ServerConfig interface {
 }
 
 // NewAPI create a new WebHookAPI with Connection, logger and router
-func NewServer(cfg ServerConfig, logger *zap.Logger, routerBuilder *PipelineBuilder, db *db.Connection) *Server {
+func NewServer(cfg ServerConfig, logger *zap.Logger, routerBuilder *PipelineBuilder, db *mongo.Database) *Server {
 	server := &Server{
 		server: &http.Server{
 			Addr:    cfg.GetHTTPAddr(),

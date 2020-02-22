@@ -7,20 +7,21 @@ import (
 	"sync"
 	"time"
 
+	"go.mongodb.org/mongo-driver/mongo"
+
 	"go.uber.org/zap"
 
-	"github.com/lungria/spendshelf-backend/src/db"
 	"github.com/lungria/spendshelf-backend/src/mqtt"
 )
 
 type App struct {
 	web      *Server
 	queue    *mqtt.Listener
-	database *db.Connection
+	database *mongo.Database
 	logger   *zap.SugaredLogger
 }
 
-func NewApp(web *Server, queue *mqtt.Listener, database *db.Connection, logger *zap.SugaredLogger) *App {
+func NewApp(web *Server, queue *mqtt.Listener, database *mongo.Database, logger *zap.SugaredLogger) *App {
 	return &App{web: web, queue: queue, database: database, logger: logger}
 }
 
@@ -30,9 +31,11 @@ func (a *App) Run() {
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
-		err := a.database.KeepConnected(ctx)
+		<-ctx.Done()
+		c, _ := context.WithTimeout(context.Background(), 3*time.Second)
+		err := a.database.Client().Disconnect(c)
 		if err != nil {
-			a.logger.Error("db keepconnected returned error", zap.Error(err))
+			a.logger.Error("db disconnect returned error", zap.Error(err))
 		}
 		wg.Done()
 	}()

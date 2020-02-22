@@ -1,195 +1,101 @@
 package transactions
 
 import (
-	"bytes"
-	"encoding/gob"
+	"context"
 	"errors"
-	"io/ioutil"
 	"time"
 
-	"go.etcd.io/bbolt"
+	"github.com/lungria/spendshelf-backend/src/categories"
 
-	"github.com/lungria/spendshelf-backend/src/db"
+	"go.mongodb.org/mongo-driver/bson"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+
+	"go.mongodb.org/mongo-driver/mongo"
 
 	"go.uber.org/zap"
 )
 
 // Transaction represents a model of transactions in database
 type Transaction struct {
-	Time        time.Time `json:"time"`
-	Description string    `json:"description"`
-	CategoryID  uint8     `json:"categoryId,omitempty"`
-	Amount      int32     `json:"amount"`
-	BankId      Bank      `json:"bankId"`
+	ID          primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	Time        time.Time          `json:"time" bson:"time"`
+	Description string             `json:"description" bson:"description"`
+	CategoryID  uint8              `json:"categoryId,omitempty" bson:"categoryId,omitempty"`
+	Amount      int32              `json:"amount" json:"amount"`
+	BankId      Bank               `json:"bankId" json:"bankId"`
 }
 
 type Bank uint8
 
 const (
+	collectionName = "transactions"
+
 	Mono Bank = iota + 1
 	Privat
 )
 
-// Store implements by methods which define in Repository interface
-type Store struct {
-	logger *zap.SugaredLogger
-	db     *db.Connection
+// Repository implements by methods which define in Repository interface
+type Repository struct {
+	logger     *zap.SugaredLogger
+	db         *mongo.Collection
+	categories *categories.Repository
 }
 
-var ErrTransactionNotFound = errors.New("transaction not found")
-
-// NewStore creates a new instance of Repository
-func NewStore(bolt *db.Connection, logger *zap.SugaredLogger) *Store {
-	return &Store{
-		logger: logger,
-		db:     bolt,
+// NewRepository creates a new instance of Repository
+func NewRepository(mongo *mongo.Database, logger *zap.SugaredLogger, categories *categories.Repository) *Repository {
+	return &Repository{
+		logger:     logger,
+		db:         mongo.Collection(collectionName),
+		categories: categories,
 	}
 }
 
+// Insert transaction to database.
+func (s *Repository) Insert(ctx context.Context, t *Transaction) error {
+	// todo: deduplication
+	//  failed transactions on save must be saved to another collection
+	_, err := s.db.InsertOne(ctx, t)
+	return err
+}
+
+// Insert multiple transaction to database.
+func (s *Repository) InsertMany(ctx context.Context, t []Transaction) error {
+	d := make([]interface{}, len(t))
+	for i := range t {
+		d[i] = t[i]
+	}
+	_, err := s.db.InsertMany(ctx, d)
+	return err
+}
+
+// SetCategory changes the category for uncategorized transaction
+func (s *Repository) SetCategory(ctx context.Context, trId primitive.ObjectID, catId primitive.ObjectID) error {
+	exists, err := s.categories.Any(ctx, catId)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return errors.New("category doesn't exist")
+	}
+
+	filter := bson.M{"_id": trId}
+	update := bson.M{"$set": bson.M{"categoryId": catId}}
+	_, err = s.db.UpdateOne(ctx, filter, update)
+	return err
+}
+
 // ReadUncategorized returns all uncategorized transactions
-func (repo *Store) ReadUncategorized() ([]Transaction, error) {
+func (s *Repository) ReadUncategorized(ctx context.Context) ([]Transaction, error) {
 	var list []Transaction
-	err := repo.db.DB.View(func(tx *bbolt.Tx) error {
-		b := tx.Bucket([]byte(db.UncategorizedTransactionsBucket))
-		list = make([]Transaction, b.Stats().KeyN)
-		i := 0
-		err := b.ForEach(func(k, v []byte) error {
-			var t Transaction
-			buf := bytes.NewBuffer(v)
-			decoder := gob.NewDecoder(buf)
-			err := decoder.Decode(&t)
-			if err != nil {
-				return err
-			}
-			list[i] = t
-			i++
-			return nil
-		})
-		if err != nil {
-			return err
-		}
-		return err
-	})
+	filter := bson.M{"categoryId": primitive.Null{}}
+	cursor, err := s.db.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	err = cursor.All(ctx, &list)
+	if err != nil {
+		return nil, err
+	}
 	return list, err
-}
-
-// UpdateCategory changes the category for uncategorized transaction
-func (repo *Store) SetCategory(transactionTime time.Time, categoryID uint8) error {
-	return repo.db.Update(func(tx *bbolt.Tx) error {
-		uncategorized := tx.Bucket([]byte(db.UncategorizedTransactionsBucket))
-		key, err := transactionTime.MarshalBinary()
-		if err != nil {
-			return err
-		}
-		// pop from uncategorized bucket if exists
-		data := uncategorized.Get(key)
-		if data == nil {
-			return ErrTransactionNotFound
-		}
-		err = uncategorized.Delete(key)
-		if err != nil {
-			return err
-		}
-		// set category
-		var tr Transaction
-		buf := bytes.NewBuffer(data)
-		decoder := gob.NewDecoder(buf)
-		err = decoder.Decode(&tr)
-		if err != nil {
-			return err
-		}
-		tr.CategoryID = categoryID
-		// save to categorized bucket
-		buf.Reset()
-		encoder := gob.NewEncoder(buf)
-		err = encoder.Encode(&tr)
-		if err != nil {
-			return err
-		}
-		readBuf, err := ioutil.ReadAll(buf)
-		if err != nil {
-			return err
-		}
-		categorized := tx.Bucket([]byte(db.CategoriesBucket))
-		err = categorized.Put(key, readBuf)
-		return err
-	})
-}
-
-// InsertMany inserts slice of transactions to database
-func (repo *Store) InsertMany(txns []Transaction) error {
-	return repo.db.Update(func(tx *bbolt.Tx) error {
-		for _, t := range txns {
-			b := tx.Bucket([]byte(db.UncategorizedTransactionsBucket))
-			key, err := t.Time.MarshalBinary()
-			if err != nil {
-				return err
-			}
-
-			buf := bytes.NewBuffer(make([]byte, 0))
-			encoder := gob.NewEncoder(buf)
-			err = encoder.Encode(t)
-			if err != nil {
-				return err
-			}
-			readBuf, err := ioutil.ReadAll(buf)
-			if err != nil {
-				return err
-			}
-			err = b.Put(key, readBuf)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-}
-
-// Insert transaction to database
-func (repo *Store) Insert(t *Transaction) error {
-	return repo.db.Update(func(tx *bbolt.Tx) error {
-		b := tx.Bucket([]byte(db.UncategorizedTransactionsBucket))
-		key, err := t.Time.MarshalBinary()
-		if err != nil {
-			return err
-		}
-
-		buf := bytes.NewBuffer(make([]byte, 0))
-		encoder := gob.NewEncoder(buf)
-		err = encoder.Encode(*t)
-		if err != nil {
-			return err
-		}
-		readBuf, err := ioutil.ReadAll(buf)
-		if err != nil {
-			return err
-		}
-		err = b.Put(key, readBuf)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-}
-
-// Find transaction by time
-func (repo *Store) Find(t time.Time) (*Transaction, error) {
-	var tr Transaction
-	err := repo.db.View(func(tx *bbolt.Tx) error {
-		b := tx.Bucket([]byte(db.UncategorizedTransactionsBucket))
-		key, err := t.MarshalBinary()
-		if err != nil {
-			return err
-		}
-
-		buf := bytes.NewBuffer(b.Get(key))
-		decoder := gob.NewDecoder(buf)
-		err = decoder.Decode(&tr)
-		if err != nil {
-			return err
-		}
-		return err
-	})
-	return &tr, err
 }

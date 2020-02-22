@@ -7,9 +7,10 @@ import (
 // EnvironmentConfiguration is struct for all configuration params of the project
 type EnvironmentConfiguration struct {
 	HTTPAddr   string `env:"SPENDSHELF_HTTP_ADDR" envDefault:":8081"`
-	DBName     string `env:"SPENDSHELF_DB_NAME" envDefault:"spendshelf.db"`
+	DBName     string `env:"SPENDSHELF_DB_NAME" envDefault:"spendshelf"`
+	MongoURI   string `env:"SPENDSHELF_MONGO_URI" envDefault:"mongodb://root:toor@localhost:27017"`
 	Topic      string `env:"SPENDSHELF_MQTT_TOPIC" envDefault:"spendshelf/transactions"`
-	BrokerHost string `env:"SPENDSHELF_MQTT_HOST" envDefault:"mqtt:1883"`
+	BrokerHost string `env:"SPENDSHELF_MQTT_HOST" envDefault:"localhost:1883"`
 }
 
 // NewConfig is parsing environment variables and returns filled EnvironmentConfiguration
@@ -29,6 +30,10 @@ func (c *EnvironmentConfiguration) GetHTTPAddr() string {
 
 func (c *EnvironmentConfiguration) GetDBName() string {
 	return c.DBName
+}
+
+func (c *EnvironmentConfiguration) GetMongoURI() string {
+	return c.MongoURI
 }
 
 func (c *EnvironmentConfiguration) GetTopic() string {
