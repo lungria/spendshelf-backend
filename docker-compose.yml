@@ -12,6 +12,8 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${SPENDSHELF_MONGO_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${SPENDSHELF_MONGO_PASSW}
+    labels:
+      - "traefik.enable=false"
   spendshelf:
     image: spendshelf
     build: ./src/
@@ -25,14 +27,17 @@ services:
       - GIN_MODE=release
     depends_on:
       - mongod
-  lb:
-    image: nginx:alpine
-    volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
-      - ./nginx/upstream.conf:/etc/nginx/conf.d/upstream.conf
+    labels:
+      - "traefik.http.routers.spendshelf.rule=PathPrefix(`/`)"
+      - "traefik.http.services.spendshelf.loadbalancer.server.port=80"
+  reverse-proxy:
+    image: traefik:v2.1
+    command: --api.insecure=true --providers.docker
     ports:
-      - 80:80
-      - 443:443
-    container_name: "lb"
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    container_name: "reverse-proxy"
     depends_on:
       - spendshelf
