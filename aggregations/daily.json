@@ -1,9 +1,0 @@
-db.getCollection('transactions').aggregate([
-  {
-    $group: {
-      _id:"$localDate",
-      sum: {$sum: "$amount"}
-    }
-  },
-  { $project: { _id: { $concat: [ { $toString: "$_id.day" }, ".", { $toString: "$_id.month" }, ".", { $toString: "$_id.year" }] }, sum: "$sum" } },
-  {$sort: {"_id": 1}}])
