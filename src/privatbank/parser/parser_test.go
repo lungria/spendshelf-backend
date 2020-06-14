@@ -1,19 +1,25 @@
 package parser
 
 import (
+	"errors"
 	"testing"
+
+	"github.com/lungria/spendshelf-backend/src/privatbank"
 )
 
 func Test_parseMessageBody_WhenMessageIsEmpty_ReturnsErrBodyMustNotBeEmpty(t *testing.T) {
-	_, err := parseMessageBody("")
+	p := newParser()
 
-	if err != ErrBodyMustNotBeEmpty {
-		t.Fatalf("expected error: %s, received error: %s", ErrBodyMustNotBeEmpty, err)
+	_, err := p.parseMessageBody("")
+
+	if errors.Unwrap(err) != ErrEmptyMessageBody {
+		t.Fatalf("expected error, received nil")
 	}
 }
 
 func Test_parseMessageBody_WhenMessageIsValid_ReturnsTransaction(t *testing.T) {
-	expected := transaction{
+	p := newParser()
+	expected := privatbank.Transaction{
 		Description: "Універмаг ПБ ЛП Покупка и доставка товаров",
 		Amount:      843.59,
 		Currency:    "UAH",
@@ -21,7 +27,7 @@ func Test_parseMessageBody_WhenMessageIsValid_ReturnsTransaction(t *testing.T) {
 		//Time: time.Date(time.now),
 		BalanceAfterTransaction: 9738.57,
 	}
-	transaction, err := parseMessageBody("843.59UAH Універмаг ПБ ЛП Покупка и доставка товаров 5*45 10:31 Бал. 9738.57UAH Кред. лiмiт 5000.0UAH")
+	transaction, err := p.parseMessageBody("843.59UAH Універмаг ПБ ЛП Покупка и доставка товаров 5*45 10:31 Бал. 9738.57UAH Кред. лiмiт 5000.0UAH")
 
 	if err != nil {
 		t.Fatalf("expected error: nil, received error: %s", err)
