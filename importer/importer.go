@@ -38,6 +38,6 @@ func (i *Importer) Import(ctx context.Context) {
 
 	err = i.storage.Save(ctx, transactions)
 	if err != nil {
-		i.log.WithError(err).Error("failed import")
+		i.log.WithError(err).Error("failed import") // todo zerolog?
 	}
 }
