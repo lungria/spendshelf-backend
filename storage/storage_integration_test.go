@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"testing"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
-const dbConnString = "postgres://localhost:5432/transactions?sslmode=disable"
+const dbConnString = "postgres://localhost:5432/postgres?sslmode=disable"
 
-func TestSave_IntegrationTest() {
+func TestSave_IntegrationTest(t *testing.T) {
 	dbpool, err := pgxpool.Connect(context.Background(), dbConnString)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
@@ -18,13 +19,7 @@ func TestSave_IntegrationTest() {
 	}
 	defer dbpool.Close()
 
-	var greeting string
-	err = dbpool.QueryRow(context.Background(), "select 'Hello, world!'").Scan(&greeting)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
-		os.Exit(1)
-	}
-
-	fmt.Println(greeting)
-
+	storage := &Storage{pool: dbpool}
+	err = storage.Save(context.Background(), nil)
+	fmt.Println(err)
 }
