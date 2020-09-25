@@ -8,23 +8,34 @@ import (
 	"github.com/lungria/spendshelf-backend/transaction"
 )
 
-type Storage struct {
+// PostgreSQLStorage for transactions.
+type PostgreSQLStorage struct {
 	pool *pgxpool.Pool
 }
 
-func (s *Storage) Save(ctx context.Context, transactions []transaction.Transaction) error {
-	// sql insert
-	// on conflict - ignore
-	// todo : Using Prepared Statements
+const insertPreparedStatementName = "insert_transactions"
+
+// Save transactions to db with dedublication using transaction ID.
+func (s *PostgreSQLStorage) Save(ctx context.Context, transactions []transaction.Transaction) error {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback(ctx)
-	// todo: tx.Prepare()
-	// todo: foreach in transactions - batch.Queue
+
+	_, err = tx.Prepare(
+		ctx,
+		insertPreparedStatementName,
+		`insert into transactions (bankID, time, description, mcc, hold, amount) 
+		 values ($1, $2, $3, $4, $5, $6) on conflict do nothing`)
+	if err != nil {
+		return err
+	}
+
 	batch := pgx.Batch{}
-	batch.Queue(`insert into transactions values ($1, $2, $3, $4, $5, $6) on conflict do nothing`, "test", "1/8/1999", "desc", 123, true, 10)
+	for _, t := range transactions {
+		batch.Queue(insertPreparedStatementName, t.BankID, t.Time, t.Description, t.MCC, t.Hold, t.Amount)
+	}
 	result := tx.SendBatch(ctx, &batch)
 	err = result.Close()
 	if err != nil {
