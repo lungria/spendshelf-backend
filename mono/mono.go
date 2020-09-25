@@ -7,6 +7,11 @@ import (
 )
 
 type Client struct {
+	apiKey string
+}
+
+func NewClient(apiKey string) *Client {
+	return &Client{apiKey: apiKey}
 }
 
 func (c *Client) GetTransactions(ctx context.Context) ([]transaction.Transaction, error) {
