@@ -13,6 +13,10 @@ type PostgreSQLStorage struct {
 	pool *pgxpool.Pool
 }
 
+func NewPostgreSQLStorage(pool *pgxpool.Pool) *PostgreSQLStorage {
+	return &PostgreSQLStorage{pool: pool}
+}
+
 const insertPreparedStatementName = "insert_transactions"
 
 // Save transactions to db with dedublication using transaction ID.

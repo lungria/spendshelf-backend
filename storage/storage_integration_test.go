@@ -1,4 +1,4 @@
-package storage
+package storage_test
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/lungria/spendshelf-backend/storage"
 	"github.com/lungria/spendshelf-backend/transaction"
 	"github.com/stretchr/testify/assert"
 )
@@ -22,7 +23,7 @@ func TestSave_WithLocalDb_NoErrorReturned(t *testing.T) {
 	}
 	defer dbpool.Close()
 
-	storage := &PostgreSQLStorage{pool: dbpool}
+	storage := storage.NewPostgreSQLStorage(dbpool)
 	err = storage.Save(context.Background(), []transaction.Transaction{
 		{"id1", time.Now().UTC(), "food", 123, true, 1110},
 		{"id1", time.Now().UTC(), "food", 123, true, 1110},
