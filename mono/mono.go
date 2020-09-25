@@ -1,19 +1,68 @@
 package mono
 
 import (
+	"bytes"
 	"context"
-
-	"github.com/lungria/spendshelf-backend/transaction"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
 )
 
 type Client struct {
-	apiKey string
+	apiKey     string
+	baseURL    string
+	httpClient http.Client
 }
 
-func NewClient(apiKey string) *Client {
-	return &Client{apiKey: apiKey}
+func NewClient(baseURL, apiKey string) *Client {
+	return &Client{baseURL: baseURL, apiKey: apiKey, httpClient: http.Client{}}
 }
 
-func (c *Client) GetTransactions(ctx context.Context) ([]transaction.Transaction, error) {
-	panic("implement me")
+func (c *Client) performRequest(ctx context.Context, url, method string, requestBody []byte) ([]byte, error) {
+	request, err := http.NewRequestWithContext(ctx, method, url, bytes.NewBuffer(requestBody))
+	if err != nil {
+		return nil, fmt.Errorf("cannot form request. %s", err)
+	}
+
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("X-Token", c.apiKey)
+
+	response, err := c.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if closeErr := response.Body.Close(); err == nil {
+			err = fmt.Errorf("closing response body: %s", closeErr)
+		}
+	}()
+
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read body: %s", err)
+	}
+
+	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
+		if len(body) == 0 {
+			return nil, fmt.Errorf("request failed but no detailed error received. status code: %v", response.StatusCode)
+		}
+
+		apiErr := &APIError{}
+		if err = json.Unmarshal(body, apiErr); err != nil {
+			return nil, fmt.Errorf("failed unmarshal error form json body: %w", err)
+		}
+
+		return nil, apiErr
+	}
+	return body, nil
+}
+
+type APIError struct {
+	Description string `json:"errorDescription"`
+}
+
+func (err APIError) Error() string {
+	return err.Description
 }
