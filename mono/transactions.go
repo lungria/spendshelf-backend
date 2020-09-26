@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/lungria/spendshelf-backend/transaction"
+
 	"strconv"
 	"strings"
 	"time"
@@ -28,7 +30,7 @@ func (q *GetTransactionsQuery) asRoute() string {
 	return sb.String()
 }
 
-func (c *Client) GetTransactions(ctx context.Context, query GetTransactionsQuery) ([]Transaction, error) {
+func (c *Client) GetTransactions(ctx context.Context, query GetTransactionsQuery) ([]transaction.Transaction, error) {
 	uri := fmt.Sprintf("%s/personal/statement%s", c.baseURL, query.asRoute())
 
 	response, err := c.performRequest(ctx, uri, http.MethodGet, nil)
@@ -39,18 +41,34 @@ func (c *Client) GetTransactions(ctx context.Context, query GetTransactionsQuery
 		return nil, fmt.Errorf("unable to get transactions: empty response without error received")
 	}
 
-	transactions := make([]Transaction, 0)
+	transactions := make(responseTransactions, 0)
 	if err = json.Unmarshal(response, &transactions); err != nil {
 		return nil, fmt.Errorf("failed unmarshal transactions form json body: %w", err)
 	}
-	return transactions, nil
+	return transactions.AsPublicAPIModel(), nil
 }
 
-type Transaction struct {
+type responseTransaction struct {
 	ID          string `json:"id"`
 	Time        Time   `json:"time"`
 	Description string `json:"description"`
-	MCC         int    `json:"mcc"`
+	MCC         int32  `json:"mcc"`
 	Hold        bool   `json:"hold"`
 	Amount      int64  `json:"amount"`
+}
+
+type responseTransactions []responseTransaction
+
+func (t responseTransactions) AsPublicAPIModel() []transaction.Transaction {
+	transactions := make([]transaction.Transaction, len(t))
+	for i, v := range t {
+		transactions[i] = transaction.Transaction{
+			BankID:      v.ID,
+			Time:        time.Time(v.Time),
+			Description: v.Description,
+			MCC:         v.MCC,
+			Hold:        v.Hold,
+			Amount:      v.Amount,
+		}
+	}
 }
