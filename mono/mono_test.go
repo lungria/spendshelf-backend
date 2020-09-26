@@ -2,7 +2,7 @@ package mono_test
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"os"
 	"testing"
 	"time"
@@ -19,12 +19,39 @@ func TestClient_GetTransactions_NoErrorsReturned(t *testing.T) {
 	}
 	client := mono.NewClient("https://api.monobank.ua", key)
 
-	transactions, err := client.GetTransactions(context.Background(), mono.GetTransactionsQuery{
-		Account: "0",
+	accID := os.Getenv("MONO_ACCOUNT_ID")
+	if accID == "" {
+		t.Fatal("MONO_ACCOUNT_ID is required for test")
+		return
+	}
+
+	_, err := client.GetTransactions(context.Background(), mono.GetTransactionsQuery{
+		Account: accID,
 		From:    time.Now().Add(-48 * time.Hour),
 		To:      time.Now(),
 	})
 
 	assert.NoError(t, err)
-	fmt.Printf("%v\n", transactions)
+}
+
+func TestJsonUnmarshal_TimeParsedCorrectly(t *testing.T) {
+	jsonData := []byte(`[
+   {
+      "id":"tr-id",
+      "time":1601022957,
+      "description":"Era-in-ear",
+      "mcc":5732,
+      "amount":-402100,
+      "operationAmount":-402100,
+      "currencyCode":980,
+      "commissionRate":0,
+      "cashbackAmount":0,
+      "balance":38817,
+      "hold":true
+   }]`)
+	tr := make([]mono.Transaction, 0)
+
+	err := json.Unmarshal(jsonData, &tr)
+
+	assert.NoError(t, err)
 }
