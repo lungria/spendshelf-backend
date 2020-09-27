@@ -2,7 +2,7 @@ package interval
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"time"
 )
 
@@ -21,15 +21,15 @@ func NewSimpleIntervalGenerator(storage TransactionsStorage) *SimpleIntervalGene
 }
 
 func (gen *SimpleIntervalGenerator) GetInterval(ctx context.Context, accountID string) (from time.Time, to time.Time, err error) {
-	date, err := gen.storage.GetLastTransactionDate(ctx, accountID)
+	lastKnownTransactionDate, err := gen.storage.GetLastTransactionDate(ctx, accountID)
 	if err != nil {
 		return time.Time{}, time.Time{}, err
 	}
 	nowUtc := time.Now().UTC()
-	diffSecs := nowUtc.Sub(date.UTC()).Seconds()
+	diffSecs := nowUtc.Sub(lastKnownTransactionDate.UTC()).Seconds()
 	if diffSecs > maxAllowedIntervalDuration {
-		return time.Time{}, time.Time{}, errors.New("interval too long")
+		return time.Time{}, time.Time{}, fmt.Errorf("interval too long, lastKnownTransactionDate: %v", lastKnownTransactionDate)
 	}
 
-	return date.UTC(), nowUtc, nil
+	return lastKnownTransactionDate.UTC(), nowUtc, nil
 }
