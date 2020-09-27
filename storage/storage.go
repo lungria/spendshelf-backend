@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"time"
 
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -47,4 +48,9 @@ func (s *PostgreSQLStorage) Save(ctx context.Context, transactions []transaction
 	}
 
 	return tx.Commit(ctx)
+}
+
+func (s *PostgreSQLStorage) GetLastTransactionDate(ctx context.Context, accountID string) (time.Time, error) {
+	// todo
+	panic("implement me")
 }

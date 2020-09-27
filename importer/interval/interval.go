@@ -1,4 +1,4 @@
-package importer
+package interval
 
 import (
 	"context"
@@ -14,6 +14,10 @@ type TransactionsStorage interface {
 
 type SimpleIntervalGenerator struct {
 	storage TransactionsStorage
+}
+
+func NewSimpleIntervalGenerator(storage TransactionsStorage) *SimpleIntervalGenerator {
+	return &SimpleIntervalGenerator{storage: storage}
 }
 
 func (gen *SimpleIntervalGenerator) GetInterval(ctx context.Context, accountID string) (from time.Time, to time.Time, err error) {

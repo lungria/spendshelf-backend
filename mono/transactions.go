@@ -48,6 +48,7 @@ func (c *Client) GetTransactions(ctx context.Context, query GetTransactionsQuery
 	return transactions.AsPublicAPIModel(), nil
 }
 
+// todo come up with better naming
 type responseTransaction struct {
 	ID          string `json:"id"`
 	Time        Time   `json:"time"`
@@ -57,8 +58,10 @@ type responseTransaction struct {
 	Amount      int64  `json:"amount"`
 }
 
+// todo come up with better naming
 type responseTransactions []responseTransaction
 
+// todo come up with better naming
 func (t responseTransactions) AsPublicAPIModel() []transaction.Transaction {
 	transactions := make([]transaction.Transaction, len(t))
 	for i, v := range t {
@@ -71,4 +74,6 @@ func (t responseTransactions) AsPublicAPIModel() []transaction.Transaction {
 			Amount:      v.Amount,
 		}
 	}
+
+	return transactions
 }

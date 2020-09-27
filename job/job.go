@@ -26,6 +26,7 @@ func (s *Scheduler) Schedule(ctx context.Context, job Job, waitBeforeRuns time.D
 			select {
 			case _ = <-t.C:
 				{
+					// todo: run with deadline
 					j(ctx)
 				}
 			case _ = <-ctx.Done():
@@ -39,6 +40,6 @@ func (s *Scheduler) Schedule(ctx context.Context, job Job, waitBeforeRuns time.D
 }
 
 // Wait blocks until the all scheduled jobs exist.
-func (s *Scheduler) Wait(){
+func (s *Scheduler) Wait() {
 	s.wg.Wait()
 }

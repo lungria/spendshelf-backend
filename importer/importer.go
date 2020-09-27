@@ -18,7 +18,7 @@ type TransactionsStorage interface {
 }
 
 type ImportIntervalGenerator interface {
-	GetInterval(ctx context.Context) (from time.Time, to time.Time, err error)
+	GetInterval(ctx context.Context, accountID string) (from time.Time, to time.Time, err error)
 }
 
 type Importer struct {
