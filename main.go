@@ -3,15 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/lungria/spendshelf-backend/importer"
 	"github.com/lungria/spendshelf-backend/job"
 	"github.com/lungria/spendshelf-backend/mono"
 	"github.com/lungria/spendshelf-backend/storage"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
 const dbConnString = "postgres://localhost:5432/postgres?sslmode=disable"
@@ -29,10 +30,11 @@ func main() {
 	}
 	defer dbpool.Close()
 	s := storage.NewPostgreSQLStorage(dbpool)
- 	i :=	importer.NewImporeter(&apiClient, s)
+	intervalGen := 
+	i := importer.NewImporeter(&apiClient, s, intervalGen)
 
 	scheduler := job.Scheduler{}
-	scheduler.Schedule(ctx, i.Import, 1*time.Minute)
+	scheduler.Schedule(ctx, i.Import(os.Getenv("MONO_ACCOUNT_ID")), 1*time.Minute)
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
