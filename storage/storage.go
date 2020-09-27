@@ -50,7 +50,19 @@ func (s *PostgreSQLStorage) Save(ctx context.Context, transactions []transaction
 	return tx.Commit(ctx)
 }
 
+// todo test
 func (s *PostgreSQLStorage) GetLastTransactionDate(ctx context.Context, accountID string) (time.Time, error) {
-	// todo
-	panic("implement me")
+	var lastKnownTransaction time.Time
+	row := s.pool.QueryRow(
+		ctx,
+		`select "time" from transactions
+		order by time desc
+		limit 1`,
+	)
+	err := row.Scan(&lastKnownTransaction)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return lastKnownTransaction, nil
 }
