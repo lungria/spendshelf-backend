@@ -16,18 +16,17 @@ type Job func(ctx context.Context)
 
 // Schedule background job. It will be runned with waitBeforeRuns period (it will wait for this period even for first)
 // and cancelled, when ctx is cancelled.
-func (s *Scheduler) Schedule(ctx context.Context, job Job, waitBeforeRuns time.Duration) {
+func (s *Scheduler) Schedule(ctx context.Context, job Job, waitBeforeRuns, jobTimeout time.Duration) {
 	s.wg.Add(1)
 	ticker := time.NewTicker(waitBeforeRuns)
-	go func(t *time.Ticker, j Job) {
+	go func(t *time.Ticker, j Job, timeout time.Duration) {
 		defer s.wg.Done()
 		defer t.Stop()
 		for {
 			select {
 			case _ = <-t.C:
 				{
-					// todo: run with deadline
-					j(ctx)
+					executeWithTimeout(ctx, j, timeout)
 				}
 			case _ = <-ctx.Done():
 				{
@@ -36,10 +35,16 @@ func (s *Scheduler) Schedule(ctx context.Context, job Job, waitBeforeRuns time.D
 
 			}
 		}
-	}(ticker, job)
+	}(ticker, job, jobTimeout)
 }
 
 // Wait blocks until the all scheduled jobs exist.
 func (s *Scheduler) Wait() {
 	s.wg.Wait()
+}
+
+func executeWithTimeout(ctx context.Context, job Job, jobTimeout time.Duration) {
+	timeoutCtx, cancel := context.WithTimeout(ctx, jobTimeout)
+	defer cancel()
+	job(timeoutCtx)
 }

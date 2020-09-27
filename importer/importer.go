@@ -35,9 +35,10 @@ func NewImporeter(api BankAPI, storage TransactionsStorage, gen ImportIntervalGe
 	}
 }
 
+// todo test
 func (i *Importer) Import(accountID string) func(context.Context) {
 	return func(ctx context.Context) {
-		from, to, err := i.intervalGen.GetInterval(ctx)
+		from, to, err := i.intervalGen.GetInterval(ctx, accountID)
 		if err != nil {
 			log.Err(err).Msg("failed import")
 			return
