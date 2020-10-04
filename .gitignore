@@ -6,3 +6,4 @@ dbdata/
 src/src
 src/spendshelf.db
 .vscode
+.env

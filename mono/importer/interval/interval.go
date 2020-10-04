@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"time"
+
+	"github.com/lungria/spendshelf-backend/storage"
 )
 
 // maxAllowedIntervalDuration limits max length of interval (in seconds) that mono API allows us to query.
@@ -28,12 +30,23 @@ func NewIntervalGenerator(storage TransactionsStorage) *Generator {
 // GetInterval creates interval based on latest stored transaction. It will return error if there latest transaction was
 // created more than maxAllowedIntervalDuration seconds ago.
 func (gen *Generator) GetInterval(ctx context.Context, accountID string) (from, to time.Time, err error) {
-	lastKnownTransactionDate, err := gen.storage.GetLastTransactionDate(ctx, accountID)
-	if err != nil {
-		return time.Time{}, time.Time{}, err
-	}
-	// todo what if no lastKnownTransactionDate exists?
 	nowUtc := time.Now().UTC()
+
+	lastKnownTransactionDate, err := gen.storage.GetLastTransactionDate(ctx, accountID)
+	switch err {
+	case storage.ErrNotFound:
+		{
+			lastKnownTransactionDate = nowUtc.Add(-maxAllowedIntervalDuration * time.Second)
+		}
+	case nil:
+		{
+
+		}
+	default:
+		{
+			return time.Time{}, time.Time{}, err
+		}
+	}
 
 	diffSecs := nowUtc.Sub(lastKnownTransactionDate.UTC()).Seconds()
 	if diffSecs > maxAllowedIntervalDuration {

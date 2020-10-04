@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/jackc/pgx/v4"
@@ -67,8 +68,13 @@ func (s *PostgreSQLStorage) GetLastTransactionDate(ctx context.Context, accountI
 
 	err := row.Scan(&lastKnownTransaction)
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return time.Time{}, ErrNotFound
+		}
 		return time.Time{}, err
 	}
 
 	return lastKnownTransaction, nil
 }
+
+var ErrNotFound = errors.New("data not found")

@@ -4,6 +4,8 @@ import (
 	"context"
 	"sync"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 // Job describes functions, that can be runned by JobRunner. Job must implement cancelation via context.
@@ -12,6 +14,10 @@ type Job func(ctx context.Context)
 // Scheduler allows to schedule background jobs with graceful cancelation.
 type Scheduler struct {
 	wg *sync.WaitGroup
+}
+
+func NewScheduler() *Scheduler {
+	return &Scheduler{wg: &sync.WaitGroup{}}
 }
 
 // Schedule background job. It will be runned with waitBeforeRuns period and canceled, when ctx is canceled.
@@ -28,6 +34,7 @@ func (s *Scheduler) Schedule(ctx context.Context, job Job, waitBeforeRuns, jobTi
 			case _ = <-t.C:
 				{
 					executeWithTimeout(ctx, j, timeout)
+					log.Debug().Msg("job finished")
 				}
 			case _ = <-ctx.Done():
 				{

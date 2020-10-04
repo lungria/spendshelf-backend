@@ -42,7 +42,7 @@ func main() {
 	apiClient := mono.NewClient(cfg.MonoBaseURL, cfg.MonoAPIKey)
 	i := importer.NewImporter(apiClient, s, intervalGen)
 
-	scheduler := job.Scheduler{}
+	scheduler := job.NewScheduler()
 	scheduler.Schedule(ctx, i.Import(cfg.MonoAccountID), 1*time.Minute, 30*time.Second)
 
 	sigChan := make(chan os.Signal, 1)
