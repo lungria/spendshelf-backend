@@ -40,7 +40,6 @@ func (gen *Generator) GetInterval(ctx context.Context, accountID string) (from, 
 		}
 	case nil:
 		{
-
 		}
 	default:
 		{
