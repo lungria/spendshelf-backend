@@ -25,10 +25,10 @@ func TestSave_WithLocalDb_NoErrorReturned(t *testing.T) {
 
 	storage := storage.NewPostgreSQLStorage(dbpool)
 	err = storage.Save(context.Background(), []transaction.Transaction{
-		{"id1", time.Now().UTC(), "food", 123, true, 1110},
-		{"id1", time.Now().UTC(), "food", 123, true, 1110},
-		{"id2", time.Now().UTC(), "car", 3121, true, 1500},
-		{"id3", time.Now().UTC(), "home", 3, false, 2000},
+		{"id1", time.Now().UTC(), "food", 123, true, 1110, "acc1"},
+		{"id1", time.Now().UTC(), "food", 123, true, 1110, "acc1"},
+		{"id2", time.Now().UTC(), "car", 3121, true, 1500, "acc1"},
+		{"id3", time.Now().UTC(), "home", 3, false, 2000, "acc1"},
 	})
 
 	assert.NoError(t, err)

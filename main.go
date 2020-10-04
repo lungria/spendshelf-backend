@@ -40,7 +40,7 @@ func main() {
 	s := storage.NewPostgreSQLStorage(dbpool)
 	intervalGen := interval.NewIntervalGenerator(s)
 	apiClient := mono.NewClient(cfg.MonoBaseURL, cfg.MonoAPIKey)
-	i := importer.NewImporeter(apiClient, s, intervalGen)
+	i := importer.NewImporter(apiClient, s, intervalGen)
 
 	scheduler := job.Scheduler{}
 	scheduler.Schedule(ctx, i.Import(cfg.MonoAccountID), 1*time.Minute, 30*time.Second)

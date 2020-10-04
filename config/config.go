@@ -11,6 +11,7 @@ type Config struct {
 	MonoBaseURL   string `env:"SHELF_MONO_BASE_URL,required"`
 }
 
+// FromEnv parses configuration based on declared environment variables.
 func FromEnv() (Config, error) {
 	cfg := Config{}
 	if err := env.Parse(&cfg); err != nil {

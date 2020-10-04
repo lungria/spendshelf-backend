@@ -9,25 +9,33 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// BankAPI abstracts bank API.
 type BankAPI interface {
+	// GetTransactions allows to load list of transactions based on specified query parameters.
 	GetTransactions(ctx context.Context, query mono.GetTransactionsQuery) ([]mono.Transaction, error)
 }
 
+// TransactionsStorage abstracts persistent storage for transactions.
 type TransactionsStorage interface {
+	// Save transactions to database.
 	Save(ctx context.Context, transactions []transaction.Transaction) error
 }
 
+// ImportIntervalGenerator generates interval for transaction import.
 type ImportIntervalGenerator interface {
+	// GetInterval generates interval for transaction import.
 	GetInterval(ctx context.Context, accountID string) (from, to time.Time, err error)
 }
 
+// Importer handles one-time import of transactions list for selected interval.
 type Importer struct {
 	api         BankAPI
 	storage     TransactionsStorage
 	intervalGen ImportIntervalGenerator
 }
 
-func NewImporeter(api BankAPI, storage TransactionsStorage, gen ImportIntervalGenerator) *Importer {
+// NewImporter create new instance of Importer.
+func NewImporter(api BankAPI, storage TransactionsStorage, gen ImportIntervalGenerator) *Importer {
 	return &Importer{
 		api:         api,
 		storage:     storage,
@@ -35,7 +43,7 @@ func NewImporeter(api BankAPI, storage TransactionsStorage, gen ImportIntervalGe
 	}
 }
 
-// todo test
+// Import loads latest transactions from mono API and stores them to DB.
 func (i *Importer) Import(accountID string) func(context.Context) {
 	return func(ctx context.Context) {
 		monoTransactions, err := i.getMonoTransactions(ctx, accountID)
@@ -48,7 +56,7 @@ func (i *Importer) Import(accountID string) func(context.Context) {
 			return
 		}
 
-		transactions := mapTransactions(monoTransactions)
+		transactions := mapTransactions(accountID, monoTransactions)
 
 		err = i.storage.Save(ctx, transactions)
 		if err != nil {
@@ -72,7 +80,7 @@ func (i *Importer) getMonoTransactions(ctx context.Context, accountID string) ([
 	return i.api.GetTransactions(ctx, query)
 }
 
-func mapTransactions(monoTransactions []mono.Transaction) []transaction.Transaction {
+func mapTransactions(accountID string, monoTransactions []mono.Transaction) []transaction.Transaction {
 	transactions := make([]transaction.Transaction, len(monoTransactions))
 	for i, v := range monoTransactions {
 		transactions[i] = transaction.Transaction{
@@ -82,6 +90,7 @@ func mapTransactions(monoTransactions []mono.Transaction) []transaction.Transact
 			MCC:         v.MCC,
 			Hold:        v.Hold,
 			Amount:      v.Amount,
+			AccountID:   accountID,
 		}
 	}
 

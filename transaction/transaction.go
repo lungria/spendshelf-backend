@@ -9,4 +9,5 @@ type Transaction struct {
 	MCC         int32
 	Hold        bool
 	Amount      int64
+	AccountID   string
 }

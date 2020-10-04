@@ -32,7 +32,7 @@ func (gen *Generator) GetInterval(ctx context.Context, accountID string) (from, 
 	if err != nil {
 		return time.Time{}, time.Time{}, err
 	}
-
+	// todo what if no lastKnownTransactionDate exists?
 	nowUtc := time.Now().UTC()
 
 	diffSecs := nowUtc.Sub(lastKnownTransactionDate.UTC()).Seconds()
