@@ -6,22 +6,23 @@ import (
 	"time"
 )
 
-// Scheduler allows to schedule background jobs with graceful cancellation.
+// Job describes functions, that can be runned by JobRunner. Job must implement cancelation via context.
+type Job func(ctx context.Context)
+
+// Scheduler allows to schedule background jobs with graceful cancelation.
 type Scheduler struct {
 	wg *sync.WaitGroup
 }
 
-// Job describes functions, that can be runned by JobRunner. Job must implement cancellation via context.
-type Job func(ctx context.Context)
-
-// Schedule background job. It will be runned with waitBeforeRuns period (it will wait for this period even for first)
-// and cancelled, when ctx is cancelled.
+// Schedule background job. It will be runned with waitBeforeRuns period and canceled, when ctx is canceled.
 func (s *Scheduler) Schedule(ctx context.Context, job Job, waitBeforeRuns, jobTimeout time.Duration) {
 	s.wg.Add(1)
+
 	ticker := time.NewTicker(waitBeforeRuns)
 	go func(t *time.Ticker, j Job, timeout time.Duration) {
 		defer s.wg.Done()
 		defer t.Stop()
+
 		for {
 			select {
 			case _ = <-t.C:
@@ -32,7 +33,6 @@ func (s *Scheduler) Schedule(ctx context.Context, job Job, waitBeforeRuns, jobTi
 				{
 					return
 				}
-
 			}
 		}
 	}(ticker, job, jobTimeout)

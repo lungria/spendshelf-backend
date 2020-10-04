@@ -26,11 +26,10 @@ func (s *PostgreSQLStorage) Save(ctx context.Context, transactions []transaction
 	if err != nil {
 		return err
 	}
+
 	defer tx.Rollback(ctx)
 
-	_, err = tx.Prepare(
-		ctx,
-		insertPreparedStatementName,
+	_, err = tx.Prepare(ctx, insertPreparedStatementName,
 		`insert into transactions (bankID, time, description, mcc, hold, amount) 
 		 values ($1, $2, $3, $4, $5, $6) on conflict do nothing`)
 	if err != nil {
@@ -38,10 +37,13 @@ func (s *PostgreSQLStorage) Save(ctx context.Context, transactions []transaction
 	}
 
 	batch := pgx.Batch{}
+
 	for _, t := range transactions {
 		batch.Queue(insertPreparedStatementName, t.BankID, t.Time, t.Description, t.MCC, t.Hold, t.Amount)
 	}
+
 	result := tx.SendBatch(ctx, &batch)
+
 	err = result.Close()
 	if err != nil {
 		return err
@@ -52,13 +54,16 @@ func (s *PostgreSQLStorage) Save(ctx context.Context, transactions []transaction
 
 // todo test
 func (s *PostgreSQLStorage) GetLastTransactionDate(ctx context.Context, accountID string) (time.Time, error) {
-	var lastKnownTransaction time.Time
+	// todo filter via accountID
 	row := s.pool.QueryRow(
 		ctx,
 		`select "time" from transactions
 		order by time desc
 		limit 1`,
 	)
+
+	var lastKnownTransaction time.Time
+
 	err := row.Scan(&lastKnownTransaction)
 	if err != nil {
 		return time.Time{}, err

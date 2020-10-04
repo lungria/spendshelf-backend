@@ -33,3 +33,17 @@ func TestSave_WithLocalDb_NoErrorReturned(t *testing.T) {
 
 	assert.NoError(t, err)
 }
+
+func TestGetLastTransactionDate_WithLocalDb_NoErrorReturned(t *testing.T) {
+	dbpool, err := pgxpool.Connect(context.Background(), dbConnString)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
+		os.Exit(1)
+	}
+	defer dbpool.Close()
+
+	storage := storage.NewPostgreSQLStorage(dbpool)
+	_, err = storage.GetLastTransactionDate(context.Background(), "accountID")
+
+	assert.NoError(t, err)
+}

@@ -17,6 +17,7 @@ func TestClient_GetTransactions_NoErrorsReturned(t *testing.T) {
 		t.Fatal("MONO_API_KEY is required for test")
 		return
 	}
+
 	client := mono.NewClient("https://api.monobank.ua", key)
 
 	accID := os.Getenv("MONO_ACCOUNT_ID")

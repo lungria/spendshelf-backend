@@ -5,9 +5,10 @@ package moq
 
 import (
 	"context"
-	"github.com/lungria/spendshelf-backend/importer/interval"
 	"sync"
 	"time"
+
+	"github.com/lungria/spendshelf-backend/mono/importer/interval"
 )
 
 // Ensure, that TransactionsStorageMock does implement TransactionsStorage.
