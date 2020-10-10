@@ -5,5 +5,6 @@ CREATE TABLE transaction (
     mcc integer NOT NULL,
     hold boolean NOT NULL,
     amount bigint NOT NULL,
-    accountID varchar(50) NOT NULL
+    accountID varchar(50) NOT NULL,
+    categoryID integer references category(ID)
 );
