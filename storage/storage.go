@@ -10,6 +10,8 @@ import (
 	"github.com/lungria/spendshelf-backend/transaction"
 )
 
+var ErrNotFound = errors.New("data not found")
+
 // PostgreSQLStorage for transactions.
 type PostgreSQLStorage struct {
 	pool *pgxpool.Pool
@@ -76,5 +78,3 @@ func (s *PostgreSQLStorage) GetLastTransactionDate(ctx context.Context, accountI
 
 	return lastKnownTransaction, nil
 }
-
-var ErrNotFound = errors.New("data not found")
