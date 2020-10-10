@@ -10,6 +10,7 @@ type Config struct {
 	MonoAPIKey    string `env:"SHELF_MONO_API_KEY,required"`
 	DBConnString  string `env:"SHELF_DB_CONN,required"`
 	MonoBaseURL   string `env:"SHELF_MONO_BASE_URL,required"`
+	WebAPIPort    string `env:"SHELF_API_PORT" envDefault:"8080"`
 }
 
 // FromEnv parses configuration based on declared environment variables.

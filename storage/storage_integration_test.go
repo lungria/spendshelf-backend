@@ -9,7 +9,7 @@ import (
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/lungria/spendshelf-backend/storage"
-	"github.com/lungria/spendshelf-backend/transaction"
+	"github.com/lungria/spendshelf-backend/storage/transaction"
 	"github.com/stretchr/testify/assert"
 )
 
