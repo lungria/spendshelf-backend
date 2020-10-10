@@ -32,6 +32,7 @@ func NewServer(cfg config.Config, routes ...RouteBinder) *Server {
 	return server
 }
 
+// Start web server.
 func (s *Server) Start() {
 	go func() {
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -40,6 +41,7 @@ func (s *Server) Start() {
 	}()
 }
 
+// Shutdown web server and kill all keep-alive connections.
 func (s *Server) Shutdown(ctx context.Context) {
 	shutdownCtx, cancel := context.WithTimeout(ctx, defaultServerShutdownTimeout)
 	defer cancel()

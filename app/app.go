@@ -12,6 +12,7 @@ import (
 	"github.com/lungria/spendshelf-backend/mono/importer"
 )
 
+// State stores information about app dependencies and allows to manage it's lifecycle.
 type State struct {
 	API       *api.Server
 	Scheduler *job.Scheduler
@@ -20,6 +21,7 @@ type State struct {
 	Config    config.Config
 }
 
+// Close releases all resources and stops all background jobs.
 func (s *State) Close() {
 	s.API.Shutdown(context.Background())
 	s.Scheduler.Wait()

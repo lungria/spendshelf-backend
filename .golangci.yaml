@@ -49,3 +49,16 @@ linters:
     - noctx # Doesn't have any config for linters-settings section.
     - prealloc
     - testpackage
+issues:
+  include:
+    # Disable excluding of issues about comments from golint.
+    - EXC0002
+  exclude-rules:
+    # Disable some linters for tests.
+    - path: app.providers.go
+      linters:
+        - wsl
+        - golint
+    - linters:
+        - golint
+      text: "unless it's in another file for this package"
