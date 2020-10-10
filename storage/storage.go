@@ -10,6 +10,7 @@ import (
 	"github.com/lungria/spendshelf-backend/transaction"
 )
 
+// ErrNotFound is being returned, if no data was found in database.
 var ErrNotFound = errors.New("data not found")
 
 // PostgreSQLStorage for transactions.
@@ -33,10 +34,9 @@ func (s *PostgreSQLStorage) Save(ctx context.Context, transactions []transaction
 
 	defer tx.Rollback(ctx)
 
-	_, err = tx.Prepare(ctx, insertPrepStatementName,
+	if _, err = tx.Prepare(ctx, insertPrepStatementName,
 		`insert into transaction (ID, time, description, mcc, hold, amount, accountID, categoryID) 
-		 values ($1, $2, $3, $4, $5, $6, $7, $8) on conflict do nothing`)
-	if err != nil {
+		 values ($1, $2, $3, $4, $5, $6, $7, $8) on conflict do nothing`); err != nil {
 		return err
 	}
 
@@ -73,6 +73,7 @@ func (s *PostgreSQLStorage) GetLastTransactionDate(ctx context.Context, accountI
 		if err == pgx.ErrNoRows {
 			return time.Time{}, ErrNotFound
 		}
+
 		return time.Time{}, err
 	}
 

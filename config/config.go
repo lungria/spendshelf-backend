@@ -4,6 +4,7 @@ import (
 	"github.com/caarlos0/env/v6"
 )
 
+// Config describes app configuration parameters.
 type Config struct {
 	MonoAccountID string `env:"SHELF_MONO_ACCOUNT_ID,required"`
 	MonoAPIKey    string `env:"SHELF_MONO_API_KEY,required"`

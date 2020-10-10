@@ -2,6 +2,7 @@ package transaction
 
 import "time"
 
+// Transaction describes single user's transaction.
 type Transaction struct {
 	ID          string
 	Time        time.Time

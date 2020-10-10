@@ -9,12 +9,14 @@ import (
 	"net/http"
 )
 
+// Client implements monobank API client.
 type Client struct {
 	apiKey     string
 	baseURL    string
 	httpClient http.Client
 }
 
+// NewClient creates new instance of Client.
 func NewClient(baseURL, apiKey string) *Client {
 	return &Client{baseURL: baseURL, apiKey: apiKey, httpClient: http.Client{}}
 }
@@ -60,10 +62,12 @@ func (c *Client) performRequest(ctx context.Context, url, method string, request
 	return body, nil
 }
 
+// APIError describes monobank API error.
 type APIError struct {
 	Description string `json:"errorDescription"`
 }
 
-func (err APIError) Error() string {
+// Error formats APIError to string.
+func (err *APIError) Error() string {
 	return err.Description
 }

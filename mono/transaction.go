@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+// GetTransactionsQuery describes parameters for GetQuery monobank request.
 type GetTransactionsQuery struct {
 	Account string
 	From    time.Time
@@ -29,6 +30,7 @@ func (q *GetTransactionsQuery) asRoute() string {
 	return sb.String()
 }
 
+// GetTransactions loads transactions from monobank with specified query parameters.
 func (c *Client) GetTransactions(ctx context.Context, query GetTransactionsQuery) ([]Transaction, error) {
 	uri := fmt.Sprintf("%s/personal/statement%s", c.baseURL, query.asRoute())
 
@@ -49,6 +51,7 @@ func (c *Client) GetTransactions(ctx context.Context, query GetTransactionsQuery
 	return transactions, nil
 }
 
+// Transaction describes monobank transaction.
 type Transaction struct {
 	ID          string `json:"id"`
 	Time        Time   `json:"time"`

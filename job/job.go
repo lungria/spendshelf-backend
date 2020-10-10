@@ -16,6 +16,7 @@ type Scheduler struct {
 	wg *sync.WaitGroup
 }
 
+// NewScheduler creates new instance of Scheduler.
 func NewScheduler() *Scheduler {
 	return &Scheduler{wg: &sync.WaitGroup{}}
 }
