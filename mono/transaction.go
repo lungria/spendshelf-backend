@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// GetTransactionsQuery describes parameters for GetQuery monobank request.
+// GetTransactionsQuery describes parameters for GetTransactions monobank request.
 type GetTransactionsQuery struct {
 	Account string
 	From    time.Time
