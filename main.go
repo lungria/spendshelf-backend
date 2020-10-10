@@ -24,7 +24,9 @@ func main() {
 	defer cancel()
 
 	state.API.Start()
-	state.Scheduler.Schedule(ctx, state.Importer.Import(state.Config.MonoAccountID), 1*time.Minute, 30*time.Second)
+	if state.Config.EnableImportJob {
+		state.Scheduler.Schedule(ctx, state.Importer.Import(state.Config.MonoAccountID), 1*time.Minute, 30*time.Second)
+	}
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
