@@ -49,7 +49,6 @@ func (c *Client) GetTransactions(ctx context.Context, query GetTransactionsQuery
 	return transactions, nil
 }
 
-// todo come up with better naming
 type Transaction struct {
 	ID          string `json:"id"`
 	Time        Time   `json:"time"`
