@@ -60,7 +60,7 @@ func (s *PostgreSQLStorage) GetLastTransactionDate(ctx context.Context, accountI
 		ctx,
 		`select "time" from transaction
 		where accountID = $1
-		order by time desc
+		order by "time" desc
 		limit 1`,
 		accountID)
 
