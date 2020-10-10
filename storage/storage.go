@@ -128,7 +128,7 @@ func (s *PostgreSQLStorage) GetByCategory(ctx context.Context, categoryID int32)
 
 		i++
 	}
-	result := make([]transaction.Transaction, i+1)
+	result := make([]transaction.Transaction, i)
 	copy(result, buffer)
 	return result, nil
 }

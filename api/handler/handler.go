@@ -42,5 +42,5 @@ func (t *TransactionHandler) GetTransactions(c *gin.Context) {
 
 // BindRoutes bind gin routes to handler methods.
 func (t *TransactionHandler) BindRoutes(router *gin.Engine) {
-	router.GET("/v1/transactions/", t.GetTransactions)
+	router.GET("/v1/transactions", t.GetTransactions)
 }
