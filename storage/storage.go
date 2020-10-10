@@ -20,7 +20,7 @@ func NewPostgreSQLStorage(pool *pgxpool.Pool) *PostgreSQLStorage {
 	return &PostgreSQLStorage{pool: pool}
 }
 
-const insertPreparedStatementName = "insert_transactions"
+const insertPrepStatementName = "insert_transactions"
 
 // Save transactions to db with deduplication using transaction ID.
 func (s *PostgreSQLStorage) Save(ctx context.Context, transactions []transaction.Transaction) error {
@@ -31,9 +31,9 @@ func (s *PostgreSQLStorage) Save(ctx context.Context, transactions []transaction
 
 	defer tx.Rollback(ctx)
 
-	_, err = tx.Prepare(ctx, insertPreparedStatementName,
-		`insert into transactions (bankID, time, description, mcc, hold, amount, accountID) 
-		 values ($1, $2, $3, $4, $5, $6, $7) on conflict do nothing`)
+	_, err = tx.Prepare(ctx, insertPrepStatementName,
+		`insert into transaction (ID, time, description, mcc, hold, amount, accountID, categoryID) 
+		 values ($1, $2, $3, $4, $5, $6, $7, $8) on conflict do nothing`)
 	if err != nil {
 		return err
 	}
@@ -41,7 +41,7 @@ func (s *PostgreSQLStorage) Save(ctx context.Context, transactions []transaction
 	batch := pgx.Batch{}
 
 	for _, t := range transactions {
-		batch.Queue(insertPreparedStatementName, t.BankID, t.Time, t.Description, t.MCC, t.Hold, t.Amount, t.AccountID)
+		batch.Queue(insertPrepStatementName, t.ID, t.Time, t.Description, t.MCC, t.Hold, t.Amount, t.AccountID, t.CategoryID)
 	}
 
 	result := tx.SendBatch(ctx, &batch)
@@ -58,7 +58,7 @@ func (s *PostgreSQLStorage) Save(ctx context.Context, transactions []transaction
 func (s *PostgreSQLStorage) GetLastTransactionDate(ctx context.Context, accountID string) (time.Time, error) {
 	row := s.pool.QueryRow(
 		ctx,
-		`select "time" from transactions
+		`select "time" from transaction
 		where accountID = $1
 		order by time desc
 		limit 1`,

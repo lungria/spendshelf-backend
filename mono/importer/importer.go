@@ -84,13 +84,14 @@ func mapTransactions(accountID string, monoTransactions []mono.Transaction) []tr
 	transactions := make([]transaction.Transaction, len(monoTransactions))
 	for i, v := range monoTransactions {
 		transactions[i] = transaction.Transaction{
-			BankID:      v.ID,
+			ID:          v.ID,
 			Time:        time.Time(v.Time),
 			Description: v.Description,
 			MCC:         v.MCC,
 			Hold:        v.Hold,
 			Amount:      v.Amount,
 			AccountID:   accountID,
+			CategoryID:  transaction.DefaultCategoryID,
 		}
 	}
 
