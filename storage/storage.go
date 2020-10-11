@@ -249,6 +249,7 @@ func (s *PostgreSQLStorage) GetCategories(ctx context.Context) ([]Category, erro
 
 	buffer := make([]Category, limit)
 	i := 0
+
 	for rows.Next() {
 		var c Category
 
