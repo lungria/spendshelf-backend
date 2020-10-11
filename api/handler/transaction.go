@@ -23,10 +23,17 @@ type UpdateTransactionQuery struct {
 	LastUpdatedAt time.Time `form:"lastUpdatedAt" binding:"required"`
 }
 
+// GetReportQuery describes request query for transaction report request.
+type GetReportQuery struct {
+	From time.Time `form:"from" binding:"required"`
+	To   time.Time `form:"to" binding:"required"`
+}
+
 // TransactionStorage abstracts storage implementation
 type TransactionStorage interface {
 	GetByCategory(ctx context.Context, categoryID int32) ([]storage.Transaction, error)
 	UpdateTransaction(ctx context.Context, params storage.UpdateTransactionCommand) (storage.Transaction, error)
+	GetReport(ctx context.Context, from, to time.Time) (map[int32]int64, error)
 }
 
 // TransactionHandler handles /vN/transaction routes.
@@ -87,8 +94,28 @@ func (t *TransactionHandler) PatchTransaction(c *gin.Context) {
 	c.JSON(http.StatusOK, &result)
 }
 
+// GetReport returns monthly spendings report.
+func (t *TransactionHandler) GetReport(c *gin.Context) {
+	var query GetReportQuery
+	if err := c.BindQuery(&query); err != nil {
+		c.JSON(http.StatusBadRequest, api.Error{Message: "from/to query parameters are required"})
+		return
+	}
+
+	result, err := t.storage.GetReport(c, query.From, query.To)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to query transactions")
+		c.JSON(http.StatusInternalServerError, api.Error{Message: "unable to load transactions from database"})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, &result)
+}
+
 // BindRoutes bind gin routes to handler methods.
 func (t *TransactionHandler) BindRoutes(router *gin.Engine) {
 	router.GET("/v1/transactions", t.GetTransactions)
 	router.PATCH("/v1/transactions/:id", t.PatchTransaction)
+	router.GET("/v1/transactions/report", t.GetReport)
 }
