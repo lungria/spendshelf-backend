@@ -6,7 +6,7 @@ CREATE TABLE transaction (
     hold boolean NOT NULL,
     amount bigint NOT NULL,
     accountID varchar(50) NOT NULL,
-    categoryID integer references category(ID) NOT NULL,
+    categoryID integer references category(ID) NOT NULL,  /* todo ondelete - restrict */
     lastUpdatedAt timestamp NOT NULL
 );
 
