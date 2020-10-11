@@ -44,6 +44,7 @@ linters:
     - gofumpt
     - golint
     - lll
+    - wsl
     - misspell
     - nestif
     - noctx # Doesn't have any config for linters-settings section.

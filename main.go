@@ -24,6 +24,7 @@ func main() {
 	defer cancel()
 
 	state.API.Start()
+
 	if state.Config.EnableImportJob {
 		state.Scheduler.Schedule(ctx, state.Importer.Import(state.Config.MonoAccountID), 1*time.Minute, 30*time.Second)
 	}

@@ -29,6 +29,7 @@ func NewServer(cfg config.Config, routes ...RouteBinder) *Server {
 			Handler: newPipelineBuilder(routes, cfg).addMiddleware().addRoutes().build(),
 		},
 	}
+
 	return server
 }
 
