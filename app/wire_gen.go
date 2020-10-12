@@ -7,6 +7,7 @@ package app
 
 import (
 	"github.com/lungria/spendshelf-backend/api"
+	"github.com/lungria/spendshelf-backend/api/handler"
 	"github.com/lungria/spendshelf-backend/config"
 	"github.com/lungria/spendshelf-backend/mono/importer"
 	"github.com/lungria/spendshelf-backend/mono/importer/interval"
@@ -30,7 +31,8 @@ func InitializeApp() (*State, error) {
 	postgreSQLStorage := storage.NewPostgreSQLStorage(pool)
 	generator := interval.NewIntervalGenerator(postgreSQLStorage)
 	importerImporter := importer.NewImporter(client, postgreSQLStorage, generator)
-	v := NewRoutesProvider()
+	transactionHandler := handler.NewTransactionHandler(postgreSQLStorage)
+	v := NewRoutesProvider(transactionHandler)
 	server := api.NewServer(configConfig, v...)
 	state := NewAppStateProvider(scheduler, importerImporter, server, pool, configConfig)
 	return state, nil

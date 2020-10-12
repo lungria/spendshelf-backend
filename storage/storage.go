@@ -79,3 +79,54 @@ func (s *PostgreSQLStorage) GetLastTransactionDate(ctx context.Context, accountI
 
 	return lastKnownTransaction, nil
 }
+
+// GetByCategory returns transactions by category.
+func (s *PostgreSQLStorage) GetByCategory(ctx context.Context, categoryID int32) ([]transaction.Transaction, error) {
+	rows, err := s.pool.Query(
+		ctx,
+		`select * from transaction
+			where categoryID = $1
+			order by "time" desc
+			limit 50`,
+		categoryID)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	buffer := make([]transaction.Transaction, 50)
+	i := 0
+
+	for rows.Next() {
+		var id string
+		var time time.Time
+		var description string
+		var mcc int32
+		var hold bool
+		var amount int64
+		var accountID string
+		var categoryID int32
+
+		err := rows.Scan(&id, &time, &description, &mcc, &hold, &amount, &accountID, &categoryID)
+		if err != nil {
+			return nil, err
+		}
+
+		buffer[i] = transaction.Transaction{
+			ID:          id,
+			Time:        time,
+			Description: description,
+			MCC:         mcc,
+			Hold:        hold,
+			Amount:      amount,
+			AccountID:   accountID,
+			CategoryID:  categoryID,
+		}
+
+		i++
+	}
+	result := make([]transaction.Transaction, i)
+	copy(result, buffer)
+	return result, nil
+}

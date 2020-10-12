@@ -3,6 +3,8 @@ package app
 import (
 	"context"
 
+	"github.com/lungria/spendshelf-backend/api/handler"
+
 	"github.com/lungria/spendshelf-backend/mono/importer"
 
 	"github.com/lungria/spendshelf-backend/api"
@@ -30,12 +32,11 @@ func NewCtxProvider() context.Context {
 
 func NewSchedulerProvider() *job.Scheduler {
 	scheduler := job.NewScheduler()
-	// scheduler.Schedule(ctx, i.Import(cfg.MonoAccountID), 1*time.Minute, 30*time.Second)
 	return scheduler
 }
 
-func NewRoutesProvider() []api.RouteBinder {
-	return nil
+func NewRoutesProvider(t *handler.TransactionHandler) []api.RouteBinder {
+	return []api.RouteBinder{t}
 }
 
 func NewAppStateProvider(
