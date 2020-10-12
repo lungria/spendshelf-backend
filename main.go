@@ -2,53 +2,31 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/lungria/spendshelf-backend/config"
-	"github.com/lungria/spendshelf-backend/job"
-	"github.com/lungria/spendshelf-backend/mono"
-	"github.com/lungria/spendshelf-backend/mono/importer"
-	"github.com/lungria/spendshelf-backend/mono/importer/interval"
-	"github.com/lungria/spendshelf-backend/storage"
+	"github.com/rs/zerolog/log"
+
+	"github.com/lungria/spendshelf-backend/app"
 )
 
 func main() {
-	cfg, err := config.FromEnv()
+	state, err := app.InitializeApp()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to parse config: %v\n", err)
-		os.Exit(1)
+		log.Fatal().Err(err).Msg("failed to initialize app")
 	}
 
-	bckgCtx := context.Background()
-	ctx, cancel := context.WithCancel(bckgCtx)
+	defer state.Close()
 
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	dbpool, err := pgxpool.Connect(context.Background(), cfg.DBConnString)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
-		os.Exit(1)
-	}
-
-	defer dbpool.Close()
-
-	s := storage.NewPostgreSQLStorage(dbpool)
-	intervalGen := interval.NewIntervalGenerator(s)
-	apiClient := mono.NewClient(cfg.MonoBaseURL, cfg.MonoAPIKey)
-	i := importer.NewImporter(apiClient, s, intervalGen)
-
-	scheduler := job.NewScheduler()
-	scheduler.Schedule(ctx, i.Import(cfg.MonoAccountID), 1*time.Minute, 30*time.Second)
+	state.API.Start()
+	state.Scheduler.Schedule(ctx, state.Importer.Import(state.Config.MonoAccountID), 1*time.Minute, 30*time.Second)
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	<-sigChan
-	cancel()
-
-	scheduler.Wait()
 }

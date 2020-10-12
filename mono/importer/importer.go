@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/lungria/spendshelf-backend/mono"
-	"github.com/lungria/spendshelf-backend/transaction"
+	"github.com/lungria/spendshelf-backend/storage/transaction"
 	"github.com/rs/zerolog/log"
 )
 
