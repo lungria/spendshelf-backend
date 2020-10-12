@@ -82,8 +82,6 @@ func (s *PostgreSQLStorage) GetLastTransactionDate(ctx context.Context, accountI
 
 // GetByCategory returns transactions by category.
 func (s *PostgreSQLStorage) GetByCategory(ctx context.Context, categoryID int32) ([]transaction.Transaction, error) {
-	// todo: add index to categoryID
-
 	rows, err := s.pool.Query(
 		ctx,
 		`select * from transaction
