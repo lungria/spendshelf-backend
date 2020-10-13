@@ -54,7 +54,6 @@ issues:
     # Disable excluding of issues about comments from golint.
     - EXC0002
   exclude-rules:
-    # Disable some linters for tests.
     - path: app.providers.go
       linters:
         - wsl
