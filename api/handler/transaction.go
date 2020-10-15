@@ -45,6 +45,7 @@ func (t *TransactionHandler) GetTransactions(c *gin.Context) {
 	if err != nil {
 		log.Error().Err(err).Msg("failed to query transactions")
 		c.JSON(http.StatusInternalServerError, api.Error{Message: "unable to load transactions from database"})
+
 		return
 	}
 
@@ -58,11 +59,13 @@ func (t *TransactionHandler) PatchTransaction(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, api.Error{Message: "id required"})
 		return
 	}
+
 	var query UpdateTransactionQuery
 	if err := c.BindQuery(&query); err != nil {
 		c.JSON(http.StatusBadRequest, api.Error{Message: "lastUpdatedAt must be valid time"})
 		return
 	}
+
 	var req UpdateTransactionBody
 	if err := c.BindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, api.Error{Message: "unable to parse json"})
@@ -77,6 +80,7 @@ func (t *TransactionHandler) PatchTransaction(c *gin.Context) {
 	if err != nil {
 		log.Error().Err(err).Msg("failed to update transaction")
 		c.JSON(http.StatusInternalServerError, api.Error{Message: "failed to update transaction in database"})
+
 		return
 	}
 

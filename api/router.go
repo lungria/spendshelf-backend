@@ -29,6 +29,7 @@ func (b *pipelineBuilder) addMiddleware() *pipelineBuilder {
 	b.router.Use(gin.RecoveryWithWriter(log.Writer()))
 	b.router.Use(defaultHeaders())
 	b.router.Use(cors.Default())
+
 	return b
 }
 
@@ -37,6 +38,7 @@ func (b *pipelineBuilder) addRoutes() *pipelineBuilder {
 	for _, r := range b.routes {
 		r.BindRoutes(b.router)
 	}
+
 	return b
 }
 

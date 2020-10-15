@@ -130,35 +130,27 @@ func scanTransactions(buffSize int, rows pgx.Rows) ([]Transaction, error) {
 	i := 0
 
 	for rows.Next() {
-		var id string
-		var lastUpdatedAt time.Time
-		var time time.Time
-		var description string
-		var mcc int32
-		var hold bool
-		var amount int64
-		var accountID string
-		var categoryID int32
+		t := Transaction{}
 
-		err := rows.Scan(&id, &time, &description, &mcc, &hold, &amount, &accountID, &categoryID, &lastUpdatedAt)
+		err := rows.Scan(
+			&t.ID,
+			&t.Time,
+			&t.Description,
+			&t.MCC,
+			&t.Hold,
+			&t.Amount,
+			&t.AccountID,
+			&t.CategoryID,
+			&t.LastUpdatedAt)
 		if err != nil {
 			return nil, err
 		}
 
-		buffer[i] = Transaction{
-			ID:            id,
-			Time:          time,
-			Description:   description,
-			MCC:           mcc,
-			Hold:          hold,
-			Amount:        amount,
-			AccountID:     accountID,
-			CategoryID:    categoryID,
-			LastUpdatedAt: lastUpdatedAt,
-		}
+		buffer[i] = t
 
 		i++
 	}
+
 	result := make([]Transaction, i)
 	copy(result, buffer)
 
@@ -179,6 +171,7 @@ func (s *PostgreSQLStorage) UpdateTransaction(
 	if err != nil {
 		return Transaction{}, err
 	}
+
 	if cmd.RowsAffected() == 0 {
 		return Transaction{}, errors.New("failed to update transaction")
 	}
