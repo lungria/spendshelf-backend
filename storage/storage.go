@@ -29,6 +29,12 @@ type Transaction struct {
 	LastUpdatedAt time.Time
 }
 
+// Category describes transaction category.
+type Category struct {
+	ID   int32
+	Name string
+}
+
 // UpdateTransactionCommand describes transaction update parameters.
 type UpdateTransactionCommand struct {
 	// filter
@@ -222,6 +228,45 @@ func (s *PostgreSQLStorage) GetReport(ctx context.Context, from, to time.Time) (
 
 		result[categoryID] = amount
 	}
+
+	return result, nil
+}
+
+// GetCategories returns existing categories.
+func (s *PostgreSQLStorage) GetCategories(ctx context.Context) ([]Category, error) {
+	const limit = 20
+
+	rows, err := s.pool.Query(
+		ctx,
+		`select ID, name from category
+		 limit $1`,
+		limit)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	buffer := make([]Category, limit)
+	i := 0
+
+	for rows.Next() {
+		var c Category
+
+		err := rows.Scan(
+			&c.ID,
+			&c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		buffer[i] = c
+
+		i++
+	}
+
+	result := make([]Category, i)
+	copy(result, buffer)
 
 	return result, nil
 }

@@ -34,6 +34,7 @@ type TransactionStorage interface {
 	GetByCategory(ctx context.Context, categoryID int32) ([]storage.Transaction, error)
 	UpdateTransaction(ctx context.Context, params storage.UpdateTransactionCommand) (storage.Transaction, error)
 	GetReport(ctx context.Context, from, to time.Time) (map[int32]int64, error)
+	GetCategories(ctx context.Context) ([]storage.Category, error)
 }
 
 // TransactionHandler handles /vN/transaction routes.
@@ -113,9 +114,23 @@ func (t *TransactionHandler) GetReport(c *gin.Context) {
 	c.JSON(http.StatusOK, &result)
 }
 
+// GetCategories returns list of existing categories.
+func (t *TransactionHandler) GetCategories(c *gin.Context) {
+	result, err := t.storage.GetCategories(c)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to query categories")
+		c.JSON(http.StatusInternalServerError, api.Error{Message: "unable to load categories from database"})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, &result)
+}
+
 // BindRoutes bind gin routes to handler methods.
 func (t *TransactionHandler) BindRoutes(router *gin.Engine) {
 	router.GET("/v1/transactions", t.GetTransactions)
 	router.PATCH("/v1/transactions/:id", t.PatchTransaction)
 	router.GET("/v1/transactions/report", t.GetReport)
+	router.GET("/v1/transactions/categories", t.GetCategories)
 }
