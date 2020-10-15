@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/lungria/spendshelf-backend/mono"
-	"github.com/lungria/spendshelf-backend/storage/transaction"
+	"github.com/lungria/spendshelf-backend/storage"
 	"github.com/rs/zerolog/log"
 )
 
@@ -18,7 +18,7 @@ type BankAPI interface {
 // TransactionsStorage abstracts persistent storage for transactions.
 type TransactionsStorage interface {
 	// Save transactions to database.
-	Save(ctx context.Context, transactions []transaction.Transaction) error
+	Save(ctx context.Context, transactions []storage.Transaction) error
 }
 
 // ImportIntervalGenerator generates interval for transaction import.
@@ -80,10 +80,10 @@ func (i *Importer) getMonoTransactions(ctx context.Context, accountID string) ([
 	return i.api.GetTransactions(ctx, query)
 }
 
-func mapTransactions(accountID string, monoTransactions []mono.Transaction) []transaction.Transaction {
-	transactions := make([]transaction.Transaction, len(monoTransactions))
+func mapTransactions(accountID string, monoTransactions []mono.Transaction) []storage.Transaction {
+	transactions := make([]storage.Transaction, len(monoTransactions))
 	for i, v := range monoTransactions {
-		transactions[i] = transaction.Transaction{
+		transactions[i] = storage.Transaction{
 			ID:          v.ID,
 			Time:        time.Time(v.Time),
 			Description: v.Description,
@@ -91,7 +91,7 @@ func mapTransactions(accountID string, monoTransactions []mono.Transaction) []tr
 			Hold:        v.Hold,
 			Amount:      v.Amount,
 			AccountID:   accountID,
-			CategoryID:  transaction.DefaultCategoryID,
+			CategoryID:  storage.DefaultCategoryID,
 		}
 	}
 

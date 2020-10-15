@@ -7,11 +7,36 @@ import (
 
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/lungria/spendshelf-backend/storage/transaction"
 )
+
+// DefaultCategoryID is the ID of category, that must be used for all new imported transactions.
+const DefaultCategoryID = 1
 
 // ErrNotFound is being returned, if no data was found in database.
 var ErrNotFound = errors.New("data not found")
+
+// Transaction describes single user's transaction.
+type Transaction struct {
+	ID          string
+	Time        time.Time
+	Description string
+	MCC         int32
+	Hold        bool
+	Amount      int64
+	AccountID   string
+	CategoryID  int32
+	// todo set on insert
+	LastUpdatedAt time.Time
+}
+
+// UpdateTransactionCommand describes transaction update parameters.
+type UpdateTransactionCommand struct {
+	// filter
+	ID            string
+	LastUpdatedAt time.Time
+	// would be updated
+	CategoryID int32
+}
 
 // PostgreSQLStorage for transactions.
 type PostgreSQLStorage struct {
@@ -26,7 +51,7 @@ func NewPostgreSQLStorage(pool *pgxpool.Pool) *PostgreSQLStorage {
 const insertPrepStatementName = "insert_transactions"
 
 // Save transactions to db with deduplication using transaction ID.
-func (s *PostgreSQLStorage) Save(ctx context.Context, transactions []transaction.Transaction) error {
+func (s *PostgreSQLStorage) Save(ctx context.Context, transactions []Transaction) error {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -35,8 +60,8 @@ func (s *PostgreSQLStorage) Save(ctx context.Context, transactions []transaction
 	defer tx.Rollback(ctx)
 
 	if _, err = tx.Prepare(ctx, insertPrepStatementName,
-		`insert into transaction (ID, time, description, mcc, hold, amount, accountID, categoryID) 
-		 values ($1, $2, $3, $4, $5, $6, $7, $8) on conflict do nothing`); err != nil {
+		`insert into transaction (ID, time, description, mcc, hold, amount, accountID, categoryID, lastUpdatedAt) 
+		 values ($1, $2, $3, $4, $5, $6, $7, $8, current_timestamp) on conflict do nothing`); err != nil {
 		return err
 	}
 
@@ -81,25 +106,32 @@ func (s *PostgreSQLStorage) GetLastTransactionDate(ctx context.Context, accountI
 }
 
 // GetByCategory returns transactions by category.
-func (s *PostgreSQLStorage) GetByCategory(ctx context.Context, categoryID int32) ([]transaction.Transaction, error) {
+func (s *PostgreSQLStorage) GetByCategory(ctx context.Context, categoryID int32) ([]Transaction, error) {
+	const limit = 50
+
 	rows, err := s.pool.Query(
 		ctx,
 		`select * from transaction
 			where categoryID = $1
 			order by "time" desc
-			limit 50`,
-		categoryID)
+			limit $2`,
+		categoryID, limit)
 	if err != nil {
 		return nil, err
 	}
 
 	defer rows.Close()
 
-	buffer := make([]transaction.Transaction, 50)
+	return scanTransactions(limit, rows)
+}
+
+func scanTransactions(buffSize int, rows pgx.Rows) ([]Transaction, error) {
+	buffer := make([]Transaction, buffSize)
 	i := 0
 
 	for rows.Next() {
 		var id string
+		var lastUpdatedAt time.Time
 		var time time.Time
 		var description string
 		var mcc int32
@@ -108,25 +140,62 @@ func (s *PostgreSQLStorage) GetByCategory(ctx context.Context, categoryID int32)
 		var accountID string
 		var categoryID int32
 
-		err := rows.Scan(&id, &time, &description, &mcc, &hold, &amount, &accountID, &categoryID)
+		err := rows.Scan(&id, &time, &description, &mcc, &hold, &amount, &accountID, &categoryID, &lastUpdatedAt)
 		if err != nil {
 			return nil, err
 		}
 
-		buffer[i] = transaction.Transaction{
-			ID:          id,
-			Time:        time,
-			Description: description,
-			MCC:         mcc,
-			Hold:        hold,
-			Amount:      amount,
-			AccountID:   accountID,
-			CategoryID:  categoryID,
+		buffer[i] = Transaction{
+			ID:            id,
+			Time:          time,
+			Description:   description,
+			MCC:           mcc,
+			Hold:          hold,
+			Amount:        amount,
+			AccountID:     accountID,
+			CategoryID:    categoryID,
+			LastUpdatedAt: lastUpdatedAt,
 		}
 
 		i++
 	}
-	result := make([]transaction.Transaction, i)
+	result := make([]Transaction, i)
 	copy(result, buffer)
+
 	return result, nil
+}
+
+// UpdateTransaction allows to partially update transaction.
+func (s *PostgreSQLStorage) UpdateTransaction(
+	ctx context.Context,
+	params UpdateTransactionCommand) (Transaction, error) {
+	cmd, err := s.pool.Exec(
+		ctx,
+		`update transaction
+			set categoryID = $1,
+			lastUpdatedAt = current_timestamp
+		 where ID = $2 AND lastUpdatedAt = $3`,
+		params.CategoryID, params.ID, params.LastUpdatedAt)
+	if err != nil {
+		return Transaction{}, err
+	}
+	if cmd.RowsAffected() == 0 {
+		return Transaction{}, errors.New("failed to update transaction")
+	}
+
+	row, err := s.pool.Query(
+		ctx,
+		`select * from transaction
+		where ID = $1`,
+		params.ID)
+	if err != nil {
+		return Transaction{}, err
+	}
+
+	result, err := scanTransactions(1, row)
+	if err != nil {
+		return Transaction{}, err
+	}
+
+	return result[0], nil
 }

@@ -7,3 +7,4 @@ src/src
 src/spendshelf.db
 .vscode
 .env
+spendshelf-backend
