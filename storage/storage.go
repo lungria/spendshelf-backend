@@ -192,3 +192,36 @@ func (s *PostgreSQLStorage) UpdateTransaction(
 
 	return result[0], nil
 }
+
+// GetReport generates spending report for set date/time interval.
+func (s *PostgreSQLStorage) GetReport(ctx context.Context, from, to time.Time) (map[int32]int64, error) {
+	rows, err := s.pool.Query(
+		ctx,
+		`select categoryID, sum(amount) as amount from transaction
+		 where time > $1 AND time <= $2
+		 group by categoryID`,
+		from, to)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	result := make(map[int32]int64)
+
+	for rows.Next() {
+		var categoryID int32
+		var amount int64
+
+		err := rows.Scan(
+			&categoryID,
+			&amount)
+		if err != nil {
+			return nil, err
+		}
+
+		result[categoryID] = amount
+	}
+
+	return result, nil
+}

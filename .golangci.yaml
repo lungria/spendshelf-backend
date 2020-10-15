@@ -62,3 +62,6 @@ issues:
     - linters:
         - golint
       text: "unless it's in another file for this package"
+    - linters:
+        - wsl
+      text: "declarations should never be cuddled"
