@@ -1,0 +1,25 @@
+# docker-compose for local debugging
+version: '3.1'
+
+services:
+
+  db:
+    image: postgres
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: adminpass123
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes: 
+      - ./dbdata:/var/lib/postgresql/data
+  app:
+    build: .
+    restart: always
+    ports:
+      - 8080:8080
+    environment:
+      SHELF_MONO_ACCOUNT_ID: "acc1"
+      SHELF_MONO_API_KEY: "apikey1"
+      SHELF_MONO_BASE_URL: "https://api.monobank.ua"
+      SHELF_DB_CONN: "postgres://db/postgres?sslmode=disable&user=postgres&password=adminpass123"
