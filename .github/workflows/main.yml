@@ -2,7 +2,7 @@ name: Deploy (main)
 
 on:
   push:
-    branches: [ v2/ci-cd ]
+    branches: [ v2/master ]
 
 jobs:   
   build:    
