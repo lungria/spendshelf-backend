@@ -17,22 +17,21 @@ var ErrNotFound = errors.New("data not found")
 
 // Transaction describes single user's transaction.
 type Transaction struct {
-	ID          string
-	Time        time.Time
-	Description string
-	MCC         int32
-	Hold        bool
-	Amount      int64
-	AccountID   string
-	CategoryID  int32
-	// todo set on insert
-	LastUpdatedAt time.Time
+	ID            string    `json:"id"`
+	Time          time.Time `json:"time"`
+	Description   string    `json:"description"`
+	MCC           int32     `json:"mcc"`
+	Hold          bool      `json:"hold"`
+	Amount        int64     `json:"amount"`
+	AccountID     string    `json:"accountID"`
+	CategoryID    int32     `json:"categoryID"`
+	LastUpdatedAt time.Time `json:"lastUpdatedAt"`
 }
 
 // Category describes transaction category.
 type Category struct {
-	ID   int32
-	Name string
+	ID   int32  `json:"id"`
+	Name string `json:"name"`
 }
 
 // UpdateTransactionCommand describes transaction update parameters.
