@@ -40,7 +40,7 @@ jobs:
       - name: Docker Build & Push      
         if: success()      
         run: |        
-          docker build build \
+          docker build \
           --platform linux/arm/v8 \
           --tag ${{ steps.prepare.outputs.docker_image }}:latest \
           --file ./Dockerfile \
