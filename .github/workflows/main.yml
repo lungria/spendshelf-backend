@@ -39,7 +39,7 @@ jobs:
         if: success()      
         run: |        
           docker build \
-          --platform linux/arm64/v8 \
+          --platform linux/arm64 \
           --tag suddengunter/spendshelf-backend:latest \
           --file ./Dockerfile \
           --output type=image,push=true .
