@@ -1,9 +1,0 @@
-lint:
-	golint ./...
-	go vet ./...
-
-test:
-	go test ./...
-
-build:
-	go build -o spendshelf .

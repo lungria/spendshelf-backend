@@ -1,0 +1,67 @@
+linters-settings:
+  dogsled:
+    # Checks assignments with too many blank identifiers (e.g. x, _, _, _, := f()).
+    max-blank-identifiers: 2
+  gocognit:
+    # Minimal cognitive complexity to report.
+    min-complexity: 20
+  gocyclo:
+    # Minimal cyclomatic complexity to report.
+    min-complexity: 10
+  gofumpt:
+    # Whether or not to use the extra rules extending gofmt.
+    extra-rules: true
+  golint:
+    min-confidence: 0
+  lll:
+    # Mininal line length to report.
+    line-length: 120
+    # Tab 'legth' when counting length of the line.
+    tab-width: 1
+  misspell:
+    # Locale to use when checking for misspellings.
+    locale: "US"
+  nestif:
+    # Minimal complexity of if statements to report.
+    min-complexity: 4
+  prealloc:
+    # Report preallocation suggestions only on simple loops that have no returns/breaks/continues/gotos in them
+    simple: false
+    # Report preallocation suggestions on range loops.
+    range-loops: true
+    # Report preallocation suggestions on for loops.
+    for-loops: true
+
+linters:
+  # please, do not use `enable-all`: it's deprecated and will be removed soon.
+  # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
+  disable-all: true
+  enable:
+    - dogsled
+    - gocognit
+    - maligned
+    - gocyclo
+    - gofumpt
+    - golint
+    - lll
+    - wsl
+    - misspell
+    - nestif
+    - noctx # Doesn't have any config for linters-settings section.
+    - prealloc
+    - testpackage
+issues:
+  include:
+    # Disable excluding of issues about comments from golint.
+    - EXC0002
+  exclude-rules:
+    - path: app.providers.go
+      linters:
+        - wsl
+        - golint
+    - linters:
+        - golint
+      text: "unless it's in another file for this package"
+    - linters:
+        - wsl
+      text: "declarations should never be cuddled"
