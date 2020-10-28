@@ -3,7 +3,7 @@ FROM golang:latest as builder
 WORKDIR /src
 COPY . ./
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o /spendshelf-backend
+RUN CGO_ENABLED=0 GOARCH=${GOARCH} GOOS=linux go build -o /spendshelf-backend
 
 FROM alpine:latest
 

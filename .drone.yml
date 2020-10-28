@@ -1,0 +1,21 @@
+kind: pipeline
+type: docker
+name: default
+
+platform:
+  arch: arm64
+
+steps:
+- name: build
+  image: plugins/docker
+  settings:
+    repo: suddengunter/spendshelf-backend
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_token
+  environment:
+    GOARCH: arm64
+  when:
+    branch:
+    - v2/ci-cd
