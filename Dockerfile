@@ -1,4 +1,7 @@
-FROM golang:1.15.3-alpine3.12 as builder
+FROM --platform=${BUILDPLATFORM} golang:1.15.3-alpine3.12 as builder
+
+ARG TARGETOS
+ARG TARGETARCH
 
 WORKDIR /src
 COPY . ./
