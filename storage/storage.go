@@ -32,6 +32,7 @@ type Transaction struct {
 type Category struct {
 	ID   int32  `json:"id"`
 	Name string `json:"name"`
+	Logo string `json:"logo"`
 }
 
 // UpdateTransactionCommand describes transaction update parameters.
@@ -237,7 +238,7 @@ func (s *PostgreSQLStorage) GetCategories(ctx context.Context) ([]Category, erro
 
 	rows, err := s.pool.Query(
 		ctx,
-		`select ID, name from category
+		`select ID, name, logo from category
 		 limit $1`,
 		limit)
 	if err != nil {
@@ -254,7 +255,8 @@ func (s *PostgreSQLStorage) GetCategories(ctx context.Context) ([]Category, erro
 
 		err := rows.Scan(
 			&c.ID,
-			&c.Name)
+			&c.Name,
+			&c.Logo)
 		if err != nil {
 			return nil, err
 		}
