@@ -1,13 +1,11 @@
-FROM golang:latest as builder
+FROM golang:1.15.3-alpine3.12 as builder
 
 WORKDIR /src
 COPY . ./
 
 RUN CGO_ENABLED=0 GOARCH=${GOARCH} GOOS=linux go build -o /spendshelf-backend
 
-FROM alpine:latest
-
-RUN apk --no-cache add ca-certificates
+FROM alpine:3.12.1
 
 WORKDIR /root/
 COPY --from=builder /spendshelf-backend .
