@@ -1,4 +1,4 @@
-name: Go
+name: Deploy (main)
 
 on:
   push:
@@ -14,19 +14,29 @@ jobs:
       # DOCKER_PASSWORD: ${{ secrets.DOCKER_TOKEN }}  
       # DOCKER_TARGET_PLATFORM: linux/arm/v8                    
     steps:    
-      -
-        name: Checkout
+      - name: Checkout
         uses: actions/checkout@v2
-      -
-        name: Set up Docker Buildx
+      
+      - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v1
         with:
           version: latest
-      -
-        name: Builder instance name
+      
+      - name: Builder instance name
         run: echo ${{ steps.buildx.outputs.name }}
-      -
-        name: Available platforms
+      
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+        with:
+          platforms: all
+          
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
+        with:
+          version: latest
+
+      - name: Available platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
  
