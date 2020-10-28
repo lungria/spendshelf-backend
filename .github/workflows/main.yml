@@ -31,14 +31,6 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Docker Build & Push      
-        if: success()      
-        run: |        
-          docker buildx build \
-          --platform linux/arm64 \
-          --tag suddengunter/spendshelf-backend:latest \
-          --file ./Dockerfile \
-          --output type=image,push=true .
 
       - name: Build and push
         uses: docker/build-push-action@v2
