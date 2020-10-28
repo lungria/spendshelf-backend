@@ -1,5 +1,7 @@
 # spendshelf-backend
 
+![main](https://github.com/lungria/spendshelf-backend/workflows/main/badge.svg)
+
 ## Overview
 
 Spendshelf started as a desire to keep money spending in the personal or/and family budget under control.
