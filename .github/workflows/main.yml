@@ -25,7 +25,6 @@ jobs:
         uses: docker/setup-buildx-action@v1
         with:
           version: latest
-          install: true
 
       # - name: Available platforms
       #   run: echo ${{ steps.buildx.outputs.platforms }}
@@ -38,7 +37,7 @@ jobs:
       - name: Docker Build & Push      
         if: success()      
         run: |        
-          docker build \
+          docker buildx build \
           --platform linux/arm64 \
           --tag suddengunter/spendshelf-backend:latest \
           --file ./Dockerfile \
