@@ -66,7 +66,8 @@ func (s *PostgreSQLStorage) Save(ctx context.Context, transactions []Transaction
 	defer tx.Rollback(ctx)
 
 	if _, err = tx.Prepare(ctx, insertPrepStatementName,
-		`insert into transaction (ID, time, description, mcc, hold, amount, accountID, categoryID, lastUpdatedAt) 
+		`insert into transaction 
+		("ID", "time", "description", "mcc", "hold", "amount", "accountID", "categoryID", "lastUpdatedAt") 
 		 values ($1, $2, $3, $4, $5, $6, $7, $8, current_timestamp) on conflict do nothing`); err != nil {
 		return err
 	}
@@ -92,7 +93,7 @@ func (s *PostgreSQLStorage) GetLastTransactionDate(ctx context.Context, accountI
 	row := s.pool.QueryRow(
 		ctx,
 		`select "time" from transaction
-		where accountID = $1
+		where "accountID" = $1
 		order by "time" desc
 		limit 1`,
 		accountID)
@@ -118,7 +119,7 @@ func (s *PostgreSQLStorage) GetByCategory(ctx context.Context, categoryID int32)
 	rows, err := s.pool.Query(
 		ctx,
 		`select * from transaction
-			where categoryID = $1
+			where "categoryID" = $1
 			order by "time" desc
 			limit $2`,
 		categoryID, limit)
@@ -169,10 +170,10 @@ func (s *PostgreSQLStorage) UpdateTransaction(
 	params UpdateTransactionCommand) (Transaction, error) {
 	cmd, err := s.pool.Exec(
 		ctx,
-		`update transaction
-			set categoryID = $1,
-			lastUpdatedAt = current_timestamp
-		 where ID = $2 AND lastUpdatedAt = $3`,
+		`update "transaction"
+			set "categoryID" = $1,
+			"lastUpdatedAt" = current_timestamp
+		 where "ID" = $2 AND "lastUpdatedAt" = $3`,
 		params.CategoryID, params.ID, params.LastUpdatedAt)
 	if err != nil {
 		return Transaction{}, err
@@ -185,7 +186,7 @@ func (s *PostgreSQLStorage) UpdateTransaction(
 	row, err := s.pool.Query(
 		ctx,
 		`select * from transaction
-		where ID = $1`,
+		where "ID" = $1`,
 		params.ID)
 	if err != nil {
 		return Transaction{}, err
@@ -203,9 +204,9 @@ func (s *PostgreSQLStorage) UpdateTransaction(
 func (s *PostgreSQLStorage) GetReport(ctx context.Context, from, to time.Time) (map[int32]int64, error) {
 	rows, err := s.pool.Query(
 		ctx,
-		`select categoryID, sum(amount) as amount from transaction
-		 where time > $1 AND time <= $2
-		 group by categoryID`,
+		`select "categoryID", sum("amount") as "amount" from transaction
+		 where "time" > $1 AND "time" <= $2
+		 group by "categoryID"`,
 		from, to)
 	if err != nil {
 		return nil, err
@@ -238,7 +239,7 @@ func (s *PostgreSQLStorage) GetCategories(ctx context.Context) ([]Category, erro
 
 	rows, err := s.pool.Query(
 		ctx,
-		`select ID, name, logo from category
+		`select "ID", "name", "logo" from category
 		 limit $1`,
 		limit)
 	if err != nil {
