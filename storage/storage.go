@@ -68,7 +68,7 @@ func (s *PostgreSQLStorage) Save(ctx context.Context, transactions []Transaction
 	if _, err = tx.Prepare(ctx, insertPrepStatementName,
 		`insert into transaction 
 		("ID", "time", "description", "mcc", "hold", "amount", "accountID", "categoryID", "lastUpdatedAt") 
-		 values ($1, $2, $3, $4, $5, $6, $7, $8, current_timestamp) on conflict do nothing`); err != nil {
+		 values ($1, $2, $3, $4, $5, $6, $7, $8, current_timestamp(0)) on conflict do nothing`); err != nil {
 		return err
 	}
 
@@ -172,7 +172,7 @@ func (s *PostgreSQLStorage) UpdateTransaction(
 		ctx,
 		`update "transaction"
 			set "categoryID" = $1,
-			"lastUpdatedAt" = current_timestamp
+			"lastUpdatedAt" = current_timestamp(0)
 		 where "ID" = $2 AND "lastUpdatedAt" = $3`,
 		params.CategoryID, params.ID, params.LastUpdatedAt)
 	if err != nil {
