@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/lungria/spendshelf-backend/category"
 	"github.com/lungria/spendshelf-backend/mono"
 	"github.com/lungria/spendshelf-backend/storage"
 	"github.com/rs/zerolog/log"
@@ -91,7 +92,7 @@ func mapTransactions(accountID string, monoTransactions []mono.Transaction) []st
 			Hold:        v.Hold,
 			Amount:      v.Amount,
 			AccountID:   accountID,
-			CategoryID:  storage.DefaultCategoryID,
+			CategoryID:  category.Default,
 		}
 	}
 

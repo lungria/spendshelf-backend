@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/lungria/spendshelf-backend/api"
+	"github.com/lungria/spendshelf-backend/category"
 	"github.com/lungria/spendshelf-backend/storage"
 
 	"github.com/rs/zerolog/log"
@@ -49,7 +50,7 @@ func NewTransactionHandler(storage TransactionStorage) *TransactionHandler {
 
 // GetTransactions returns transactions (without category).
 func (t *TransactionHandler) GetTransactions(c *gin.Context) {
-	result, err := t.storage.GetByCategory(c, storage.DefaultCategoryID)
+	result, err := t.storage.GetByCategory(c, category.Default)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to query transactions")
 		c.JSON(http.StatusInternalServerError, api.Error{Message: "unable to load transactions from database"})
