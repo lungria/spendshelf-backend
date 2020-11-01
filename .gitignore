@@ -1,10 +1,7 @@
-src/spendshelf
-.idea/
-# MonogoDB directory
-dbdata/
-# Path to binary
-src/src
-src/spendshelf.db
+.git
+.github
+.idea
 .vscode
-.env
 spendshelf-backend
+dbdata
+.env
