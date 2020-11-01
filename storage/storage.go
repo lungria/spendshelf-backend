@@ -9,8 +9,12 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
-// DefaultCategoryID is the ID of category, that must be used for all new imported transactions.
-const DefaultCategoryID = 1
+const (
+	// DefaultCategoryID is the ID of category, that must be used for all new imported transactions.
+	DefaultCategoryID = 1
+	// IgnoredCategoryID is the ID of category, that would be ignored in report.
+	IgnoredCategoryID = 127
+)
 
 // ErrNotFound is being returned, if no data was found in database.
 var ErrNotFound = errors.New("data not found")
@@ -205,9 +209,9 @@ func (s *PostgreSQLStorage) GetReport(ctx context.Context, from, to time.Time) (
 	rows, err := s.pool.Query(
 		ctx,
 		`select "categoryID", sum("amount") as "amount" from transaction
-		 where "time" > $1 AND "time" <= $2
+		 where "time" > $1 AND "time" <= $2 AND "categoryID" != $3
 		 group by "categoryID"`,
-		from, to)
+		from, to, IgnoredCategoryID)
 	if err != nil {
 		return nil, err
 	}
