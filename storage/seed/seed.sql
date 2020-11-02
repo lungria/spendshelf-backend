@@ -8,6 +8,6 @@ values
        (5, 'Rent', 'house', current_timestamp(0)),
        (6, 'Internet', 'network', current_timestamp(0)),
        (7, 'Clothes', 'eyeglasses', current_timestamp(0)),
-       (8, 'IKEA', 'Wrench', current_timestamp(0)),
+       (8, 'IKEA', 'wrench', current_timestamp(0)),
        (9, 'Caffee', 'list.dash', current_timestamp(0)),
        (10, 'Other', 'creditcard', current_timestamp(0))
