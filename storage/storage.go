@@ -7,13 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
-)
-
-const (
-	// DefaultCategoryID is the ID of category, that must be used for all new imported transactions.
-	DefaultCategoryID = 1
-	// IgnoredCategoryID is the ID of category, that would be ignored in report.
-	IgnoredCategoryID = 127
+	"github.com/lungria/spendshelf-backend/category"
 )
 
 // ErrNotFound is being returned, if no data was found in database.
@@ -211,7 +205,7 @@ func (s *PostgreSQLStorage) GetReport(ctx context.Context, from, to time.Time) (
 		`select "categoryID", sum("amount") as "amount" from transaction
 		 where "time" > $1 AND "time" <= $2 AND "categoryID" != $3
 		 group by "categoryID"`,
-		from, to, IgnoredCategoryID)
+		from, to, category.Ignored)
 	if err != nil {
 		return nil, err
 	}

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/lungria/spendshelf-backend/category"
 	"github.com/lungria/spendshelf-backend/storage"
 	"github.com/stretchr/testify/assert"
 )
@@ -31,7 +32,7 @@ func TestSave_WithLocalDb_NoErrorReturned(t *testing.T) {
 		true,
 		1110,
 		"acc1",
-		storage.DefaultCategoryID,
+		category.Default,
 		time.Now().UTC(),
 	}, {
 		"id1",
@@ -41,7 +42,7 @@ func TestSave_WithLocalDb_NoErrorReturned(t *testing.T) {
 		true,
 		1110,
 		"acc1",
-		storage.DefaultCategoryID,
+		category.Default,
 		time.Now().UTC(),
 	}, {
 		"id2",
@@ -51,7 +52,7 @@ func TestSave_WithLocalDb_NoErrorReturned(t *testing.T) {
 		true,
 		1500,
 		"acc1",
-		storage.DefaultCategoryID,
+		category.Default,
 		time.Now().UTC(),
 	}, {
 		"id3",
@@ -61,7 +62,7 @@ func TestSave_WithLocalDb_NoErrorReturned(t *testing.T) {
 		false,
 		2000,
 		"acc1",
-		storage.DefaultCategoryID,
+		category.Default,
 		time.Now().UTC(),
 	}})
 
