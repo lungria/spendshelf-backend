@@ -14,6 +14,8 @@ import (
 type BankAPI interface {
 	// GetTransactions allows to load list of transactions based on specified query parameters.
 	GetTransactions(ctx context.Context, query mono.GetTransactionsQuery) ([]mono.Transaction, error)
+	// GetUserInfo loads user accounts list.
+	GetUserInfo(ctx context.Context) ([]mono.Account, error)
 }
 
 // TransactionsStorage abstracts persistent storage for transactions.
@@ -22,13 +24,20 @@ type TransactionsStorage interface {
 	Save(ctx context.Context, transactions []storage.Transaction) error
 }
 
+// AccountsStorage abstracts persistent storage for accounts.
+type AccountsStorage interface {
+	// todo: update by id, if not found - insert new record
+	// todo: do not use mono.Account, introduce custom model
+	Save(ctx context.Context, account mono.Account) error
+}
+
 // ImportIntervalGenerator generates interval for transaction import.
 type ImportIntervalGenerator interface {
 	// GetInterval generates interval for transaction import.
 	GetInterval(ctx context.Context, accountID string) (from, to time.Time, err error)
 }
 
-// Importer handles one-time import of transactions list for selected interval.
+// Importer loads latest data from bank for specified accountID.
 type Importer struct {
 	api         BankAPI
 	storage     TransactionsStorage
@@ -44,9 +53,20 @@ func NewImporter(api BankAPI, storage TransactionsStorage, gen ImportIntervalGen
 	}
 }
 
-// Import loads latest transactions from mono API and stores them to DB.
+// Import latest data from bank for specified accountID.
 func (i *Importer) Import(accountID string) func(context.Context) {
 	return func(ctx context.Context) {
+		accounts, err := i.api.GetUserInfo(ctx)
+		if err != nil {
+			log.Err(err).Msg("failed import")
+			return
+		}
+		account, found := i.findAccount(accounts, accountID)
+		if !found {
+			log.Err(err).Str("accountID", accountID).Msg("failed import: account not found")
+			return
+		}
+
 		monoTransactions, err := i.getMonoTransactions(ctx, accountID)
 		if err != nil {
 			log.Err(err).Msg("failed import")
@@ -64,6 +84,16 @@ func (i *Importer) Import(accountID string) func(context.Context) {
 			log.Err(err).Msg("failed import")
 		}
 	}
+}
+
+func (i *Importer) findAccount(accounts []mono.Account, accountID string) (mono.Account, bool) {
+	for _, v := range accounts {
+		if v.ID == accountID {
+			return v, true
+		}
+	}
+
+	return mono.Account{}, false
 }
 
 func (i *Importer) getMonoTransactions(ctx context.Context, accountID string) ([]mono.Transaction, error) {
