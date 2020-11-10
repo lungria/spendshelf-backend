@@ -20,6 +20,7 @@ func InitializeApp() (*State, error) {
 		NewDbPoolProvider,
 		NewMonoAPIProvider,
 		storage.NewPostgreSQLStorage,
+		storage.NewAccountsStorage,
 		interval.NewIntervalGenerator,
 		importer.NewImporter,
 		NewSchedulerProvider,
@@ -34,6 +35,8 @@ func InitializeApp() (*State, error) {
 		wire.Bind(new(importer.TransactionsStorage), new(*storage.PostgreSQLStorage)),
 		wire.Bind(new(interval.TransactionsStorage), new(*storage.PostgreSQLStorage)),
 		wire.Bind(new(handler.TransactionStorage), new(*storage.PostgreSQLStorage)),
+
+		wire.Bind(new(importer.AccountsStorage), new(*storage.AccountsStorage)),
 	)
 	return &State{}, nil
 }

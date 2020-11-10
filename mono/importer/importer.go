@@ -2,6 +2,7 @@ package importer
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/lungria/spendshelf-backend/category"
@@ -27,8 +28,7 @@ type TransactionsStorage interface {
 // AccountsStorage abstracts persistent storage for accounts.
 type AccountsStorage interface {
 	// todo: update by id, if not found - insert new record
-	// todo: do not use mono.Account, introduce custom model
-	Save(ctx context.Context, account mono.Account) error
+	Save(ctx context.Context, account storage.Account) error
 }
 
 // ImportIntervalGenerator generates interval for transaction import.
@@ -39,31 +39,34 @@ type ImportIntervalGenerator interface {
 
 // Importer loads latest data from bank for specified accountID.
 type Importer struct {
-	api         BankAPI
-	storage     TransactionsStorage
-	intervalGen ImportIntervalGenerator
+	api          BankAPI
+	transactions TransactionsStorage
+	accounts     AccountsStorage
+	intervalGen  ImportIntervalGenerator
 }
 
 // NewImporter create new instance of Importer.
-func NewImporter(api BankAPI, storage TransactionsStorage, gen ImportIntervalGenerator) *Importer {
+func NewImporter(api BankAPI, t TransactionsStorage, a AccountsStorage, gen ImportIntervalGenerator) *Importer {
 	return &Importer{
-		api:         api,
-		storage:     storage,
-		intervalGen: gen,
+		api:          api,
+		transactions: t,
+		accounts:     a,
+		intervalGen:  gen,
 	}
 }
 
 // Import latest data from bank for specified accountID.
 func (i *Importer) Import(accountID string) func(context.Context) {
 	return func(ctx context.Context) {
-		accounts, err := i.api.GetUserInfo(ctx)
+		account, err := i.fetchAccount(ctx, accountID)
 		if err != nil {
 			log.Err(err).Msg("failed import")
 			return
 		}
-		account, found := i.findAccount(accounts, accountID)
-		if !found {
-			log.Err(err).Str("accountID", accountID).Msg("failed import: account not found")
+
+		err = i.accounts.Save(ctx, account)
+		if err != nil {
+			log.Err(err).Msg("failed import")
 			return
 		}
 
@@ -79,14 +82,35 @@ func (i *Importer) Import(accountID string) func(context.Context) {
 
 		transactions := mapTransactions(accountID, monoTransactions)
 
-		err = i.storage.Save(ctx, transactions)
+		err = i.transactions.Save(ctx, transactions)
 		if err != nil {
 			log.Err(err).Msg("failed import")
 		}
 	}
 }
 
-func (i *Importer) findAccount(accounts []mono.Account, accountID string) (mono.Account, bool) {
+func (i *Importer) fetchAccount(ctx context.Context, accountID string) (storage.Account, error) {
+	accounts, err := i.api.GetUserInfo(ctx)
+	if err != nil {
+		return storage.Account{}, err
+	}
+
+	monoAccount, found := findByID(accounts, accountID)
+	if !found {
+		return storage.Account{}, fmt.Errorf("account not found: %v", accountID)
+	}
+
+	return storage.Account{
+		ID: monoAccount.ID,
+		// CreatedAt:     todo how to fill??,
+		// Description:   todo how to fill??,
+		Balance: monoAccount.Balance,
+		// Currency: todo how to fill??,
+		//  LastUpdatedAt: set in SQL,
+	}, nil
+}
+
+func findByID(accounts []mono.Account, accountID string) (mono.Account, bool) {
 	for _, v := range accounts {
 		if v.ID == accountID {
 			return v, true
