@@ -27,7 +27,6 @@ type TransactionsStorage interface {
 
 // AccountsStorage abstracts persistent storage for accounts.
 type AccountsStorage interface {
-	// todo: update by id, if not found - insert new record
 	Save(ctx context.Context, account storage.Account) error
 }
 
@@ -101,12 +100,8 @@ func (i *Importer) fetchAccount(ctx context.Context, accountID string) (storage.
 	}
 
 	return storage.Account{
-		ID: monoAccount.ID,
-		// CreatedAt:     todo how to fill??,
-		// Description:   todo how to fill??,
+		ID:      monoAccount.ID,
 		Balance: monoAccount.Balance,
-		// Currency: todo how to fill??,
-		//  LastUpdatedAt: set in SQL,
 	}, nil
 }
 
