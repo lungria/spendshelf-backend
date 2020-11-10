@@ -27,6 +27,7 @@ func InitializeApp() (*State, error) {
 		NewRoutesProvider,
 		api.NewServer,
 		handler.NewTransactionHandler,
+		handler.NewAccountHandler,
 		NewAppStateProvider,
 
 		wire.Bind(new(importer.BankAPI), new(*mono.Client)),
@@ -37,6 +38,7 @@ func InitializeApp() (*State, error) {
 		wire.Bind(new(handler.TransactionStorage), new(*storage.PostgreSQLStorage)),
 
 		wire.Bind(new(importer.AccountsStorage), new(*storage.AccountsStorage)),
+		wire.Bind(new(handler.AccountsStorage), new(*storage.AccountsStorage)),
 	)
 	return &State{}, nil
 }

@@ -50,3 +50,8 @@ func (s *AccountsStorage) Save(ctx context.Context, account Account) error {
 
 	return nil
 }
+
+// GetAll accounts from database.
+func (s *AccountsStorage) GetAll(ctx context.Context) ([]Account, error) {
+	panic("implement me")
+}
