@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -53,5 +54,48 @@ func (s *AccountsStorage) Save(ctx context.Context, account Account) error {
 
 // GetAll accounts from database.
 func (s *AccountsStorage) GetAll(ctx context.Context) ([]Account, error) {
-	panic("implement me")
+	const limit = 10
+
+	rows, err := s.pool.Query(
+		ctx,
+		`select * from "account"
+			 order by "createdAt" desc
+			 limit $1`, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	return scanAccounts(limit, rows)
+}
+
+func scanAccounts(buffSize int, rows pgx.Rows) ([]Account, error) {
+	buffer := make([]Account, buffSize)
+	i := 0
+
+	for rows.Next() {
+		a := Account{}
+
+		err := rows.Scan(
+			&a.ID,
+			&a.CreatedAt,
+			&a.Description,
+			&a.Balance,
+			&a.Currency,
+			&a.LastUpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		buffer[i] = a
+
+		i++
+	}
+
+	result := make([]Account, i)
+	copy(result, buffer)
+
+	return result, nil
 }
