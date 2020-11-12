@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const dbConnString = "postgres://localhost:5432/postgres?sslmode=disable"
+const dbConnString = "postgres://localhost:5432/spendshelf-test?sslmode=disable"
 
 func TestSave_WithLocalDb_NoErrorReturned(t *testing.T) {
 	dbpool, err := pgxpool.Connect(context.Background(), dbConnString)

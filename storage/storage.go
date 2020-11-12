@@ -42,6 +42,8 @@ type UpdateTransactionCommand struct {
 	CategoryID int32
 }
 
+// todo: split PostgreSQLStorage into CategoriesStorage and TransactionsStorage
+
 // PostgreSQLStorage for transactions.
 type PostgreSQLStorage struct {
 	pool *pgxpool.Pool

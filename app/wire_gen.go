@@ -29,10 +29,12 @@ func InitializeApp() (*State, error) {
 		return nil, err
 	}
 	postgreSQLStorage := storage.NewPostgreSQLStorage(pool)
+	accountsStorage := storage.NewAccountsStorage(pool)
 	generator := interval.NewIntervalGenerator(postgreSQLStorage)
-	importerImporter := importer.NewImporter(client, postgreSQLStorage, generator)
+	importerImporter := importer.NewImporter(client, postgreSQLStorage, accountsStorage, generator)
 	transactionHandler := handler.NewTransactionHandler(postgreSQLStorage)
-	v := NewRoutesProvider(transactionHandler)
+	accountHandler := handler.NewAccountHandler(accountsStorage)
+	v := NewRoutesProvider(transactionHandler, accountHandler)
 	server := api.NewServer(configConfig, v...)
 	state := NewAppStateProvider(scheduler, importerImporter, server, pool, configConfig)
 	return state, nil
