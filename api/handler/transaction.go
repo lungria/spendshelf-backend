@@ -16,7 +16,8 @@ import (
 
 // UpdateTransactionBody describes request body for update transaction request.
 type UpdateTransactionBody struct {
-	CategoryID int32 `json:"categoryID" binding:"required"`
+	CategoryID *int32  `json:"categoryID"`
+	Comment    *string `json:"string"`
 }
 
 // UpdateTransactionQuery describes request query for update transaction request.

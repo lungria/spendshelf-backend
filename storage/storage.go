@@ -3,7 +3,14 @@ package storage
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strconv"
+	"strings"
 	"time"
+
+	"github.com/rs/zerolog/log"
+
+	"github.com/rs/zerolog"
 
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -24,6 +31,7 @@ type Transaction struct {
 	AccountID     string    `json:"accountID"`
 	CategoryID    int32     `json:"categoryID"`
 	LastUpdatedAt time.Time `json:"lastUpdatedAt"`
+	Comment       *string   `json:"comment"`
 }
 
 // Category describes transaction category.
@@ -38,8 +46,10 @@ type UpdateTransactionCommand struct {
 	// filter
 	ID            string
 	LastUpdatedAt time.Time
+
 	// would be updated
-	CategoryID int32
+	CategoryID *int32
+	Comment    *string
 }
 
 // todo: split PostgreSQLStorage into CategoriesStorage and TransactionsStorage
@@ -47,11 +57,12 @@ type UpdateTransactionCommand struct {
 // PostgreSQLStorage for transactions.
 type PostgreSQLStorage struct {
 	pool *pgxpool.Pool
+	log  *zerolog.Logger
 }
 
 // NewPostgreSQLStorage creates new instance of PostgreSQLStorage.
-func NewPostgreSQLStorage(pool *pgxpool.Pool) *PostgreSQLStorage {
-	return &PostgreSQLStorage{pool: pool}
+func NewPostgreSQLStorage(pool *pgxpool.Pool, log *zerolog.Logger) *PostgreSQLStorage {
+	return &PostgreSQLStorage{pool: pool, log: log}
 }
 
 const insertPrepStatementName = "insert_transactions"
@@ -168,13 +179,48 @@ func scanTransactions(buffSize int, rows pgx.Rows) ([]Transaction, error) {
 func (s *PostgreSQLStorage) UpdateTransaction(
 	ctx context.Context,
 	params UpdateTransactionCommand) (Transaction, error) {
+
+	paramIterator := 1
+	sql := strings.Builder{}
+
+	sql.WriteString(`update "transaction" `)
+	sql.WriteString("\n")
+
+	sqlParams := make([]interface{}, 0)
+
+	if params.CategoryID == nil {
+		sql.WriteString("set \"categoryID\" = $")
+		sql.WriteString(strconv.Itoa(paramIterator))
+		sql.WriteString(", ")
+		sqlParams = append(sqlParams, *params.CategoryID)
+		paramIterator++
+	}
+	if params.Comment == nil {
+		sql.WriteString("set \"comment\" = $")
+		sql.WriteString(strconv.Itoa(paramIterator))
+		sql.WriteString(", ")
+		sqlParams = append(sqlParams, *params.Comment)
+		paramIterator++
+	}
+	sql.WriteString("\"lastUpdatedAt\" = current_timestamp(0) \n")
+	sql.WriteString(fmt.Sprintf("where \"ID\" = $%v \n", paramIterator))
+	paramIterator++
+	sql.WriteString(fmt.Sprintf("AND \"lastUpdatedAt\" = $%v", paramIterator))
+	paramIterator++
+
+	if len(sqlParams) == 0 {
+		return Transaction{}, fmt.Errorf("nothing to update: all optional parameters are nil")
+	}
+
+	sqlString := sql.String()
+	log.Trace().Str("sql", sqlString).Msg("transaction update received")
+
+	sqlParams = append(sqlParams, params.ID, params.LastUpdatedAt)
+
 	cmd, err := s.pool.Exec(
 		ctx,
-		`update "transaction"
-			set "categoryID" = $1,
-			"lastUpdatedAt" = current_timestamp(0)
-		 where "ID" = $2 AND "lastUpdatedAt" = $3`,
-		params.CategoryID, params.ID, params.LastUpdatedAt)
+		sqlString,
+		sqlParams)
 	if err != nil {
 		return Transaction{}, err
 	}
