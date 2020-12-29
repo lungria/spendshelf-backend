@@ -8,6 +8,7 @@ const (
 	// Ignored is the ID of category, that would be ignored in report.
 	Ignored = 127
 
+	// todo: remove hardcoded
 	// custom categories, used in automatcher package (optional)
 
 	// Health is for transactions, related to medicine, doctors appointments and care products.

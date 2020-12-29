@@ -23,7 +23,7 @@ func TestAccountStorageSave_WithLocalDb_NoErrorReturned(t *testing.T) {
 
 	// test insert
 	err = db.Save(context.Background(), storage.Account{
-		ID:       "id",
+		ID:       "acc1",
 		Balance:  10000,
 		Currency: "UAH",
 	})
@@ -32,7 +32,7 @@ func TestAccountStorageSave_WithLocalDb_NoErrorReturned(t *testing.T) {
 
 	// test on conflict update
 	err = db.Save(context.Background(), storage.Account{
-		ID:       "id",
+		ID:       "acc1",
 		Balance:  20000,
 		Currency: "UAH",
 	})

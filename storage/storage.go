@@ -10,8 +10,6 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"github.com/rs/zerolog"
-
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/lungria/spendshelf-backend/category"
@@ -57,12 +55,11 @@ type UpdateTransactionCommand struct {
 // PostgreSQLStorage for transactions.
 type PostgreSQLStorage struct {
 	pool *pgxpool.Pool
-	log  *zerolog.Logger
 }
 
 // NewPostgreSQLStorage creates new instance of PostgreSQLStorage.
-func NewPostgreSQLStorage(pool *pgxpool.Pool, log *zerolog.Logger) *PostgreSQLStorage {
-	return &PostgreSQLStorage{pool: pool, log: log}
+func NewPostgreSQLStorage(pool *pgxpool.Pool) *PostgreSQLStorage {
+	return &PostgreSQLStorage{pool: pool}
 }
 
 const insertPrepStatementName = "insert_transactions"
@@ -100,6 +97,7 @@ func (s *PostgreSQLStorage) Save(ctx context.Context, transactions []Transaction
 }
 
 // GetLastTransactionDate returns date property of latest transaction (sorted by date desc).
+// Returns storage.ErrNotFound if transaction not found by query.
 func (s *PostgreSQLStorage) GetLastTransactionDate(ctx context.Context, accountID string) (time.Time, error) {
 	row := s.pool.QueryRow(
 		ctx,
@@ -123,7 +121,43 @@ func (s *PostgreSQLStorage) GetLastTransactionDate(ctx context.Context, accountI
 	return lastKnownTransaction, nil
 }
 
+// GetByID returns transaction by ID.
+// Returns storage.ErrNotFound if transaction not found by query.
+func (s *PostgreSQLStorage) GetByID(ctx context.Context, transactionID string) (Transaction, error) {
+	row := s.pool.QueryRow(
+		ctx,
+		`select * from transaction
+		where "ID" = $1
+		order by "time" desc
+		limit 1`,
+		transactionID)
+
+	t := Transaction{}
+
+	err := row.Scan(
+		&t.ID,
+		&t.Time,
+		&t.Description,
+		&t.MCC,
+		&t.Hold,
+		&t.Amount,
+		&t.AccountID,
+		&t.CategoryID,
+		&t.LastUpdatedAt,
+		&t.Comment)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return Transaction{}, ErrNotFound
+		}
+
+		return Transaction{}, err
+	}
+
+	return t, nil
+}
+
 // GetByCategory returns transactions by category.
+// Returns storage.ErrNotFound if transaction not found by query.
 func (s *PostgreSQLStorage) GetByCategory(ctx context.Context, categoryID int32) ([]Transaction, error) {
 	const limit = 50
 
@@ -135,6 +169,10 @@ func (s *PostgreSQLStorage) GetByCategory(ctx context.Context, categoryID int32)
 			limit $2`,
 		categoryID, limit)
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, ErrNotFound
+		}
+
 		return nil, err
 	}
 
@@ -159,7 +197,8 @@ func scanTransactions(buffSize int, rows pgx.Rows) ([]Transaction, error) {
 			&t.Amount,
 			&t.AccountID,
 			&t.CategoryID,
-			&t.LastUpdatedAt)
+			&t.LastUpdatedAt,
+			&t.Comment)
 		if err != nil {
 			return nil, err
 		}
@@ -188,14 +227,14 @@ func (s *PostgreSQLStorage) UpdateTransaction(
 
 	sqlParams := make([]interface{}, 0)
 
-	if params.CategoryID == nil {
+	if params.CategoryID != nil {
 		sql.WriteString("set \"categoryID\" = $")
 		sql.WriteString(strconv.Itoa(paramIterator))
 		sql.WriteString(", ")
 		sqlParams = append(sqlParams, *params.CategoryID)
 		paramIterator++
 	}
-	if params.Comment == nil {
+	if params.Comment != nil {
 		sql.WriteString("set \"comment\" = $")
 		sql.WriteString(strconv.Itoa(paramIterator))
 		sql.WriteString(", ")
@@ -220,7 +259,7 @@ func (s *PostgreSQLStorage) UpdateTransaction(
 	cmd, err := s.pool.Exec(
 		ctx,
 		sqlString,
-		sqlParams)
+		sqlParams...)
 	if err != nil {
 		return Transaction{}, err
 	}
