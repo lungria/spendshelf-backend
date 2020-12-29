@@ -17,7 +17,7 @@ import (
 // UpdateTransactionBody describes request body for update transaction request.
 type UpdateTransactionBody struct {
 	CategoryID *int32  `json:"categoryID"`
-	Comment    *string `json:"string"`
+	Comment    *string `json:"comment"`
 }
 
 // UpdateTransactionQuery describes request query for update transaction request.
@@ -51,6 +51,7 @@ func NewTransactionHandler(storage TransactionStorage) *TransactionHandler {
 
 // GetTransactions returns transactions (without category).
 func (t *TransactionHandler) GetTransactions(c *gin.Context) {
+	// todo: bind category ID from query
 	result, err := t.storage.GetByCategory(c, category.Default)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to query transactions")
@@ -86,6 +87,7 @@ func (t *TransactionHandler) PatchTransaction(c *gin.Context) {
 		ID:            id,
 		LastUpdatedAt: query.LastUpdatedAt,
 		CategoryID:    req.CategoryID,
+		Comment:       req.Comment,
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to update transaction")
