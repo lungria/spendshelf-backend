@@ -24,5 +24,5 @@ CREATE TABLE transaction (
     "accountID" varchar(50) NOT NULL references account("ID") ON DELETE RESTRICT NOT NULL,
     "categoryID" integer references category("ID") ON DELETE RESTRICT NOT NULL,
     "lastUpdatedAt" timestamp NOT NULL,
-    "comment" varchar(50) /* todo: migration */
+    "comment" varchar(50)
 );
