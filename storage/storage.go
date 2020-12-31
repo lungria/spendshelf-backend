@@ -218,7 +218,6 @@ func scanTransactions(buffSize int, rows pgx.Rows) ([]Transaction, error) {
 func (s *PostgreSQLStorage) UpdateTransaction(
 	ctx context.Context,
 	params UpdateTransactionCommand) (Transaction, error) {
-
 	paramIterator := 1
 	sql := strings.Builder{}
 
@@ -231,19 +230,24 @@ func (s *PostgreSQLStorage) UpdateTransaction(
 		sql.WriteString("set \"categoryID\" = $")
 		sql.WriteString(strconv.Itoa(paramIterator))
 		sql.WriteString(", ")
-		sqlParams = append(sqlParams, *params.CategoryID)
 		paramIterator++
+
+		sqlParams = append(sqlParams, *params.CategoryID)
 	}
+
 	if params.Comment != nil {
 		sql.WriteString("set \"comment\" = $")
 		sql.WriteString(strconv.Itoa(paramIterator))
 		sql.WriteString(", ")
-		sqlParams = append(sqlParams, *params.Comment)
 		paramIterator++
+
+		sqlParams = append(sqlParams, *params.Comment)
 	}
+
 	sql.WriteString("\"lastUpdatedAt\" = current_timestamp(0) \n")
 	sql.WriteString(fmt.Sprintf("where \"ID\" = $%v \n", paramIterator))
 	paramIterator++
+
 	sql.WriteString(fmt.Sprintf("AND \"lastUpdatedAt\" = $%v", paramIterator))
 	paramIterator++
 
