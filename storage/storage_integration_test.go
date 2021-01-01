@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// todo: setup before test, clear after test
 const dbConnString = "postgres://localhost:5432/spendshelf-test?sslmode=disable"
 
 func TestSave_WithLocalDb_NoErrorReturned(t *testing.T) {
@@ -22,8 +23,8 @@ func TestSave_WithLocalDb_NoErrorReturned(t *testing.T) {
 		os.Exit(1)
 	}
 	defer dbpool.Close()
-
 	db := storage.NewPostgreSQLStorage(dbpool)
+
 	err = db.Save(context.Background(), []storage.Transaction{{
 		"id1",
 		time.Now().UTC(),
@@ -34,6 +35,7 @@ func TestSave_WithLocalDb_NoErrorReturned(t *testing.T) {
 		"acc1",
 		category.Default,
 		time.Now().UTC(),
+		nil,
 	}, {
 		"id1",
 		time.Now().UTC(),
@@ -44,6 +46,7 @@ func TestSave_WithLocalDb_NoErrorReturned(t *testing.T) {
 		"acc1",
 		category.Default,
 		time.Now().UTC(),
+		nil,
 	}, {
 		"id2",
 		time.Now().UTC(),
@@ -54,6 +57,7 @@ func TestSave_WithLocalDb_NoErrorReturned(t *testing.T) {
 		"acc1",
 		category.Default,
 		time.Now().UTC(),
+		nil,
 	}, {
 		"id3",
 		time.Now().UTC(),
@@ -64,6 +68,7 @@ func TestSave_WithLocalDb_NoErrorReturned(t *testing.T) {
 		"acc1",
 		category.Default,
 		time.Now().UTC(),
+		nil,
 	}})
 
 	assert.NoError(t, err)
@@ -76,9 +81,58 @@ func TestGetLastTransactionDate_WithLocalDb_NoErrorReturned(t *testing.T) {
 		os.Exit(1)
 	}
 	defer dbpool.Close()
-
 	db := storage.NewPostgreSQLStorage(dbpool)
+
 	_, err = db.GetLastTransactionDate(context.Background(), "acc1")
 
 	assert.NoError(t, err)
+}
+
+// todo: this test doesn't work, because storage.Save method ignores lastUpdatedAt, need to add some workaround
+func TestUpdate_WithLocalDb_NoErrorReturned(t *testing.T) {
+	dbpool, err := pgxpool.Connect(context.Background(), dbConnString)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
+		os.Exit(1)
+	}
+	defer dbpool.Close()
+	db := storage.NewPostgreSQLStorage(dbpool)
+	lastUpdatedAt := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+	err = db.Save(context.Background(), []storage.Transaction{{
+		"id4",
+		time.Now().UTC(),
+		"food",
+		123,
+		true,
+		1110,
+		"acc1",
+		category.Default,
+		lastUpdatedAt,
+		nil,
+	}})
+
+	// update comment without category
+	comment := "comment"
+	_, err = db.UpdateTransaction(context.Background(), storage.UpdateTransactionCommand{
+		Comment:       &comment,
+		ID:            "id4",
+		LastUpdatedAt: lastUpdatedAt,
+	})
+	assert.NoError(t, err)
+	updatedTransaction, err := db.GetByID(context.Background(), "id4")
+	assert.NoError(t, err)
+	assert.Equal(t, "comment", *updatedTransaction.Comment)
+	assert.Equal(t, category.Default, updatedTransaction.CategoryID)
+	// update category without comment
+	category := int32(10)
+	_, err = db.UpdateTransaction(context.Background(), storage.UpdateTransactionCommand{
+		CategoryID:    &category,
+		ID:            "id4",
+		LastUpdatedAt: updatedTransaction.LastUpdatedAt,
+	})
+	assert.NoError(t, err)
+	updatedTransaction, err = db.GetByID(context.Background(), "id4")
+	assert.NoError(t, err)
+	assert.Equal(t, "comment", *updatedTransaction.Comment)
+	assert.Equal(t, 10, updatedTransaction.CategoryID)
 }

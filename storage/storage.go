@@ -3,7 +3,12 @@ package storage
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strconv"
+	"strings"
 	"time"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -24,6 +29,7 @@ type Transaction struct {
 	AccountID     string    `json:"accountID"`
 	CategoryID    int32     `json:"categoryID"`
 	LastUpdatedAt time.Time `json:"lastUpdatedAt"`
+	Comment       *string   `json:"comment"`
 }
 
 // Category describes transaction category.
@@ -38,8 +44,10 @@ type UpdateTransactionCommand struct {
 	// filter
 	ID            string
 	LastUpdatedAt time.Time
+
 	// would be updated
-	CategoryID int32
+	CategoryID *int32
+	Comment    *string
 }
 
 // todo: split PostgreSQLStorage into CategoriesStorage and TransactionsStorage
@@ -89,6 +97,7 @@ func (s *PostgreSQLStorage) Save(ctx context.Context, transactions []Transaction
 }
 
 // GetLastTransactionDate returns date property of latest transaction (sorted by date desc).
+// Returns storage.ErrNotFound if transaction not found by query.
 func (s *PostgreSQLStorage) GetLastTransactionDate(ctx context.Context, accountID string) (time.Time, error) {
 	row := s.pool.QueryRow(
 		ctx,
@@ -112,7 +121,43 @@ func (s *PostgreSQLStorage) GetLastTransactionDate(ctx context.Context, accountI
 	return lastKnownTransaction, nil
 }
 
+// GetByID returns transaction by ID.
+// Returns storage.ErrNotFound if transaction not found by query.
+func (s *PostgreSQLStorage) GetByID(ctx context.Context, transactionID string) (Transaction, error) {
+	row := s.pool.QueryRow(
+		ctx,
+		`select * from transaction
+		where "ID" = $1
+		order by "time" desc
+		limit 1`,
+		transactionID)
+
+	t := Transaction{}
+
+	err := row.Scan(
+		&t.ID,
+		&t.Time,
+		&t.Description,
+		&t.MCC,
+		&t.Hold,
+		&t.Amount,
+		&t.AccountID,
+		&t.CategoryID,
+		&t.LastUpdatedAt,
+		&t.Comment)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return Transaction{}, ErrNotFound
+		}
+
+		return Transaction{}, err
+	}
+
+	return t, nil
+}
+
 // GetByCategory returns transactions by category.
+// Returns storage.ErrNotFound if transaction not found by query.
 func (s *PostgreSQLStorage) GetByCategory(ctx context.Context, categoryID int32) ([]Transaction, error) {
 	const limit = 50
 
@@ -124,6 +169,10 @@ func (s *PostgreSQLStorage) GetByCategory(ctx context.Context, categoryID int32)
 			limit $2`,
 		categoryID, limit)
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, ErrNotFound
+		}
+
 		return nil, err
 	}
 
@@ -148,7 +197,8 @@ func scanTransactions(buffSize int, rows pgx.Rows) ([]Transaction, error) {
 			&t.Amount,
 			&t.AccountID,
 			&t.CategoryID,
-			&t.LastUpdatedAt)
+			&t.LastUpdatedAt,
+			&t.Comment)
 		if err != nil {
 			return nil, err
 		}
@@ -168,13 +218,52 @@ func scanTransactions(buffSize int, rows pgx.Rows) ([]Transaction, error) {
 func (s *PostgreSQLStorage) UpdateTransaction(
 	ctx context.Context,
 	params UpdateTransactionCommand) (Transaction, error) {
+	paramIterator := 1
+	sql := strings.Builder{}
+
+	sql.WriteString(`update "transaction" `)
+	sql.WriteString("\n")
+
+	sqlParams := make([]interface{}, 0)
+
+	if params.CategoryID != nil {
+		sql.WriteString("set \"categoryID\" = $")
+		sql.WriteString(strconv.Itoa(paramIterator))
+		sql.WriteString(", ")
+		paramIterator++
+
+		sqlParams = append(sqlParams, *params.CategoryID)
+	}
+
+	if params.Comment != nil {
+		sql.WriteString("set \"comment\" = $")
+		sql.WriteString(strconv.Itoa(paramIterator))
+		sql.WriteString(", ")
+		paramIterator++
+
+		sqlParams = append(sqlParams, *params.Comment)
+	}
+
+	sql.WriteString("\"lastUpdatedAt\" = current_timestamp(0) \n")
+	sql.WriteString(fmt.Sprintf("where \"ID\" = $%v \n", paramIterator))
+	paramIterator++
+
+	sql.WriteString(fmt.Sprintf("AND \"lastUpdatedAt\" = $%v", paramIterator))
+	paramIterator++
+
+	if len(sqlParams) == 0 {
+		return Transaction{}, fmt.Errorf("nothing to update: all optional parameters are nil")
+	}
+
+	sqlString := sql.String()
+	log.Trace().Str("sql", sqlString).Msg("transaction update received")
+
+	sqlParams = append(sqlParams, params.ID, params.LastUpdatedAt)
+
 	cmd, err := s.pool.Exec(
 		ctx,
-		`update "transaction"
-			set "categoryID" = $1,
-			"lastUpdatedAt" = current_timestamp(0)
-		 where "ID" = $2 AND "lastUpdatedAt" = $3`,
-		params.CategoryID, params.ID, params.LastUpdatedAt)
+		sqlString,
+		sqlParams...)
 	if err != nil {
 		return Transaction{}, err
 	}
