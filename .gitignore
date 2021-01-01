@@ -1,7 +1,7 @@
 .git
-.github
 .idea
 .vscode
 spendshelf-backend
 dbdata
 .env
+.DS_Store

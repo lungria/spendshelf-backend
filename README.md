@@ -25,6 +25,7 @@ Any contribution is welcome through pull requests
 
 ## Frontend
 
-For `v2` we do not have any UI client at the moment.
-
-Native iOS app is being actively developed in private repository and would be published later (under the same MIT License as in this repo).
+Native iOS app is being actively developed in private repository, but at the moment there are lots of hardcoded stuff in there. Contact [me](https://github.com/suddengunter) if you want to see sources, I would share them privately (under MIT license, then do whatever you like with them).
+Preview screenshots of native iOS client:
+![main](https://github.com/lungria/spendshelf-backend/.github/img/1.png)
+![main](https://github.com/lungria/spendshelf-backend/.github/img/2.png)
