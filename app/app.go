@@ -1,8 +1,6 @@
 package app
 
 import (
-	"context"
-
 	"github.com/rs/zerolog/log"
 
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -23,7 +21,7 @@ type State struct {
 
 // Close releases all resources and stops all background jobs.
 func (s *State) Close() {
-	s.API.Shutdown(context.Background())
+	s.API.Shutdown()
 	s.Scheduler.Wait()
 	s.DB.Close()
 	log.Info().Msg("app shutdown finished gracefully")

@@ -43,8 +43,8 @@ func (s *Server) Start() {
 }
 
 // Shutdown web server and kill all keep-alive connections.
-func (s *Server) Shutdown(ctx context.Context) {
-	shutdownCtx, cancel := context.WithTimeout(ctx, defaultServerShutdownTimeout)
+func (s *Server) Shutdown() {
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), defaultServerShutdownTimeout)
 	defer cancel()
 
 	s.server.SetKeepAlivesEnabled(false)
