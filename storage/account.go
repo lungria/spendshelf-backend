@@ -25,6 +25,7 @@ type AccountsStorage struct {
 }
 
 // NewAccountsStorage creates new instance of AccountsStorage.
+// todo: add proper integration tests.
 func NewAccountsStorage(pool *pgxpool.Pool) *AccountsStorage {
 	return &AccountsStorage{
 		pool: pool,

@@ -58,6 +58,7 @@ type PostgreSQLStorage struct {
 }
 
 // NewPostgreSQLStorage creates new instance of PostgreSQLStorage.
+// todo: add proper integration tests.
 func NewPostgreSQLStorage(pool *pgxpool.Pool) *PostgreSQLStorage {
 	return &PostgreSQLStorage{pool: pool}
 }
