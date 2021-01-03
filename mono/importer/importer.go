@@ -55,6 +55,8 @@ func NewImporter(api BankAPI, t TransactionsStorage, a AccountsStorage, gen Impo
 }
 
 // Import latest data from bank for specified accountID.
+// todo: extract transaction and account import logic into separate structs.
+// todo: tests.
 func (i *Importer) Import(accountID string) func(context.Context) {
 	return func(ctx context.Context) {
 		account, err := i.fetchAccount(ctx, accountID)

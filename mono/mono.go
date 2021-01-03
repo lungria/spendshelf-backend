@@ -17,6 +17,7 @@ type Client struct {
 }
 
 // NewClient creates new instance of Client.
+// todo: add tests with mock http server.
 func NewClient(baseURL, apiKey string) *Client {
 	return &Client{baseURL: baseURL, apiKey: apiKey, httpClient: http.Client{}}
 }

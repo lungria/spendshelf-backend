@@ -12,6 +12,7 @@ import (
 const maxAllowedIntervalDuration = 2682000
 
 // TransactionsStorage abstracts data access layer for already imported transactions.
+// todo: untie implementation from DB: cache latest transaction date in memory.
 type TransactionsStorage interface {
 	// GetLastTransactionDate returns date property of latest transaction (sorted by date desc).
 	GetLastTransactionDate(ctx context.Context, accountID string) (time.Time, error)
