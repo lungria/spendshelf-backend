@@ -15,6 +15,7 @@ import (
 )
 
 // UpdateTransactionBody describes request body for update transaction request.
+// todo: validate.
 type UpdateTransactionBody struct {
 	CategoryID *int32  `json:"categoryID"`
 	Comment    *string `json:"comment"`
@@ -31,7 +32,7 @@ type GetReportQuery struct {
 	To   time.Time `form:"to" binding:"required"`
 }
 
-// TransactionStorage abstracts storage implementation
+// TransactionStorage abstracts storage implementation.
 type TransactionStorage interface {
 	GetByCategory(ctx context.Context, categoryID int32) ([]storage.Transaction, error)
 	UpdateTransaction(ctx context.Context, params storage.UpdateTransactionCommand) (storage.Transaction, error)
@@ -51,11 +52,11 @@ func NewTransactionHandler(storage TransactionStorage) *TransactionHandler {
 
 // GetTransactions returns transactions (without category).
 func (t *TransactionHandler) GetTransactions(c *gin.Context) {
-	// todo: bind category ID from query
+	// todo: add categoryID as URL query parameter
 	result, err := t.storage.GetByCategory(c, category.Default)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to query transactions")
-		c.JSON(http.StatusInternalServerError, api.Error{Message: "unable to load transactions from database"})
+		log.Error().Err(err).Msg("unable to load transactions from storage")
+		c.JSON(api.InternalServerError())
 
 		return
 	}
@@ -63,7 +64,11 @@ func (t *TransactionHandler) GetTransactions(c *gin.Context) {
 	c.JSON(http.StatusOK, &result)
 }
 
-// PatchTransaction allows to update
+// PatchTransaction allows to update single transaction.
+// Transaction is being selected by id route parameter and filtered by lastUpdatedAt query parameter.
+// lastUpdatedAt filtering protects us from concurrent updates issues (simplest implementation of optimistic
+// concurrency). Body can contain optional parameters (see UpdateTransactionBody fields). Patch will update
+// only not nil fields.
 func (t *TransactionHandler) PatchTransaction(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
@@ -90,8 +95,8 @@ func (t *TransactionHandler) PatchTransaction(c *gin.Context) {
 		Comment:       req.Comment,
 	})
 	if err != nil {
-		log.Error().Err(err).Msg("failed to update transaction")
-		c.JSON(http.StatusInternalServerError, api.Error{Message: "failed to update transaction in database"})
+		log.Error().Err(err).Msg("failed to update transaction in storage")
+		c.JSON(api.InternalServerError())
 
 		return
 	}
@@ -109,8 +114,8 @@ func (t *TransactionHandler) GetReport(c *gin.Context) {
 
 	result, err := t.storage.GetReport(c, query.From, query.To)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to query transactions")
-		c.JSON(http.StatusInternalServerError, api.Error{Message: "unable to load transactions from database"})
+		log.Error().Err(err).Msg("unable to load transactions from storage")
+		c.JSON(api.InternalServerError())
 
 		return
 	}
@@ -122,8 +127,8 @@ func (t *TransactionHandler) GetReport(c *gin.Context) {
 func (t *TransactionHandler) GetCategories(c *gin.Context) {
 	result, err := t.storage.GetCategories(c)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to query categories")
-		c.JSON(http.StatusInternalServerError, api.Error{Message: "unable to load categories from database"})
+		log.Error().Err(err).Msg("unable to load categories from storage")
+		c.JSON(api.InternalServerError())
 
 		return
 	}

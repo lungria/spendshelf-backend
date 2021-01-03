@@ -18,7 +18,7 @@ type AccountsStorage interface {
 	GetAll(ctx context.Context) ([]storage.Account, error)
 }
 
-// AccountHandler handles /vN/account routes.
+// AccountHandler handles /vN/account* and /vN/accounts* routes.
 type AccountHandler struct {
 	storage AccountsStorage
 }
@@ -32,8 +32,8 @@ func NewAccountHandler(storage AccountsStorage) *AccountHandler {
 func (t *AccountHandler) GetAccounts(c *gin.Context) {
 	result, err := t.storage.GetAll(c)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to query accounts")
-		c.JSON(http.StatusInternalServerError, api.Error{Message: "unable to load accounts from database"})
+		log.Error().Err(err).Msg("unable to load accounts from storage")
+		c.JSON(api.InternalServerError())
 
 		return
 	}
