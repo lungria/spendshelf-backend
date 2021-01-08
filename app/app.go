@@ -1,13 +1,13 @@
 package app
 
 import (
+	importer2 "github.com/lungria/spendshelf-backend/importer"
 	"github.com/rs/zerolog/log"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/lungria/spendshelf-backend/api"
-	"github.com/lungria/spendshelf-backend/config"
-	"github.com/lungria/spendshelf-backend/job"
-	"github.com/lungria/spendshelf-backend/mono/importer"
+	"github.com/lungria/spendshelf-backend/app/config"
+	"github.com/lungria/spendshelf-backend/app/job"
 )
 
 // State stores information about app dependencies and allows to manage it's lifecycle.
@@ -15,7 +15,7 @@ type State struct {
 	API       *api.Server
 	Scheduler *job.Scheduler
 	DB        *pgxpool.Pool
-	Importer  *importer.Importer
+	Importer  *importer2.Importer
 	Config    config.Config
 }
 

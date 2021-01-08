@@ -12,7 +12,7 @@ import (
 
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/lungria/spendshelf-backend/category"
+	"github.com/lungria/spendshelf-backend/storage/category"
 )
 
 // ErrNotFound is being returned, if no data was found in database.

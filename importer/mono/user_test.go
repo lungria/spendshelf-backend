@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/lungria/spendshelf-backend/mono"
+	"github.com/lungria/spendshelf-backend/importer/mono"
 	"github.com/stretchr/testify/assert"
 )
 

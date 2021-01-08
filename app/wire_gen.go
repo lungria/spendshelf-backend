@@ -8,9 +8,9 @@ package app
 import (
 	"github.com/lungria/spendshelf-backend/api"
 	"github.com/lungria/spendshelf-backend/api/handler"
-	"github.com/lungria/spendshelf-backend/config"
-	"github.com/lungria/spendshelf-backend/mono/importer"
-	"github.com/lungria/spendshelf-backend/mono/importer/interval"
+	"github.com/lungria/spendshelf-backend/app/config"
+	"github.com/lungria/spendshelf-backend/importer"
+	"github.com/lungria/spendshelf-backend/importer/interval"
 	"github.com/lungria/spendshelf-backend/storage"
 )
 
@@ -23,15 +23,16 @@ func InitializeApp() (*State, error) {
 		return nil, err
 	}
 	client := NewMonoAPIProvider(configConfig)
-	context := NewCtxProvider()
-	pool, err := NewDbPoolProvider(context, configConfig)
+	pool, err := NewDbPoolProvider(configConfig)
 	if err != nil {
 		return nil, err
 	}
 	postgreSQLStorage := storage.NewPostgreSQLStorage(pool)
-	accountsStorage := storage.NewAccountsStorage(pool)
 	generator := interval.NewIntervalGenerator(postgreSQLStorage)
-	importerImporter := importer.NewImporter(client, postgreSQLStorage, accountsStorage, generator)
+	defaultTransactionsImporter := importer.NewTransactionsImporter(client, postgreSQLStorage, generator)
+	accountsStorage := storage.NewAccountsStorage(pool)
+	defaultAccountImporter := importer.NewDefaultAccountImporter(client, accountsStorage)
+	importerImporter := importer.NewImporter(defaultTransactionsImporter, defaultAccountImporter)
 	transactionHandler := handler.NewTransactionHandler(postgreSQLStorage)
 	accountHandler := handler.NewAccountHandler(accountsStorage)
 	v := NewRoutesProvider(transactionHandler, accountHandler)

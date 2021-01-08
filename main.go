@@ -7,7 +7,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/lungria/spendshelf-backend/job"
+	"github.com/lungria/spendshelf-backend/app/job"
 
 	"github.com/rs/zerolog/log"
 

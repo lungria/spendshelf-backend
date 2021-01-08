@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/lungria/spendshelf-backend/api"
-	"github.com/lungria/spendshelf-backend/category"
 	"github.com/lungria/spendshelf-backend/storage"
+	"github.com/lungria/spendshelf-backend/storage/category"
 
 	"github.com/rs/zerolog/log"
 
@@ -52,6 +52,7 @@ func NewTransactionHandler(storage TransactionStorage) *TransactionHandler {
 
 // GetTransactions returns transactions (without category).
 func (t *TransactionHandler) GetTransactions(c *gin.Context) {
+	// todo: store transactions list cached in thread-safe circular buffer
 	// todo: add categoryID as URL query parameter
 	result, err := t.storage.GetByCategory(c, category.Default)
 	if err != nil {

@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lungria/spendshelf-backend/config"
+	"github.com/lungria/spendshelf-backend/app/config"
 	cors "github.com/rs/cors/wrapper/gin"
 )
 

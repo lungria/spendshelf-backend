@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lungria/spendshelf-backend/mono/importer/interval"
+	"github.com/lungria/spendshelf-backend/importer/interval"
 )
 
 // Ensure, that TransactionsStorageMock does implement TransactionsStorage.

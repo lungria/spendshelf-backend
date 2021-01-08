@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/lungria/spendshelf-backend/category"
 	"github.com/lungria/spendshelf-backend/storage"
+	"github.com/lungria/spendshelf-backend/storage/category"
 	"github.com/stretchr/testify/assert"
 )
 
