@@ -2,6 +2,7 @@ package importer
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/lungria/spendshelf-backend/importer/mono"
 	"github.com/lungria/spendshelf-backend/storage"
@@ -35,14 +36,12 @@ func NewDefaultAccountImporter(api UserInfoBankAPI, accounts AccountsStorage) *D
 func (i *DefaultAccountImporter) Import(ctx context.Context, accountID string) error {
 	accounts, err := i.api.GetUserInfo(ctx)
 	if err != nil {
-		// todo wrap
-		return err
+		return fmt.Errorf("failed import account '%s' data: %w", accountID, err)
 	}
 
 	monoAccount, found := i.findByID(accounts, accountID)
 	if !found {
-		// todo wrap
-		return err
+		return fmt.Errorf("failed import account '%s' data: %w", accountID, err)
 	}
 
 	err = i.accounts.Save(ctx, storage.Account{
@@ -50,8 +49,7 @@ func (i *DefaultAccountImporter) Import(ctx context.Context, accountID string) e
 		Balance: monoAccount.Balance,
 	})
 	if err != nil {
-		// todo wrap
-		return err
+		return fmt.Errorf("failed import account '%s' data: %w", accountID, err)
 	}
 
 	return nil

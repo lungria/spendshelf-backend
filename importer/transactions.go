@@ -2,6 +2,7 @@ package importer
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/lungria/spendshelf-backend/importer/mono"
@@ -54,7 +55,7 @@ func NewTransactionsImporter(
 func (i *DefaultTransactionsImporter) Import(ctx context.Context, accountID string) error {
 	from, to, err := i.intervalGen.GetInterval(ctx, accountID)
 	if err != nil {
-		return err // todo: wrap
+		return fmt.Errorf("failed import transaction for account '%s': %w", accountID, err)
 	}
 
 	query := mono.GetTransactionsQuery{
@@ -65,7 +66,7 @@ func (i *DefaultTransactionsImporter) Import(ctx context.Context, accountID stri
 
 	monoTransactions, err := i.api.GetTransactions(ctx, query)
 	if err != nil {
-		return err // todo: wrap
+		return fmt.Errorf("failed import transaction for account '%s': %w", accountID, err)
 	}
 
 	if len(monoTransactions) == 0 {
@@ -76,7 +77,7 @@ func (i *DefaultTransactionsImporter) Import(ctx context.Context, accountID stri
 
 	err = i.transactions.Save(ctx, transactions)
 	if err != nil {
-		return err // todo: wrap
+		return fmt.Errorf("failed import transaction for account '%s': %w", accountID, err)
 	}
 
 	return nil
