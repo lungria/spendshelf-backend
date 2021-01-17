@@ -41,7 +41,7 @@ func (i *DefaultAccountImporter) Import(ctx context.Context, accountID string) e
 
 	monoAccount, found := i.findByID(accounts, accountID)
 	if !found {
-		return fmt.Errorf("failed import account '%s' data: %w", accountID, err)
+		return fmt.Errorf("unable to save account data for unknown account: %s", accountID)
 	}
 
 	err = i.accounts.Save(ctx, storage.Account{
