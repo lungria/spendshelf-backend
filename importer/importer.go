@@ -33,7 +33,6 @@ func NewImporter(transactions TransactionsImporter, accounts AccountImporter) *I
 }
 
 // Import latest data from bank for specified accountID.
-// todo: tests.
 func (i *Importer) Import(accountID string) func(context.Context) {
 	return func(ctx context.Context) {
 		err := i.accounts.Import(ctx, accountID)
