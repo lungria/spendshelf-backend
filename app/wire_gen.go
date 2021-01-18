@@ -10,6 +10,7 @@ import (
 	"github.com/lungria/spendshelf-backend/api/handler"
 	"github.com/lungria/spendshelf-backend/app/config"
 	"github.com/lungria/spendshelf-backend/importer"
+	"github.com/lungria/spendshelf-backend/importer/account"
 	"github.com/lungria/spendshelf-backend/importer/interval"
 	"github.com/lungria/spendshelf-backend/storage"
 )
@@ -31,8 +32,8 @@ func InitializeApp() (*State, error) {
 	generator := interval.NewIntervalGenerator(postgreSQLStorage)
 	defaultTransactionsImporter := importer.NewTransactionsImporter(client, postgreSQLStorage, generator)
 	accountsStorage := storage.NewAccountsStorage(pool)
-	defaultAccountImporter := importer.NewDefaultAccountImporter(client, accountsStorage)
-	importerImporter := importer.NewImporter(defaultTransactionsImporter, defaultAccountImporter)
+	defaultImporter := account.NewDefaultImporter(client, accountsStorage)
+	importerImporter := importer.NewImporter(defaultTransactionsImporter, defaultImporter)
 	transactionHandler := handler.NewTransactionHandler(postgreSQLStorage)
 	accountHandler := handler.NewAccountHandler(accountsStorage)
 	v := NewRoutesProvider(transactionHandler, accountHandler)

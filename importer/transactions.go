@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/lungria/spendshelf-backend/importer/account"
+
 	"github.com/lungria/spendshelf-backend/importer/mono"
 	"github.com/lungria/spendshelf-backend/storage"
 	"github.com/lungria/spendshelf-backend/storage/category"
@@ -34,7 +36,7 @@ type ImportIntervalGenerator interface {
 type DefaultTransactionsImporter struct {
 	api          TransactionsBankAPI
 	transactions TransactionsStorage
-	accounts     DefaultAccountImporter
+	accounts     account.DefaultImporter
 	intervalGen  ImportIntervalGenerator
 }
 
