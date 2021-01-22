@@ -32,7 +32,6 @@ func NewDefaultImporter(api BankAPI, accounts Storage) *DefaultImporter {
 }
 
 // Import latest account related data from bank for specified accountID and save it to storage.
-// todo: tests.
 func (i *DefaultImporter) Import(ctx context.Context, accountID string) error {
 	accounts, err := i.api.GetUserInfo(ctx)
 	if err != nil {
@@ -41,7 +40,7 @@ func (i *DefaultImporter) Import(ctx context.Context, accountID string) error {
 
 	monoAccount, found := i.findByID(accounts, accountID)
 	if !found {
-		return NewNotFoundInAPIError(accountID)
+		return fmt.Errorf("API response doesn't contain requred information for account '%s'", accountID)
 	}
 
 	err = i.accounts.Save(ctx, storage.Account{
@@ -63,22 +62,4 @@ func (i *DefaultImporter) findByID(accounts []mono.Account, accountID string) (m
 	}
 
 	return mono.Account{}, false
-}
-
-type NotFoundInAPIError struct {
-	accountID string
-}
-
-func NewNotFoundInAPIError(accountID string) *NotFoundInAPIError {
-	return &NotFoundInAPIError{
-		accountID: accountID,
-	}
-}
-
-func (err *NotFoundInAPIError) GetAccountID() string {
-	return err.accountID
-}
-
-func (err *NotFoundInAPIError) Error() string {
-	return fmt.Sprintf("API response doesn't contain requred information for account: %s", err.accountID)
 }

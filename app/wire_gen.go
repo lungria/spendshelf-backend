@@ -12,6 +12,7 @@ import (
 	"github.com/lungria/spendshelf-backend/importer"
 	"github.com/lungria/spendshelf-backend/importer/account"
 	"github.com/lungria/spendshelf-backend/importer/interval"
+	"github.com/lungria/spendshelf-backend/importer/transactions"
 	"github.com/lungria/spendshelf-backend/storage"
 )
 
@@ -29,8 +30,8 @@ func InitializeApp() (*State, error) {
 		return nil, err
 	}
 	postgreSQLStorage := storage.NewPostgreSQLStorage(pool)
-	generator := interval.NewIntervalGenerator(postgreSQLStorage)
-	defaultTransactionsImporter := importer.NewTransactionsImporter(client, postgreSQLStorage, generator)
+	generator := interval.NewGenerator(postgreSQLStorage)
+	defaultTransactionsImporter := transactions.NewImporter(client, postgreSQLStorage, generator)
 	accountsStorage := storage.NewAccountsStorage(pool)
 	defaultImporter := account.NewDefaultImporter(client, accountsStorage)
 	importerImporter := importer.NewImporter(defaultTransactionsImporter, defaultImporter)

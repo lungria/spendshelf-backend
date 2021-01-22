@@ -11,6 +11,7 @@ import (
 	"github.com/lungria/spendshelf-backend/importer/account"
 	"github.com/lungria/spendshelf-backend/importer/interval"
 	"github.com/lungria/spendshelf-backend/importer/mono"
+	"github.com/lungria/spendshelf-backend/importer/transactions"
 	"github.com/lungria/spendshelf-backend/storage"
 )
 
@@ -21,24 +22,24 @@ func InitializeApp() (*State, error) {
 		NewMonoAPIProvider,
 		storage.NewPostgreSQLStorage,
 		storage.NewAccountsStorage,
-		interval.NewIntervalGenerator,
+		interval.NewGenerator,
 		NewSchedulerProvider,
 		NewRoutesProvider,
 		api.NewServer,
 		NewAppStateProvider,
 
 		importer.NewImporter,
-		importer.NewTransactionsImporter,
+		transactions.NewImporter,
 		account.NewDefaultImporter,
 
-		wire.Bind(new(importer.TransactionsStorage), new(*storage.PostgreSQLStorage)),
+		wire.Bind(new(transactions.TransactionsStorage), new(*storage.PostgreSQLStorage)),
 		wire.Bind(new(interval.TransactionsStorage), new(*storage.PostgreSQLStorage)),
 		wire.Bind(new(account.Storage), new(*storage.AccountsStorage)),
 		wire.Bind(new(importer.AccountImporter), new(*account.DefaultImporter)),
-		wire.Bind(new(importer.TransactionsImporter), new(*importer.DefaultTransactionsImporter)),
-		wire.Bind(new(importer.TransactionsBankAPI), new(*mono.Client)),
+		wire.Bind(new(importer.TransactionsImporter), new(*transactions.DefaultImporter)),
+		wire.Bind(new(transactions.TransactionsBankAPI), new(*mono.Client)),
 		wire.Bind(new(account.BankAPI), new(*mono.Client)),
-		wire.Bind(new(importer.ImportIntervalGenerator), new(*interval.Generator)),
+		wire.Bind(new(transactions.ImportIntervalGenerator), new(*interval.Generator)),
 
 		handler.NewTransactionHandler,
 		handler.NewAccountHandler,

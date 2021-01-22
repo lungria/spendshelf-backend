@@ -23,8 +23,8 @@ type Generator struct {
 	storage TransactionsStorage
 }
 
-// NewIntervalGenerator creates new instance of Generator.
-func NewIntervalGenerator(storage TransactionsStorage) *Generator {
+// NewGenerator creates new instance of Generator.
+func NewGenerator(storage TransactionsStorage) *Generator {
 	return &Generator{storage: storage}
 }
 
