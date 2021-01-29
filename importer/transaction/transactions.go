@@ -1,5 +1,4 @@
-// todo: rename package to transaction
-package transactions
+package transaction
 
 import (
 	"context"
@@ -54,7 +53,6 @@ func NewImporter(
 }
 
 // Import loads transactions in specified interval for specified accountID and saves them to storage.
-// todo: tests.
 func (i *DefaultImporter) Import(ctx context.Context, accountID string) error {
 	from, to, err := i.intervalGen.GetInterval(ctx, accountID)
 	if err != nil {

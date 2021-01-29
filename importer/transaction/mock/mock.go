@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lungria/spendshelf-backend/importer/transactions"
+	"github.com/lungria/spendshelf-backend/importer/transaction"
 
 	"github.com/lungria/spendshelf-backend/importer/mono"
 	"github.com/lungria/spendshelf-backend/storage"
@@ -16,7 +16,7 @@ import (
 
 // Ensure, that BankAPIMock does implement BankAPI.
 // If this is not the case, regenerate this file with moq.
-var _ transactions.BankAPI = &BankAPIMock{}
+var _ transaction.BankAPI = &BankAPIMock{}
 
 // BankAPIMock is a mock implementation of BankAPI.
 //
@@ -87,7 +87,7 @@ func (mock *BankAPIMock) GetTransactionsCalls() []struct {
 
 // Ensure, that StorageMock does implement Storage.
 // If this is not the case, regenerate this file with moq.
-var _ transactions.Storage = &StorageMock{}
+var _ transaction.Storage = &StorageMock{}
 
 // StorageMock is a mock implementation of Storage.
 //
@@ -158,7 +158,7 @@ func (mock *StorageMock) SaveCalls() []struct {
 
 // Ensure, that ImportIntervalGeneratorMock does implement ImportIntervalGenerator.
 // If this is not the case, regenerate this file with moq.
-var _ transactions.ImportIntervalGenerator = &ImportIntervalGeneratorMock{}
+var _ transaction.ImportIntervalGenerator = &ImportIntervalGeneratorMock{}
 
 // ImportIntervalGeneratorMock is a mock implementation of ImportIntervalGenerator.
 //

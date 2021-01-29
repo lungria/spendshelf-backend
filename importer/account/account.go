@@ -26,7 +26,7 @@ type DefaultImporter struct {
 	accounts Storage
 }
 
-// DefaultImporter create new instance of DefaultImporter.
+// NewDefaultImporter create new instance of DefaultImporter.
 func NewDefaultImporter(api BankAPI, accounts Storage) *DefaultImporter {
 	return &DefaultImporter{api: api, accounts: accounts}
 }
@@ -40,7 +40,7 @@ func (i *DefaultImporter) Import(ctx context.Context, accountID string) error {
 
 	monoAccount, found := i.findByID(accounts, accountID)
 	if !found {
-		return fmt.Errorf("API response doesn't contain requred information for account '%s'", accountID)
+		return fmt.Errorf("API response doesn't contain required information for account '%s'", accountID)
 	}
 
 	err = i.accounts.Save(ctx, storage.Account{
