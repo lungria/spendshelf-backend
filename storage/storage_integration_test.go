@@ -3,10 +3,11 @@ package storage_test
 import (
 	"context"
 	"fmt"
-	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"testing"
+
+	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/stretchr/testify/assert"
 )
 
 func prepare(t *testing.T) (*pgxpool.Pool, func()) {
@@ -15,18 +16,20 @@ func prepare(t *testing.T) (*pgxpool.Pool, func()) {
 
 	random := rand.Intn(999)
 	dbName := fmt.Sprintf("test%v", random)
-	sql := fmt.Sprintf("create db %s;", dbName)
+	sql := fmt.Sprintf("create database %s;", dbName)
 	_, err = mainPool.Exec(context.Background(), sql)
 
 	assert.Nil(t, err)
-	cleanup := func() {
-		defer mainPool.Close()
-		_, err = mainPool.Exec(context.Background(), fmt.Sprintf("dropdb %s;", dbName))
-		assert.Nil(t, err)
-	}
 
 	testDB, err := pgxpool.Connect(context.Background(), fmt.Sprintf("postgres://localhost:5432/%s?sslmode=disable&user=postgres&password=adminpass123", dbName))
 	assert.Nil(t, err)
+
+	cleanup := func() {
+		defer mainPool.Close()
+		testDB.Close()
+		_, err = mainPool.Exec(context.Background(), fmt.Sprintf("drop database %s;", dbName))
+		assert.Nil(t, err)
+	}
 
 	return testDB, cleanup
 }
@@ -35,11 +38,12 @@ func Test_Select_1__WithLocalDb__NoErrors(t *testing.T) {
 	db, cleanup := prepare(t)
 	defer cleanup()
 
-	_, err := db.Query(context.Background(), "select 1;")
+	res, err := db.Query(context.Background(), "select 1;")
+	// todo: check if this is used in real code!
+	res.Close()
 
 	assert.Nil(t, err)
 }
-
 
 //
 //func TestSave_WithLocalDb_NoErrorReturned(t *testing.T) {
