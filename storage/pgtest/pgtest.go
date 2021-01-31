@@ -41,7 +41,7 @@ func prepare(t *testing.T) (*pgxpool.Pool, func()) {
 	// create temporary testing database
 	random := rand.Intn(9999)
 	dbName := fmt.Sprintf("pgtest%v", random)
-	_, err = mainPool.Exec(context.Background(), "create database $1", dbName)
+	_, err = mainPool.Exec(context.Background(), fmt.Sprintf("create database %s", dbName))
 	if err != nil {
 		mainPool.Close()
 		t.Fatalf("expected nil, found: %v", err)
@@ -58,7 +58,7 @@ func prepare(t *testing.T) (*pgxpool.Pool, func()) {
 	cleanup := func() {
 		defer mainPool.Close()
 		testDB.Close()
-		_, err = mainPool.Exec(context.Background(), "drop database $1;", dbName)
+		_, err = mainPool.Exec(context.Background(), fmt.Sprintf("drop database %s;", dbName))
 		if err != nil {
 			t.Fatalf("expected nil, found: %v", err)
 		}
