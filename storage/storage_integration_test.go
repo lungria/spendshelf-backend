@@ -16,17 +16,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-//func Test_Select_1__WithLocalDb__NoErrors(t *testing.T) {
-//	db, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
-//	defer cleanup()
-//
-//	res, err := db.Query(context.Background(), "select 1;")
-//	// todo: check if this is used in real code!
-//	defer res.Close()
-//
-//	assert.Nil(t, err)
-//}
-
 func TestSave_OnDuplicateInsert_DoesNothing(t *testing.T) {
 	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
 	defer cleanup()
@@ -91,42 +80,42 @@ func TestSave_OnDuplicateInsert_DoesNothing(t *testing.T) {
 	assert.Equal(t, "ORIGINAL DESCRIPTION", description)
 }
 
-func prepareTestCategory(t *testing.T, db *pgxpool.Pool) int32 {
-	categoryID := int32(1)
-	_, err := db.Exec(context.Background(), `
-				insert into category ("ID", "name", "logo", "createdAt")
-				values ($1, 'Unknown', 'creditcard', current_timestamp(0))`, categoryID)
+func TestGetLastTransactionDate_WithLocalDb_NoErrorReturned(t *testing.T) {
+	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
+	defer cleanup()
+	accountID := prepareTestAccount(t, pool)
+	categoryID := prepareTestCategory(t, pool)
+	db := storage.NewPostgreSQLStorage(pool)
+	mockTransactions := []storage.Transaction{
+		{
+			ID:          "old-tr",
+			Time:        time.Date(2020, 10, 10, 0, 0, 0, 0, time.UTC),
+			Description: "desc",
+			MCC:         10,
+			Hold:        false,
+			Amount:      100,
+			AccountID:   accountID,
+			CategoryID:  categoryID,
+		},
+		{
+			ID:          "new-tr",
+			Time:        time.Date(2020, 10, 11, 0, 0, 0, 0, time.UTC),
+			Description: "desc",
+			MCC:         10,
+			Hold:        false,
+			Amount:      100,
+			AccountID:   accountID,
+			CategoryID:  categoryID,
+		}}
 
-	require.Nil(t, err)
-	return categoryID
+	err := db.Save(context.Background(), mockTransactions)
+	assert.NoError(t, err)
+
+	lastTransactionDate, err := db.GetLastTransactionDate(context.Background(), accountID)
+
+	assert.NoError(t, err)
+	assert.Equal(t, mockTransactions[1].Time, lastTransactionDate)
 }
-
-func prepareTestAccount(t *testing.T, db *pgxpool.Pool) string {
-	accountID := "test-acc-id"
-	_, err := db.Exec(context.Background(), `
-				insert into "account"
-							 ("ID", "createdAt", "description", "balance", "currency", "lastUpdatedAt")
-							 values ($1, current_timestamp(0), 'desc', 0, 'UAH', current_timestamp(0))
-				`, accountID)
-
-	require.Nil(t, err)
-	return accountID
-}
-
-//
-//func TestGetLastTransactionDate_WithLocalDb_NoErrorReturned(t *testing.T) {
-//	dbpool, err := pgxpool.Connect(context.Background(), dbConnString)
-//	if err != nil {
-//		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
-//		os.Exit(1)
-//	}
-//	defer dbpool.Close()
-//	db := storage.NewPostgreSQLStorage(dbpool)
-//
-//	_, err = db.GetLastTransactionDate(context.Background(), "acc1")
-//
-//	assert.NoError(t, err)
-//}
 
 //
 //// todo: this test doesn't work, because storage.Save method ignores lastUpdatedAt, need to add some workaround
@@ -177,3 +166,25 @@ func prepareTestAccount(t *testing.T, db *pgxpool.Pool) string {
 //	assert.Equal(t, "comment", *updatedTransaction.Comment)
 //	assert.Equal(t, 10, updatedTransaction.CategoryID)
 //}
+
+func prepareTestAccount(t *testing.T, db *pgxpool.Pool) string {
+	accountID := "test-acc-id"
+	_, err := db.Exec(context.Background(), `
+				insert into "account"
+							 ("ID", "createdAt", "description", "balance", "currency", "lastUpdatedAt")
+							 values ($1, current_timestamp(0), 'desc', 0, 'UAH', current_timestamp(0))
+				`, accountID)
+
+	require.NoError(t, err)
+	return accountID
+}
+
+func prepareTestCategory(t *testing.T, db *pgxpool.Pool) int32 {
+	categoryID := int32(1)
+	_, err := db.Exec(context.Background(), `
+				insert into category ("ID", "name", "logo", "createdAt")
+				values ($1, 'Unknown', 'creditcard', current_timestamp(0))`, categoryID)
+
+	require.NoError(t, err)
+	return categoryID
+}
