@@ -2,45 +2,20 @@ package storage_test
 
 import (
 	"context"
-	"fmt"
-	"math/rand"
 	"testing"
 
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/lungria/spendshelf-backend/storage/pgtest"
+
 	"github.com/stretchr/testify/assert"
 )
 
-func prepare(t *testing.T) (*pgxpool.Pool, func()) {
-	mainPool, err := pgxpool.Connect(context.Background(), "postgres://localhost:5432/postgres?sslmode=disable&user=postgres&password=adminpass123")
-	assert.Nil(t, err)
-
-	random := rand.Intn(999)
-	dbName := fmt.Sprintf("test%v", random)
-	sql := fmt.Sprintf("create database %s;", dbName)
-	_, err = mainPool.Exec(context.Background(), sql)
-
-	assert.Nil(t, err)
-
-	testDB, err := pgxpool.Connect(context.Background(), fmt.Sprintf("postgres://localhost:5432/%s?sslmode=disable&user=postgres&password=adminpass123", dbName))
-	assert.Nil(t, err)
-
-	cleanup := func() {
-		defer mainPool.Close()
-		testDB.Close()
-		_, err = mainPool.Exec(context.Background(), fmt.Sprintf("drop database %s;", dbName))
-		assert.Nil(t, err)
-	}
-
-	return testDB, cleanup
-}
-
 func Test_Select_1__WithLocalDb__NoErrors(t *testing.T) {
-	db, cleanup := prepare(t)
+	db, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
 	defer cleanup()
 
 	res, err := db.Query(context.Background(), "select 1;")
 	// todo: check if this is used in real code!
-	res.Close()
+	defer res.Close()
 
 	assert.Nil(t, err)
 }
