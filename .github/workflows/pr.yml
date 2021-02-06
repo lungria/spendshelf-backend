@@ -33,9 +33,9 @@ jobs:
       run: go build -v .
     - name: Test
       run: |
-          echo "PG_TEST_USERNAME=postgres" >> $GITHUB_ENV
-          echo "PG_TEST_PASSWORD=postgres" >> $GITHUB_ENV
-          echo "PG_TEST_HOST=localhost:5432" >> $GITHUB_ENV
+          export PG_TEST_USERNAME=postgres
+          export PG_TEST_PASSWORD=postgres
+          export PG_TEST_HOST=localhost:5432
           go test -v ./...
       
   golangci:
