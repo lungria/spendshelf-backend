@@ -18,11 +18,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var defaultCategory = storage.Category{
+	ID:   1,
+	Name: "Unknown",
+	Logo: "creditcard",
+}
+
 func TestSave_OnDuplicateInsert_DoesNothing(t *testing.T) {
 	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
 	defer cleanup()
 	accountID := prepareTestAccount(t, pool)
-	categoryID := prepareTestCategory(t, pool)
+	prepareTestCategory(t, pool, defaultCategory)
 
 	db := storage.NewPostgreSQLStorage(pool)
 	// try insert
@@ -34,7 +40,7 @@ func TestSave_OnDuplicateInsert_DoesNothing(t *testing.T) {
 		true,
 		1110,
 		accountID,
-		categoryID,
+		defaultCategory.ID,
 		time.Now().UTC(),
 		nil,
 	}, {
@@ -45,7 +51,7 @@ func TestSave_OnDuplicateInsert_DoesNothing(t *testing.T) {
 		true,
 		1500,
 		accountID,
-		categoryID,
+		defaultCategory.ID,
 		time.Now().UTC(),
 		nil,
 	}})
@@ -61,7 +67,7 @@ func TestSave_OnDuplicateInsert_DoesNothing(t *testing.T) {
 		true,
 		1110,
 		accountID,
-		categoryID,
+		defaultCategory.ID,
 		time.Now().UTC(),
 		nil,
 	}})
@@ -86,7 +92,7 @@ func TestGetLastTransactionDate_WithLocalDb_NoErrorReturned(t *testing.T) {
 	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
 	defer cleanup()
 	accountID := prepareTestAccount(t, pool)
-	categoryID := prepareTestCategory(t, pool)
+	prepareTestCategory(t, pool, defaultCategory)
 	db := storage.NewPostgreSQLStorage(pool)
 	mockTransactions := []storage.Transaction{
 		{
@@ -97,7 +103,7 @@ func TestGetLastTransactionDate_WithLocalDb_NoErrorReturned(t *testing.T) {
 			Hold:        false,
 			Amount:      100,
 			AccountID:   accountID,
-			CategoryID:  categoryID,
+			CategoryID:  defaultCategory.ID,
 		},
 		{
 			ID:          "new-tr",
@@ -107,7 +113,7 @@ func TestGetLastTransactionDate_WithLocalDb_NoErrorReturned(t *testing.T) {
 			Hold:        false,
 			Amount:      100,
 			AccountID:   accountID,
-			CategoryID:  categoryID,
+			CategoryID:  defaultCategory.ID,
 		}}
 
 	err := db.Save(context.Background(), mockTransactions)
@@ -119,15 +125,13 @@ func TestGetLastTransactionDate_WithLocalDb_NoErrorReturned(t *testing.T) {
 	assert.Equal(t, mockTransactions[1].Time, lastTransactionDate)
 }
 
-//
-//// todo: this test doesn't work, because storage.Save method ignores lastUpdatedAt, need to add some workaround
 func TestUpdate_WithLocalDb_NoErrorReturned(t *testing.T) {
 	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
 	defer cleanup()
 	accountID := prepareTestAccount(t, pool)
-	categoryID := prepareTestCategory(t, pool)
+	prepareTestCategory(t, pool, defaultCategory)
 	db := storage.NewPostgreSQLStorage(pool)
-
+	// prepare transaction
 	err := db.Save(context.Background(), []storage.Transaction{{
 		"id4",
 		time.Now().UTC(),
@@ -136,7 +140,7 @@ func TestUpdate_WithLocalDb_NoErrorReturned(t *testing.T) {
 		true,
 		1110,
 		accountID,
-		categoryID,
+		defaultCategory.ID,
 		time.Now(),
 		nil,
 	}})
@@ -151,7 +155,9 @@ func TestUpdate_WithLocalDb_NoErrorReturned(t *testing.T) {
 			ID:            "id4",
 			LastUpdatedAt: transaction.LastUpdatedAt,
 		},
-		Comment: &comment,
+		UpdatedFields: storage.UpdatedFields{
+			Comment: &comment,
+		},
 	})
 	assert.NoError(t, err)
 	updatedTransaction, err := db.GetByID(context.Background(), "id4")
@@ -159,22 +165,29 @@ func TestUpdate_WithLocalDb_NoErrorReturned(t *testing.T) {
 	assert.Equal(t, "comment", *updatedTransaction.Comment)
 	assert.Equal(t, category.Default, updatedTransaction.CategoryID)
 	transaction, err = db.GetByID(context.Background(), "id4")
-
 	require.NoError(t, err)
+
 	// update category without comment
-	category := int32(10)
+	newCategory := storage.Category{
+		ID:   99,
+		Name: "Food",
+		Logo: "food",
+	}
+	prepareTestCategory(t, pool, newCategory)
 	_, err = db.UpdateTransaction(context.Background(), storage.UpdateTransactionCommand{
-		CategoryID: &category,
 		Query: storage.Query{
 			ID:            "id4",
 			LastUpdatedAt: transaction.LastUpdatedAt,
+		},
+		UpdatedFields: storage.UpdatedFields{
+			CategoryID: &newCategory.ID,
 		},
 	})
 	assert.NoError(t, err)
 	updatedTransaction, err = db.GetByID(context.Background(), "id4")
 	assert.NoError(t, err)
 	assert.Equal(t, "comment", *updatedTransaction.Comment)
-	assert.Equal(t, 10, updatedTransaction.CategoryID)
+	assert.Equal(t, newCategory.ID, updatedTransaction.CategoryID)
 }
 
 func prepareTestAccount(t *testing.T, db *pgxpool.Pool) string {
@@ -189,12 +202,10 @@ func prepareTestAccount(t *testing.T, db *pgxpool.Pool) string {
 	return accountID
 }
 
-func prepareTestCategory(t *testing.T, db *pgxpool.Pool) int32 {
-	categoryID := int32(1)
+func prepareTestCategory(t *testing.T, db *pgxpool.Pool, category storage.Category) {
 	_, err := db.Exec(context.Background(), `
 				insert into category ("ID", "name", "logo", "createdAt")
-				values ($1, 'Unknown', 'creditcard', current_timestamp(0))`, categoryID)
+				values ($1, $2, $3, current_timestamp(0))`, category.ID, category.Name, category.Logo)
 
 	require.NoError(t, err)
-	return categoryID
 }

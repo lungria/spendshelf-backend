@@ -94,9 +94,10 @@ func (t *TransactionHandler) PatchTransaction(c *gin.Context) {
 			ID:            id,
 			LastUpdatedAt: query.LastUpdatedAt,
 		},
-		CategoryID: req.CategoryID,
-		Comment:    req.Comment,
-	})
+		UpdatedFields: storage.UpdatedFields{
+			CategoryID: req.CategoryID,
+			Comment:    req.Comment,
+		}})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to update transaction in storage")
 		c.JSON(api.InternalServerError())

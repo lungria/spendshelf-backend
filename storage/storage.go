@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rs/zerolog/log"
-
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/lungria/spendshelf-backend/storage/category"
@@ -41,15 +39,18 @@ type Category struct {
 
 // UpdateTransactionCommand describes transaction update parameters.
 type UpdateTransactionCommand struct {
-	Query Query
-
-	CategoryID *int32
-	Comment    *string
+	Query         Query
+	UpdatedFields UpdatedFields
 }
 
 type Query struct {
 	ID            string
 	LastUpdatedAt time.Time
+}
+
+type UpdatedFields struct {
+	CategoryID *int32
+	Comment    *string
 }
 
 // todo: split PostgreSQLStorage into CategoriesStorage and TransactionsStorage
@@ -229,22 +230,22 @@ func (s *PostgreSQLStorage) UpdateTransaction(
 
 	sqlParams := make([]interface{}, 0)
 
-	if params.CategoryID != nil {
+	if params.UpdatedFields.CategoryID != nil {
 		sql.WriteString("set \"categoryID\" = $")
 		sql.WriteString(strconv.Itoa(paramIterator))
 		sql.WriteString(", ")
 		paramIterator++
 
-		sqlParams = append(sqlParams, *params.CategoryID)
+		sqlParams = append(sqlParams, *params.UpdatedFields.CategoryID)
 	}
 
-	if params.Comment != nil {
+	if params.UpdatedFields.Comment != nil {
 		sql.WriteString("set \"comment\" = $")
 		sql.WriteString(strconv.Itoa(paramIterator))
 		sql.WriteString(", ")
 		paramIterator++
 
-		sqlParams = append(sqlParams, *params.Comment)
+		sqlParams = append(sqlParams, *params.UpdatedFields.Comment)
 	}
 
 	sql.WriteString("\"lastUpdatedAt\" = current_timestamp(0) \n")
@@ -259,7 +260,6 @@ func (s *PostgreSQLStorage) UpdateTransaction(
 	}
 
 	sqlString := sql.String()
-	log.Trace().Str("sql", sqlString).Msg("transaction update received")
 
 	sqlParams = append(sqlParams, params.Query.ID, params.Query.LastUpdatedAt)
 
