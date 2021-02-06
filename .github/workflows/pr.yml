@@ -31,11 +31,12 @@ jobs:
 
     - name: Build
       run: go build -v .
+
     - name: Test
       run: |
           export PG_TEST_USERNAME=postgres
           export PG_TEST_PASSWORD=postgres
-          export PG_TEST_HOST=localhost:5432
+          export PG_TEST_HOST=localhost:5433
           go test -v ./...
       
   golangci:
