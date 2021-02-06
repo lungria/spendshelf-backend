@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/lungria/spendshelf-backend/storage/category"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -119,53 +121,61 @@ func TestGetLastTransactionDate_WithLocalDb_NoErrorReturned(t *testing.T) {
 
 //
 //// todo: this test doesn't work, because storage.Save method ignores lastUpdatedAt, need to add some workaround
-//func TestUpdate_WithLocalDb_NoErrorReturned(t *testing.T) {
-//	dbpool, err := pgxpool.Connect(context.Background(), dbConnString)
-//	if err != nil {
-//		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
-//		os.Exit(1)
-//	}
-//	defer dbpool.Close()
-//	db := storage.NewPostgreSQLStorage(dbpool)
-//	lastUpdatedAt := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
-//	err = db.Save(context.Background(), []storage.Transaction{{
-//		"id4",
-//		time.Now().UTC(),
-//		"food",
-//		123,
-//		true,
-//		1110,
-//		"acc1",
-//		category.Default,
-//		lastUpdatedAt,
-//		nil,
-//	}})
-//
-//	// update comment without category
-//	comment := "comment"
-//	_, err = db.UpdateTransaction(context.Background(), storage.UpdateTransactionCommand{
-//		Comment:       &comment,
-//		ID:            "id4",
-//		LastUpdatedAt: lastUpdatedAt,
-//	})
-//	assert.NoError(t, err)
-//	updatedTransaction, err := db.GetByID(context.Background(), "id4")
-//	assert.NoError(t, err)
-//	assert.Equal(t, "comment", *updatedTransaction.Comment)
-//	assert.Equal(t, category.Default, updatedTransaction.CategoryID)
-//	// update category without comment
-//	category := int32(10)
-//	_, err = db.UpdateTransaction(context.Background(), storage.UpdateTransactionCommand{
-//		CategoryID:    &category,
-//		ID:            "id4",
-//		LastUpdatedAt: updatedTransaction.LastUpdatedAt,
-//	})
-//	assert.NoError(t, err)
-//	updatedTransaction, err = db.GetByID(context.Background(), "id4")
-//	assert.NoError(t, err)
-//	assert.Equal(t, "comment", *updatedTransaction.Comment)
-//	assert.Equal(t, 10, updatedTransaction.CategoryID)
-//}
+func TestUpdate_WithLocalDb_NoErrorReturned(t *testing.T) {
+	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
+	defer cleanup()
+	accountID := prepareTestAccount(t, pool)
+	categoryID := prepareTestCategory(t, pool)
+	db := storage.NewPostgreSQLStorage(pool)
+
+	err := db.Save(context.Background(), []storage.Transaction{{
+		"id4",
+		time.Now().UTC(),
+		"food",
+		123,
+		true,
+		1110,
+		accountID,
+		categoryID,
+		time.Now(),
+		nil,
+	}})
+	assert.NoError(t, err)
+	transaction, err := db.GetByID(context.Background(), "id4")
+	assert.NoError(t, err)
+
+	// update comment without category
+	comment := "comment"
+	_, err = db.UpdateTransaction(context.Background(), storage.UpdateTransactionCommand{
+		Query: storage.Query{
+			ID:            "id4",
+			LastUpdatedAt: transaction.LastUpdatedAt,
+		},
+		Comment: &comment,
+	})
+	assert.NoError(t, err)
+	updatedTransaction, err := db.GetByID(context.Background(), "id4")
+	assert.NoError(t, err)
+	assert.Equal(t, "comment", *updatedTransaction.Comment)
+	assert.Equal(t, category.Default, updatedTransaction.CategoryID)
+	transaction, err = db.GetByID(context.Background(), "id4")
+
+	require.NoError(t, err)
+	// update category without comment
+	category := int32(10)
+	_, err = db.UpdateTransaction(context.Background(), storage.UpdateTransactionCommand{
+		CategoryID: &category,
+		Query: storage.Query{
+			ID:            "id4",
+			LastUpdatedAt: transaction.LastUpdatedAt,
+		},
+	})
+	assert.NoError(t, err)
+	updatedTransaction, err = db.GetByID(context.Background(), "id4")
+	assert.NoError(t, err)
+	assert.Equal(t, "comment", *updatedTransaction.Comment)
+	assert.Equal(t, 10, updatedTransaction.CategoryID)
+}
 
 func prepareTestAccount(t *testing.T, db *pgxpool.Pool) string {
 	accountID := "test-acc-id"

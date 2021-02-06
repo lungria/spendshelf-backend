@@ -41,13 +41,15 @@ type Category struct {
 
 // UpdateTransactionCommand describes transaction update parameters.
 type UpdateTransactionCommand struct {
-	// filter
-	ID            string
-	LastUpdatedAt time.Time
+	Query Query
 
-	// would be updated
 	CategoryID *int32
 	Comment    *string
+}
+
+type Query struct {
+	ID            string
+	LastUpdatedAt time.Time
 }
 
 // todo: split PostgreSQLStorage into CategoriesStorage and TransactionsStorage
@@ -259,7 +261,7 @@ func (s *PostgreSQLStorage) UpdateTransaction(
 	sqlString := sql.String()
 	log.Trace().Str("sql", sqlString).Msg("transaction update received")
 
-	sqlParams = append(sqlParams, params.ID, params.LastUpdatedAt)
+	sqlParams = append(sqlParams, params.Query.ID, params.Query.LastUpdatedAt)
 
 	cmd, err := s.pool.Exec(
 		ctx,
@@ -277,7 +279,7 @@ func (s *PostgreSQLStorage) UpdateTransaction(
 		ctx,
 		`select * from transaction
 		where "ID" = $1`,
-		params.ID)
+		params.Query.ID)
 	if err != nil {
 		return Transaction{}, err
 	}
