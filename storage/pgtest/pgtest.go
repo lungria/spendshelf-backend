@@ -46,6 +46,11 @@ func prepare(t *testing.T) (*pgxpool.Pool, func()) {
 		mainPool.Close()
 		t.Fatalf("expected nil, found: %v", err)
 	}
+	_, err = mainPool.Exec(context.Background(), fmt.Sprintf("GRANT ALL PRIVILEGES ON DATABASE %s TO %s", dbName, conStr.Username))
+	if err != nil {
+		mainPool.Close()
+		t.Fatalf("expected nil, found: %v", err)
+	}
 
 	// connect to temporary testing database
 	testDB, err := pgxpool.Connect(context.Background(), fmt.Sprintf("postgres://localhost:5432/%s?sslmode=disable&user=postgres&password=adminpass123", dbName))
