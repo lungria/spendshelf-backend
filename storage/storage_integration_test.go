@@ -170,6 +170,7 @@ func TestGetByID_WithLocalDb_NoErrorReturned(t *testing.T) {
 func TestGetByCategory_WithLocalDb_NoErrorReturned(t *testing.T) {
 	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
 	defer cleanup()
+
 	newCategory := storage.Category{
 		ID:   22,
 		Name: "test_category",
@@ -215,13 +216,16 @@ func TestGetByCategory_WithLocalDb_NoErrorReturned(t *testing.T) {
 func TestGetCategories_WithLocalDb_NoErrorReturned(t *testing.T) {
 	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
 	defer cleanup()
+
 	newCategory := storage.Category{
 		ID:   22,
 		Name: "test_category",
 		Logo: "no_logo",
 	}
+
 	prepareTestCategory(t, pool, defaultCategory)
 	prepareTestCategory(t, pool, newCategory)
+
 	db := storage.NewPostgreSQLStorage(pool)
 
 	categories, err := db.GetCategories(context.Background())
@@ -229,6 +233,7 @@ func TestGetCategories_WithLocalDb_NoErrorReturned(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Len(t, categories, 2)
+
 	for _, v := range categories {
 		assert.True(t, v.ID == 22 || v.ID == 1)
 		assert.True(t, v.Name == "test_category" || v.Name == "Unknown")
@@ -307,6 +312,7 @@ func TestUpdate_WithLocalDb_NoErrorReturned(t *testing.T) {
 func TestGetReport_WithLocalDb_NoErrorReturned(t *testing.T) {
 	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
 	defer cleanup()
+
 	newCategory := storage.Category{
 		ID:   22,
 		Name: "test_category",
@@ -355,7 +361,7 @@ func TestGetReport_WithLocalDb_NoErrorReturned(t *testing.T) {
 
 	report, err := db.GetReport(
 		context.Background(),
-		time.Date(2020, 10, 01, 0, 0, 0, 0, time.UTC),
+		time.Date(2020, 10, 0o1, 0, 0, 0, 0, time.UTC),
 		time.Date(2020, 10, 12, 0, 0, 0, 0, time.UTC))
 
 	assert.NoError(t, err)
