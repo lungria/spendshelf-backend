@@ -28,6 +28,9 @@ func TestImport_WhenGetIntervalFails_ReturnsError(t *testing.T) {
 	err := svc.Import(context.Background(), "acc")
 
 	assert.True(t, errors.Is(err, testError))
+	assert.Zero(t, len(storage.SaveCalls()))
+	assert.Zero(t, len(api.GetTransactionsCalls()))
+	assert.NotZero(t, len(gen.GetIntervalCalls()))
 }
 
 func TestImport_WhenApiGetTransactionsFails_ReturnsError(t *testing.T) {
@@ -46,6 +49,9 @@ func TestImport_WhenApiGetTransactionsFails_ReturnsError(t *testing.T) {
 	err := svc.Import(context.Background(), "acc")
 
 	assert.True(t, errors.Is(err, testError))
+	assert.Zero(t, len(storage.SaveCalls()))
+	assert.NotZero(t, len(api.GetTransactionsCalls()))
+	assert.NotZero(t, len(gen.GetIntervalCalls()))
 }
 
 func TestImport_WhenApiGetTransactionsReturnsNothing_StorageNotCalled(t *testing.T) {
@@ -64,6 +70,9 @@ func TestImport_WhenApiGetTransactionsReturnsNothing_StorageNotCalled(t *testing
 
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(storage.SaveCalls()))
+	assert.Zero(t, len(storage.SaveCalls()))
+	assert.NotZero(t, len(api.GetTransactionsCalls()))
+	assert.NotZero(t, len(gen.GetIntervalCalls()))
 }
 
 func TestImport_WhenStorageSaveReturnsError_ReturnsError(t *testing.T) {
@@ -93,6 +102,9 @@ func TestImport_WhenStorageSaveReturnsError_ReturnsError(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, 1, len(saveCalls))
 	assert.Equal(t, transactionID, saveCalls[0].Transactions[0].ID)
+	assert.NotZero(t, len(db.SaveCalls()))
+	assert.NotZero(t, len(api.GetTransactionsCalls()))
+	assert.NotZero(t, len(gen.GetIntervalCalls()))
 }
 
 func TestImport_WhenDataIsSaved_ReturnsNil(t *testing.T) {
@@ -121,4 +133,7 @@ func TestImport_WhenDataIsSaved_ReturnsNil(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(saveCalls))
 	assert.Equal(t, transactionID, saveCalls[0].Transactions[0].ID)
+	assert.NotZero(t, len(db.SaveCalls()))
+	assert.NotZero(t, len(api.GetTransactionsCalls()))
+	assert.NotZero(t, len(gen.GetIntervalCalls()))
 }

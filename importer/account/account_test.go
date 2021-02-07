@@ -1,4 +1,3 @@
-// todo: verify calls count on mocks!
 package account_test
 
 import (
@@ -27,6 +26,8 @@ func TestImport_WhenGetUserInfoFails_ReturnsError(t *testing.T) {
 	err := svc.Import(context.Background(), "acc")
 
 	assert.True(t, errors.Is(err, testError))
+	assert.Zero(t, len(storage.SaveCalls()))
+	assert.NotZero(t, len(api.GetUserInfoCalls()))
 }
 
 func TestImport_WhenApiDoNotReturnAccountInfo_ReturnsError(t *testing.T) {
@@ -50,6 +51,8 @@ func TestImport_WhenApiDoNotReturnAccountInfo_ReturnsError(t *testing.T) {
 	err := svc.Import(context.Background(), "unknown_account_id")
 
 	assert.Error(t, err)
+	assert.Zero(t, len(storage.SaveCalls()))
+	assert.NotZero(t, len(api.GetUserInfoCalls()))
 }
 
 func TestImport_WhenStorageSaveReturnsError_ReturnsError(t *testing.T) {
@@ -71,6 +74,8 @@ func TestImport_WhenStorageSaveReturnsError_ReturnsError(t *testing.T) {
 	err := svc.Import(context.Background(), "id1")
 
 	assert.True(t, errors.Is(err, testError))
+	assert.NotZero(t, len(db.SaveCalls()))
+	assert.NotZero(t, len(api.GetUserInfoCalls()))
 }
 
 func TestImport_WhenDataIsSaved_ReturnsNil(t *testing.T) {
@@ -91,4 +96,6 @@ func TestImport_WhenDataIsSaved_ReturnsNil(t *testing.T) {
 	err := svc.Import(context.Background(), "id1")
 
 	assert.Nil(t, err)
+	assert.NotZero(t, len(db.SaveCalls()))
+	assert.NotZero(t, len(api.GetUserInfoCalls()))
 }
