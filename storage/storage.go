@@ -43,11 +43,13 @@ type UpdateTransactionCommand struct {
 	UpdatedFields UpdatedFields
 }
 
+// Query fields for UpdateTransactionCommand. All fields are required.
 type Query struct {
 	ID            string
 	LastUpdatedAt time.Time
 }
 
+// UpdatedFields for UpdateTransactionCommand. All fields are optional, but at least one field must be non-nil.
 type UpdatedFields struct {
 	CategoryID *int32
 	Comment    *string

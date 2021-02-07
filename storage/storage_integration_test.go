@@ -27,6 +27,7 @@ var defaultCategory = storage.Category{
 func TestSave_OnDuplicateInsert_DoesNothing(t *testing.T) {
 	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
 	defer cleanup()
+
 	accountID := prepareTestAccount(t, pool)
 	prepareTestCategory(t, pool, defaultCategory)
 
@@ -91,6 +92,7 @@ func TestSave_OnDuplicateInsert_DoesNothing(t *testing.T) {
 func TestGetLastTransactionDate_WithLocalDb_NoErrorReturned(t *testing.T) {
 	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
 	defer cleanup()
+
 	accountID := prepareTestAccount(t, pool)
 	prepareTestCategory(t, pool, defaultCategory)
 	db := storage.NewPostgreSQLStorage(pool)
@@ -114,7 +116,8 @@ func TestGetLastTransactionDate_WithLocalDb_NoErrorReturned(t *testing.T) {
 			Amount:      100,
 			AccountID:   accountID,
 			CategoryID:  defaultCategory.ID,
-		}}
+		},
+	}
 
 	err := db.Save(context.Background(), mockTransactions)
 	assert.NoError(t, err)
@@ -128,6 +131,7 @@ func TestGetLastTransactionDate_WithLocalDb_NoErrorReturned(t *testing.T) {
 func TestUpdate_WithLocalDb_NoErrorReturned(t *testing.T) {
 	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
 	defer cleanup()
+
 	accountID := prepareTestAccount(t, pool)
 	prepareTestCategory(t, pool, defaultCategory)
 	db := storage.NewPostgreSQLStorage(pool)
@@ -164,6 +168,7 @@ func TestUpdate_WithLocalDb_NoErrorReturned(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "comment", *updatedTransaction.Comment)
 	assert.Equal(t, category.Default, updatedTransaction.CategoryID)
+
 	transaction, err = db.GetByID(context.Background(), "id4")
 	require.NoError(t, err)
 
@@ -173,7 +178,9 @@ func TestUpdate_WithLocalDb_NoErrorReturned(t *testing.T) {
 		Name: "Food",
 		Logo: "food",
 	}
+
 	prepareTestCategory(t, pool, newCategory)
+
 	_, err = db.UpdateTransaction(context.Background(), storage.UpdateTransactionCommand{
 		Query: storage.Query{
 			ID:            "id4",
@@ -199,6 +206,7 @@ func prepareTestAccount(t *testing.T, db *pgxpool.Pool) string {
 				`, accountID)
 
 	require.NoError(t, err)
+
 	return accountID
 }
 
