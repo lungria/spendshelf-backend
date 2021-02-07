@@ -11,8 +11,6 @@ jobs:
     services:
       postgres:
         image: postgres
-        ports:
-          - 5432:5432
         env:
           POSTGRES_PASSWORD: postgres
           PGDATA: /var/lib/postgresql/data/pgdata
@@ -36,7 +34,7 @@ jobs:
       run: |
           export PG_TEST_USERNAME=postgres
           export PG_TEST_PASSWORD=postgres
-          export PG_TEST_HOST=localhost:5432
+          export PG_TEST_HOST=postgres:5432
           go test -v ./...
       
   golangci:
