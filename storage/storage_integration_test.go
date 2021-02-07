@@ -5,17 +5,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lungria/spendshelf-backend/storage/category"
-
-	"github.com/stretchr/testify/require"
-
 	"github.com/jackc/pgx/v4/pgxpool"
-
-	"github.com/lungria/spendshelf-backend/storage/pgtest"
-
 	"github.com/lungria/spendshelf-backend/storage"
-
+	"github.com/lungria/spendshelf-backend/storage/category"
+	"github.com/lungria/spendshelf-backend/storage/pgtest"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var defaultCategory = storage.Category{
@@ -211,33 +206,6 @@ func TestGetByCategory_WithLocalDb_NoErrorReturned(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, transaction, 1)
 	assert.Equal(t, mockTransactions[0].ID, transaction[0].ID)
-}
-
-func TestGetCategories_WithLocalDb_NoErrorReturned(t *testing.T) {
-	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
-	defer cleanup()
-
-	newCategory := storage.Category{
-		ID:   22,
-		Name: "test_category",
-		Logo: "no_logo",
-	}
-
-	prepareTestCategory(t, pool, defaultCategory)
-	prepareTestCategory(t, pool, newCategory)
-
-	db := storage.NewPostgreSQLStorage(pool)
-
-	categories, err := db.GetCategories(context.Background())
-	assert.NoError(t, err)
-
-	assert.NoError(t, err)
-	assert.Len(t, categories, 2)
-
-	for _, v := range categories {
-		assert.True(t, v.ID == 22 || v.ID == 1)
-		assert.True(t, v.Name == "test_category" || v.Name == "Unknown")
-	}
 }
 
 func TestUpdate_WithLocalDb_NoErrorReturned(t *testing.T) {

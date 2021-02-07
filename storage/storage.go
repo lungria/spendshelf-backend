@@ -30,13 +30,6 @@ type Transaction struct {
 	Comment       *string   `json:"comment"`
 }
 
-// Category describes transaction category.
-type Category struct {
-	ID   int32  `json:"id"`
-	Name string `json:"name"`
-	Logo string `json:"logo"`
-}
-
 // UpdateTransactionCommand describes transaction update parameters.
 type UpdateTransactionCommand struct {
 	Query         Query
@@ -54,8 +47,6 @@ type UpdatedFields struct {
 	CategoryID *int32
 	Comment    *string
 }
-
-// todo: split PostgreSQLStorage into CategoriesStorage and TransactionsStorage
 
 // PostgreSQLStorage for transactions.
 type PostgreSQLStorage struct {
@@ -186,39 +177,6 @@ func (s *PostgreSQLStorage) GetByCategory(ctx context.Context, categoryID int32)
 	return scanTransactions(limit, rows)
 }
 
-func scanTransactions(buffSize int, rows pgx.Rows) ([]Transaction, error) {
-	buffer := make([]Transaction, buffSize)
-	i := 0
-
-	for rows.Next() {
-		t := Transaction{}
-
-		err := rows.Scan(
-			&t.ID,
-			&t.Time,
-			&t.Description,
-			&t.MCC,
-			&t.Hold,
-			&t.Amount,
-			&t.AccountID,
-			&t.CategoryID,
-			&t.LastUpdatedAt,
-			&t.Comment)
-		if err != nil {
-			return nil, err
-		}
-
-		buffer[i] = t
-
-		i++
-	}
-
-	result := make([]Transaction, i)
-	copy(result, buffer)
-
-	return result, nil
-}
-
 // UpdateTransaction allows to partially update transaction.
 func (s *PostgreSQLStorage) UpdateTransaction(
 	ctx context.Context,
@@ -326,41 +284,34 @@ func (s *PostgreSQLStorage) GetReport(ctx context.Context, from, to time.Time) (
 	return result, nil
 }
 
-// GetCategories returns existing categories.
-func (s *PostgreSQLStorage) GetCategories(ctx context.Context) ([]Category, error) {
-	const limit = 20
-
-	rows, err := s.pool.Query(
-		ctx,
-		`select "ID", "name", "logo" from category
-		 limit $1`,
-		limit)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	buffer := make([]Category, limit)
+func scanTransactions(buffSize int, rows pgx.Rows) ([]Transaction, error) {
+	buffer := make([]Transaction, buffSize)
 	i := 0
 
 	for rows.Next() {
-		var c Category
+		t := Transaction{}
 
 		err := rows.Scan(
-			&c.ID,
-			&c.Name,
-			&c.Logo)
+			&t.ID,
+			&t.Time,
+			&t.Description,
+			&t.MCC,
+			&t.Hold,
+			&t.Amount,
+			&t.AccountID,
+			&t.CategoryID,
+			&t.LastUpdatedAt,
+			&t.Comment)
 		if err != nil {
 			return nil, err
 		}
 
-		buffer[i] = c
+		buffer[i] = t
 
 		i++
 	}
 
-	result := make([]Category, i)
+	result := make([]Transaction, i)
 	copy(result, buffer)
 
 	return result, nil
