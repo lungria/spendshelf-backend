@@ -22,14 +22,14 @@ jobs:
     - name: Build
       run: go build -v .
 
-
-    - name: Test
+    - name: Start PosgreSQL
       uses: harmon758/postgresql-action@v1
       with:
         postgresql version: '12'
         postgresql db: postgres
         postgresql user: postgres
         postgresql password: postgres
+    - name: Test
       run: |
           export PG_TEST_USERNAME=postgres
           export PG_TEST_PASSWORD=postgres
