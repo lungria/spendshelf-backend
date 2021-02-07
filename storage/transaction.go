@@ -48,20 +48,20 @@ type UpdatedFields struct {
 	Comment    *string
 }
 
-// PostgreSQLStorage for transactions.
-type PostgreSQLStorage struct {
+// TransactionStorage for transactions.
+type TransactionStorage struct {
 	pool *pgxpool.Pool
 }
 
-// NewPostgreSQLStorage creates new instance of PostgreSQLStorage.
-func NewPostgreSQLStorage(pool *pgxpool.Pool) *PostgreSQLStorage {
-	return &PostgreSQLStorage{pool: pool}
+// NewTransactionStorage creates new instance of TransactionStorage.
+func NewPostgreSQLStorage(pool *pgxpool.Pool) *TransactionStorage {
+	return &TransactionStorage{pool: pool}
 }
 
 const insertPrepStatementName = "insert_transactions"
 
 // Save transactions to db with deduplication using transaction ID.
-func (s *PostgreSQLStorage) Save(ctx context.Context, transactions []Transaction) error {
+func (s *TransactionStorage) Save(ctx context.Context, transactions []Transaction) error {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -94,7 +94,7 @@ func (s *PostgreSQLStorage) Save(ctx context.Context, transactions []Transaction
 
 // GetLastTransactionDate returns date property of latest transaction (sorted by date desc).
 // Returns storage.ErrNotFound if transaction not found by query.
-func (s *PostgreSQLStorage) GetLastTransactionDate(ctx context.Context, accountID string) (time.Time, error) {
+func (s *TransactionStorage) GetLastTransactionDate(ctx context.Context, accountID string) (time.Time, error) {
 	row := s.pool.QueryRow(
 		ctx,
 		`select "time" from transaction
@@ -119,7 +119,7 @@ func (s *PostgreSQLStorage) GetLastTransactionDate(ctx context.Context, accountI
 
 // GetByID returns transaction by ID.
 // Returns storage.ErrNotFound if transaction not found by query.
-func (s *PostgreSQLStorage) GetByID(ctx context.Context, transactionID string) (Transaction, error) {
+func (s *TransactionStorage) GetByID(ctx context.Context, transactionID string) (Transaction, error) {
 	row := s.pool.QueryRow(
 		ctx,
 		`select * from transaction
@@ -154,7 +154,7 @@ func (s *PostgreSQLStorage) GetByID(ctx context.Context, transactionID string) (
 
 // GetByCategory returns transactions by category.
 // Returns storage.ErrNotFound if transaction not found by query.
-func (s *PostgreSQLStorage) GetByCategory(ctx context.Context, categoryID int32) ([]Transaction, error) {
+func (s *TransactionStorage) GetByCategory(ctx context.Context, categoryID int32) ([]Transaction, error) {
 	const limit = 50
 
 	rows, err := s.pool.Query(
@@ -178,7 +178,7 @@ func (s *PostgreSQLStorage) GetByCategory(ctx context.Context, categoryID int32)
 }
 
 // UpdateTransaction allows to partially update transaction.
-func (s *PostgreSQLStorage) UpdateTransaction(
+func (s *TransactionStorage) UpdateTransaction(
 	ctx context.Context,
 	params UpdateTransactionCommand) (Transaction, error) {
 	paramIterator := 1
@@ -252,7 +252,7 @@ func (s *PostgreSQLStorage) UpdateTransaction(
 }
 
 // GetReport generates spending report for set date/time interval.
-func (s *PostgreSQLStorage) GetReport(ctx context.Context, from, to time.Time) (map[int32]int64, error) {
+func (s *TransactionStorage) GetReport(ctx context.Context, from, to time.Time) (map[int32]int64, error) {
 	rows, err := s.pool.Query(
 		ctx,
 		`select "categoryID", sum("amount") as "amount" from transaction
