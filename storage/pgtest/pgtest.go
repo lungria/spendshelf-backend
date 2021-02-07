@@ -20,11 +20,14 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/caarlos0/env/v6"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 )
+
+var random = rand.NewSource(time.Now().Unix())
 
 type config struct {
 	Username string `env:"PG_TEST_USERNAME,required"`
@@ -58,8 +61,7 @@ func prepare(t *testing.T) (*pgxpool.Pool, func()) {
 	}
 
 	// create temporary testing database
-	random := rand.Uint64()
-	dbName := fmt.Sprintf("pgtest%v", random)
+	dbName := fmt.Sprintf("pgtest%v", random.Int63())
 
 	_, err = mainPool.Exec(context.Background(), fmt.Sprintf("create database %s", dbName))
 	if err != nil {
