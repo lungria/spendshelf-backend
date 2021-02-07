@@ -4,7 +4,29 @@ on:
   pull_request: 
 
 jobs:
+  # Label of the runner job
+  runner-job:
+    # You must use a Linux environment when using service containers or container jobs
+    runs-on: ubuntu-latest
 
+    # Service containers to run with `runner-job`
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres
+        # Provide the password for postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # Maps tcp port 5432 on service container to the host
+          - 5432:5432
   build:
     name: Build & Test
     runs-on: ubuntu-20.04
@@ -22,13 +44,6 @@ jobs:
     - name: Build
       run: go build -v .
 
-    - name: Start PosgreSQL
-      uses: harmon758/postgresql-action@v1
-      with:
-        postgresql version: '13.1'
-        postgresql db: postgres
-        postgresql user: postgres
-        postgresql password: postgres
     - name: Test
       run: |
           export PG_TEST_USERNAME=postgres
