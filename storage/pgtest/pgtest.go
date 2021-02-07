@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
+	"sync"
 	"testing"
 	"time"
 
@@ -28,8 +29,8 @@ import (
 )
 
 var (
-	src    = rand.NewSource(time.Now().Unix())
-	random = rand.New(src)
+	seededRand = rand.New(rand.NewSource(time.Now().UnixNano()))
+	mutex      = &sync.Mutex{}
 )
 
 type config struct {
@@ -64,7 +65,9 @@ func prepare(t *testing.T) (*pgxpool.Pool, func()) {
 	}
 
 	// create temporary testing database
-	dbName := fmt.Sprintf("pgtest%v", random.Uint64())
+	mutex.Lock()
+	dbName := fmt.Sprintf("pgtest%v", seededRand.Uint64())
+	mutex.Unlock()
 
 	_, err = mainPool.Exec(context.Background(), fmt.Sprintf("create database %s", dbName))
 	if err != nil {
