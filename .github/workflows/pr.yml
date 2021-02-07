@@ -12,7 +12,7 @@ jobs:
         image: postgres
         env:
           # Must be set to any custom value except the default 'postgres'. If default value is used - for some reason
-          # we would be unable to connect to new dynamically created databases in runtime.
+          # we would not be able to connect to new dynamically created databases in runtime.
           POSTGRES_PASSWORD: adminpass123
         # Set health checks to wait until postgres has started
         options: >-
