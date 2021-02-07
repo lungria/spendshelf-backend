@@ -27,22 +27,23 @@ jobs:
         ports:
           # Maps tcp port 5432 on service container to the host
           - 5432:5432
-  build:
-    name: Build & Test
-    runs-on: ubuntu-20.04
     steps:
-
-    - name: Set up Go 1.x
-      uses: actions/setup-go@v2
-      with:
-        go-version: ^1.15
-      id: go
-
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
-
-    - name: Build
-      run: go build -v .
+#  build:
+#    name: Build & Test
+#    runs-on: ubuntu-20.04
+#    steps:
+#
+#    - name: Set up Go 1.x
+#      uses: actions/setup-go@v2
+#      with:
+#        go-version: ^1.15
+#      id: go
+#
+#    - name: Check out code into the Go module directory
+#      uses: actions/checkout@v2
+#
+#    - name: Build
+#      run: go build -v .
 
     - name: Test
       run: |
