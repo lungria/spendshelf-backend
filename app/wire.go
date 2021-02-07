@@ -20,7 +20,7 @@ func InitializeApp() (*State, error) {
 		config.FromEnv,
 		NewDbPoolProvider,
 		NewMonoAPIProvider,
-		storage.NewPostgreSQLStorage,
+		storage.NewTransactionStorage,
 		storage.NewCategoryStorage,
 		storage.NewAccountsStorage,
 		interval.NewGenerator,

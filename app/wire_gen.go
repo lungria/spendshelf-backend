@@ -29,7 +29,7 @@ func InitializeApp() (*State, error) {
 	if err != nil {
 		return nil, err
 	}
-	postgreSQLStorage := storage.NewPostgreSQLStorage(pool)
+	postgreSQLStorage := storage.NewTransactionStorage(pool)
 	generator := interval.NewGenerator(postgreSQLStorage)
 	defaultImporter := transaction.NewImporter(client, postgreSQLStorage, generator)
 	accountsStorage := storage.NewAccountsStorage(pool)

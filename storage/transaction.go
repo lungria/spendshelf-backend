@@ -54,7 +54,7 @@ type TransactionStorage struct {
 }
 
 // NewTransactionStorage creates new instance of TransactionStorage.
-func NewPostgreSQLStorage(pool *pgxpool.Pool) *TransactionStorage {
+func NewTransactionStorage(pool *pgxpool.Pool) *TransactionStorage {
 	return &TransactionStorage{pool: pool}
 }
 

@@ -26,7 +26,7 @@ func TestSave_OnDuplicateInsert_DoesNothing(t *testing.T) {
 	accountID := prepareTestAccount(t, pool)
 	prepareTestCategory(t, pool, defaultCategory)
 
-	db := storage.NewPostgreSQLStorage(pool)
+	db := storage.NewTransactionStorage(pool)
 	// try insert
 	err := db.Save(context.Background(), []storage.Transaction{{
 		"id1",
@@ -90,7 +90,7 @@ func TestGetLastTransactionDate_WithLocalDb_NoErrorReturned(t *testing.T) {
 
 	accountID := prepareTestAccount(t, pool)
 	prepareTestCategory(t, pool, defaultCategory)
-	db := storage.NewPostgreSQLStorage(pool)
+	db := storage.NewTransactionStorage(pool)
 	mockTransactions := []storage.Transaction{
 		{
 			ID:          "old-tr",
@@ -129,7 +129,7 @@ func TestGetByID_WithLocalDb_NoErrorReturned(t *testing.T) {
 
 	accountID := prepareTestAccount(t, pool)
 	prepareTestCategory(t, pool, defaultCategory)
-	db := storage.NewPostgreSQLStorage(pool)
+	db := storage.NewTransactionStorage(pool)
 	mockTransactions := []storage.Transaction{
 		{
 			ID:          "1",
@@ -174,7 +174,7 @@ func TestGetByCategory_WithLocalDb_NoErrorReturned(t *testing.T) {
 	accountID := prepareTestAccount(t, pool)
 	prepareTestCategory(t, pool, defaultCategory)
 	prepareTestCategory(t, pool, newCategory)
-	db := storage.NewPostgreSQLStorage(pool)
+	db := storage.NewTransactionStorage(pool)
 	mockTransactions := []storage.Transaction{
 		{
 			ID:          "1",
@@ -214,7 +214,7 @@ func TestUpdate_WithLocalDb_NoErrorReturned(t *testing.T) {
 
 	accountID := prepareTestAccount(t, pool)
 	prepareTestCategory(t, pool, defaultCategory)
-	db := storage.NewPostgreSQLStorage(pool)
+	db := storage.NewTransactionStorage(pool)
 	// prepare transaction
 	err := db.Save(context.Background(), []storage.Transaction{{
 		"id4",
@@ -289,7 +289,7 @@ func TestGetReport_WithLocalDb_NoErrorReturned(t *testing.T) {
 	accountID := prepareTestAccount(t, pool)
 	prepareTestCategory(t, pool, defaultCategory)
 	prepareTestCategory(t, pool, newCategory)
-	db := storage.NewPostgreSQLStorage(pool)
+	db := storage.NewTransactionStorage(pool)
 	mockTransactions := []storage.Transaction{
 		{
 			ID:          "1",
