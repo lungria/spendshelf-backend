@@ -8,14 +8,6 @@ jobs:
   build:
     name: Build & Test
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres
-        env:
-          POSTGRES_PASSWORD: postgres
-          PGDATA: /var/lib/postgresql/data/pgdata
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
-
     steps:
 
     - name: Set up Go 1.x
@@ -30,13 +22,19 @@ jobs:
     - name: Build
       run: go build -v .
 
+
     - name: Test
+      uses: harmon758/postgresql-action@v1
+      with:
+        postgresql version: '12'
+        postgresql db: postgres
+        postgresql user: postgres
+        postgresql password: postgres
       run: |
           export PG_TEST_USERNAME=postgres
           export PG_TEST_PASSWORD=postgres
-          export PG_TEST_HOST=postgres:5432
+          export PG_TEST_HOST=localhost:5432
           go test -v ./...
-      
   golangci:
     name: lint
     runs-on: ubuntu-latest
