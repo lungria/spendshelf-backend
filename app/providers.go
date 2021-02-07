@@ -3,18 +3,13 @@ package app
 import (
 	"context"
 
-	importer2 "github.com/lungria/spendshelf-backend/importer"
-
-	"github.com/lungria/spendshelf-backend/api/handler"
-
-	"github.com/lungria/spendshelf-backend/api"
-
-	"github.com/lungria/spendshelf-backend/app/job"
-
-	"github.com/lungria/spendshelf-backend/importer/mono"
-
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/lungria/spendshelf-backend/api"
+	"github.com/lungria/spendshelf-backend/api/handler"
 	"github.com/lungria/spendshelf-backend/app/config"
+	"github.com/lungria/spendshelf-backend/app/job"
+	"github.com/lungria/spendshelf-backend/importer"
+	"github.com/lungria/spendshelf-backend/importer/mono"
 )
 
 func NewDbPoolProvider(cfg config.Config) (*pgxpool.Pool, error) {
@@ -37,7 +32,7 @@ func NewRoutesProvider(t *handler.TransactionHandler, a *handler.AccountHandler)
 
 func NewAppStateProvider(
 	s *job.Scheduler,
-	i *importer2.Importer,
+	i *importer.Importer,
 	a *api.Server,
 	pool *pgxpool.Pool,
 	cfg config.Config) *State {
