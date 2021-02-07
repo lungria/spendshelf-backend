@@ -27,7 +27,8 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
-var random = rand.NewSource(time.Now().Unix())
+var src = rand.NewSource(time.Now().Unix())
+var random = rand.New(src)
 
 type config struct {
 	Username string `env:"PG_TEST_USERNAME,required"`
@@ -61,7 +62,7 @@ func prepare(t *testing.T) (*pgxpool.Pool, func()) {
 	}
 
 	// create temporary testing database
-	dbName := fmt.Sprintf("pgtest%v", random.Int63())
+	dbName := fmt.Sprintf("pgtest%v", random.Uint64())
 
 	_, err = mainPool.Exec(context.Background(), fmt.Sprintf("create database %s", dbName))
 	if err != nil {
