@@ -27,8 +27,10 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
-var src = rand.NewSource(time.Now().Unix())
-var random = rand.New(src)
+var (
+	src    = rand.NewSource(time.Now().Unix())
+	random = rand.New(src)
+)
 
 type config struct {
 	Username string `env:"PG_TEST_USERNAME,required"`
