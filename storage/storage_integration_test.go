@@ -128,6 +128,113 @@ func TestGetLastTransactionDate_WithLocalDb_NoErrorReturned(t *testing.T) {
 	assert.Equal(t, mockTransactions[1].Time, lastTransactionDate)
 }
 
+func TestGetByID_WithLocalDb_NoErrorReturned(t *testing.T) {
+	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
+	defer cleanup()
+
+	accountID := prepareTestAccount(t, pool)
+	prepareTestCategory(t, pool, defaultCategory)
+	db := storage.NewPostgreSQLStorage(pool)
+	mockTransactions := []storage.Transaction{
+		{
+			ID:          "1",
+			Time:        time.Date(2020, 10, 10, 0, 0, 0, 0, time.UTC),
+			Description: "desc",
+			MCC:         10,
+			Hold:        false,
+			Amount:      100,
+			AccountID:   accountID,
+			CategoryID:  defaultCategory.ID,
+		},
+		{
+			ID:          "2",
+			Time:        time.Date(2020, 10, 11, 0, 0, 0, 0, time.UTC),
+			Description: "desc",
+			MCC:         10,
+			Hold:        false,
+			Amount:      100,
+			AccountID:   accountID,
+			CategoryID:  defaultCategory.ID,
+		},
+	}
+
+	err := db.Save(context.Background(), mockTransactions)
+	assert.NoError(t, err)
+
+	transaction, err := db.GetByID(context.Background(), "1")
+
+	assert.NoError(t, err)
+	assert.Equal(t, "1", transaction.ID)
+}
+
+func TestGetByCategory_WithLocalDb_NoErrorReturned(t *testing.T) {
+	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
+	defer cleanup()
+	newCategory := storage.Category{
+		ID:   22,
+		Name: "test_category",
+		Logo: "no_logo",
+	}
+	accountID := prepareTestAccount(t, pool)
+	prepareTestCategory(t, pool, defaultCategory)
+	prepareTestCategory(t, pool, newCategory)
+	db := storage.NewPostgreSQLStorage(pool)
+	mockTransactions := []storage.Transaction{
+		{
+			ID:          "1",
+			Time:        time.Date(2020, 10, 10, 0, 0, 0, 0, time.UTC),
+			Description: "desc",
+			MCC:         10,
+			Hold:        false,
+			Amount:      100,
+			AccountID:   accountID,
+			CategoryID:  newCategory.ID,
+		},
+		{
+			ID:          "2",
+			Time:        time.Date(2020, 10, 11, 0, 0, 0, 0, time.UTC),
+			Description: "desc",
+			MCC:         10,
+			Hold:        false,
+			Amount:      100,
+			AccountID:   accountID,
+			CategoryID:  defaultCategory.ID,
+		},
+	}
+
+	err := db.Save(context.Background(), mockTransactions)
+	assert.NoError(t, err)
+
+	transaction, err := db.GetByCategory(context.Background(), newCategory.ID)
+
+	assert.NoError(t, err)
+	assert.Len(t, transaction, 1)
+	assert.Equal(t, mockTransactions[0].ID, transaction[0].ID)
+}
+
+func TestGetCategories_WithLocalDb_NoErrorReturned(t *testing.T) {
+	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
+	defer cleanup()
+	newCategory := storage.Category{
+		ID:   22,
+		Name: "test_category",
+		Logo: "no_logo",
+	}
+	prepareTestCategory(t, pool, defaultCategory)
+	prepareTestCategory(t, pool, newCategory)
+	db := storage.NewPostgreSQLStorage(pool)
+
+	categories, err := db.GetCategories(context.Background())
+	assert.NoError(t, err)
+
+	assert.NoError(t, err)
+	assert.Len(t, categories, 2)
+	for _, v := range categories {
+		assert.True(t, v.ID == 22 || v.ID == 1)
+		assert.True(t, v.Name == "test_category" || v.Name == "Unknown")
+	}
+}
+
 func TestUpdate_WithLocalDb_NoErrorReturned(t *testing.T) {
 	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
 	defer cleanup()
@@ -195,6 +302,66 @@ func TestUpdate_WithLocalDb_NoErrorReturned(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "comment", *updatedTransaction.Comment)
 	assert.Equal(t, newCategory.ID, updatedTransaction.CategoryID)
+}
+
+func TestGetReport_WithLocalDb_NoErrorReturned(t *testing.T) {
+	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
+	defer cleanup()
+	newCategory := storage.Category{
+		ID:   22,
+		Name: "test_category",
+		Logo: "no_logo",
+	}
+	accountID := prepareTestAccount(t, pool)
+	prepareTestCategory(t, pool, defaultCategory)
+	prepareTestCategory(t, pool, newCategory)
+	db := storage.NewPostgreSQLStorage(pool)
+	mockTransactions := []storage.Transaction{
+		{
+			ID:          "1",
+			Time:        time.Date(2020, 10, 10, 0, 0, 0, 0, time.UTC),
+			Description: "desc",
+			MCC:         10,
+			Hold:        false,
+			Amount:      100,
+			AccountID:   accountID,
+			CategoryID:  newCategory.ID,
+		},
+		{
+			ID:          "2",
+			Time:        time.Date(2020, 10, 11, 0, 0, 0, 0, time.UTC),
+			Description: "desc",
+			MCC:         10,
+			Hold:        false,
+			Amount:      100,
+			AccountID:   accountID,
+			CategoryID:  defaultCategory.ID,
+		},
+
+		{
+			ID:          "2",
+			Time:        time.Date(2020, 10, 13, 0, 0, 0, 0, time.UTC),
+			Description: "desc",
+			MCC:         10,
+			Hold:        false,
+			Amount:      100,
+			AccountID:   accountID,
+			CategoryID:  defaultCategory.ID,
+		},
+	}
+
+	err := db.Save(context.Background(), mockTransactions)
+	assert.NoError(t, err)
+
+	report, err := db.GetReport(
+		context.Background(),
+		time.Date(2020, 10, 01, 0, 0, 0, 0, time.UTC),
+		time.Date(2020, 10, 12, 0, 0, 0, 0, time.UTC))
+
+	assert.NoError(t, err)
+	assert.Len(t, report, 2)
+	assert.Equal(t, mockTransactions[0].Amount, report[22])
+	assert.Equal(t, mockTransactions[1].Amount, report[1])
 }
 
 func prepareTestAccount(t *testing.T, db *pgxpool.Pool) string {
