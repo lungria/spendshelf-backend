@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAccountStorageSave_WithLocalDb_NoErrorReturned(t *testing.T) {
+func TestAccountStorageSave_WithProductionSchema_NoErrorReturned(t *testing.T) {
 	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
 	defer cleanup()
 
@@ -45,7 +45,7 @@ func TestAccountStorageSave_WithLocalDb_NoErrorReturned(t *testing.T) {
 	assert.Equal(t, int64(20000), balance)
 }
 
-func TestAccountStorageGetAll_WithLocalDb_NoErrorReturned(t *testing.T) {
+func TestAccountStorageGetAll_WithProductionSchema_NoErrorReturned(t *testing.T) {
 	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
 	defer cleanup()
 

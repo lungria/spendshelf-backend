@@ -84,7 +84,7 @@ func TestSave_OnDuplicateInsert_DoesNothing(t *testing.T) {
 	assert.Equal(t, "ORIGINAL DESCRIPTION", description)
 }
 
-func TestGetLastTransactionDate_WithLocalDb_NoErrorReturned(t *testing.T) {
+func TestGetLastTransactionDate_WithProductionSchema_NoErrorReturned(t *testing.T) {
 	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
 	defer cleanup()
 
@@ -123,7 +123,7 @@ func TestGetLastTransactionDate_WithLocalDb_NoErrorReturned(t *testing.T) {
 	assert.Equal(t, mockTransactions[1].Time, lastTransactionDate)
 }
 
-func TestGetByID_WithLocalDb_NoErrorReturned(t *testing.T) {
+func TestGetByID_WithProductionSchema_NoErrorReturned(t *testing.T) {
 	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
 	defer cleanup()
 
@@ -162,7 +162,7 @@ func TestGetByID_WithLocalDb_NoErrorReturned(t *testing.T) {
 	assert.Equal(t, "1", transaction.ID)
 }
 
-func TestGetByCategory_WithLocalDb_NoErrorReturned(t *testing.T) {
+func TestGetByCategory_WithProductionSchema_NoErrorReturned(t *testing.T) {
 	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
 	defer cleanup()
 
@@ -208,7 +208,7 @@ func TestGetByCategory_WithLocalDb_NoErrorReturned(t *testing.T) {
 	assert.Equal(t, mockTransactions[0].ID, transaction[0].ID)
 }
 
-func TestUpdate_WithLocalDb_NoErrorReturned(t *testing.T) {
+func TestUpdate_WithProductionSchema_NoErrorReturned(t *testing.T) {
 	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
 	defer cleanup()
 
@@ -277,7 +277,7 @@ func TestUpdate_WithLocalDb_NoErrorReturned(t *testing.T) {
 	assert.Equal(t, newCategory.ID, updatedTransaction.CategoryID)
 }
 
-func TestGetReport_WithLocalDb_NoErrorReturned(t *testing.T) {
+func TestGetReport_WithProductionSchema_NoErrorReturned(t *testing.T) {
 	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
 	defer cleanup()
 
