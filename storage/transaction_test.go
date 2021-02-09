@@ -329,7 +329,7 @@ func TestGetReport_WithLocalDb_NoErrorReturned(t *testing.T) {
 
 	report, err := db.GetReport(
 		context.Background(),
-		time.Date(2020, 10, 0o1, 0, 0, 0, 0, time.UTC),
+		time.Date(2020, 10, 01, 0, 0, 0, 0, time.UTC),
 		time.Date(2020, 10, 12, 0, 0, 0, 0, time.UTC))
 
 	assert.NoError(t, err)
