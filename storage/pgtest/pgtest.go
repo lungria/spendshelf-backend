@@ -75,12 +75,10 @@ func prepare(t *testing.T) (*pgxpool.Pool, func()) {
 		t.Fatalf("expected nil, found: %v", err)
 	}
 
+	conStr.DB = dbName
+
 	// connect to temporary testing database
-	testDB, err := pgxpool.Connect(
-		context.Background(),
-		fmt.Sprintf(
-			"postgres://localhost:5432/%s?sslmode=disable&user=postgres&password=adminpass123",
-			dbName))
+	testDB, err := pgxpool.Connect(context.Background(), conStr.String())
 	if err != nil {
 		mainPool.Close()
 		t.Fatalf("expected nil, found: %v", err)
