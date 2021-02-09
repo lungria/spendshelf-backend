@@ -11,6 +11,8 @@ services:
     environment:
       POSTGRES_PASSWORD: adminpass123
       PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ./dbdata:/var/lib/postgresql/data
   app:
     build: .
     restart: always
