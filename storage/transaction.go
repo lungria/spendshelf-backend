@@ -8,11 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rs/zerolog/log"
-
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/lungria/spendshelf-backend/category"
+	"github.com/lungria/spendshelf-backend/storage/category"
 )
 
 // ErrNotFound is being returned, if no data was found in database.
@@ -32,40 +30,38 @@ type Transaction struct {
 	Comment       *string   `json:"comment"`
 }
 
-// Category describes transaction category.
-type Category struct {
-	ID   int32  `json:"id"`
-	Name string `json:"name"`
-	Logo string `json:"logo"`
-}
-
 // UpdateTransactionCommand describes transaction update parameters.
 type UpdateTransactionCommand struct {
-	// filter
+	Query         Query
+	UpdatedFields UpdatedFields
+}
+
+// Query fields for UpdateTransactionCommand. All fields are required.
+type Query struct {
 	ID            string
 	LastUpdatedAt time.Time
+}
 
-	// would be updated
+// UpdatedFields for UpdateTransactionCommand. All fields are optional, but at least one field must be non-nil.
+type UpdatedFields struct {
 	CategoryID *int32
 	Comment    *string
 }
 
-// todo: split PostgreSQLStorage into CategoriesStorage and TransactionsStorage
-
-// PostgreSQLStorage for transactions.
-type PostgreSQLStorage struct {
+// TransactionStorage for transactions.
+type TransactionStorage struct {
 	pool *pgxpool.Pool
 }
 
-// NewPostgreSQLStorage creates new instance of PostgreSQLStorage.
-func NewPostgreSQLStorage(pool *pgxpool.Pool) *PostgreSQLStorage {
-	return &PostgreSQLStorage{pool: pool}
+// NewTransactionStorage creates new instance of TransactionStorage.
+func NewTransactionStorage(pool *pgxpool.Pool) *TransactionStorage {
+	return &TransactionStorage{pool: pool}
 }
 
 const insertPrepStatementName = "insert_transactions"
 
 // Save transactions to db with deduplication using transaction ID.
-func (s *PostgreSQLStorage) Save(ctx context.Context, transactions []Transaction) error {
+func (s *TransactionStorage) Save(ctx context.Context, transactions []Transaction) error {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -98,7 +94,7 @@ func (s *PostgreSQLStorage) Save(ctx context.Context, transactions []Transaction
 
 // GetLastTransactionDate returns date property of latest transaction (sorted by date desc).
 // Returns storage.ErrNotFound if transaction not found by query.
-func (s *PostgreSQLStorage) GetLastTransactionDate(ctx context.Context, accountID string) (time.Time, error) {
+func (s *TransactionStorage) GetLastTransactionDate(ctx context.Context, accountID string) (time.Time, error) {
 	row := s.pool.QueryRow(
 		ctx,
 		`select "time" from transaction
@@ -123,7 +119,7 @@ func (s *PostgreSQLStorage) GetLastTransactionDate(ctx context.Context, accountI
 
 // GetByID returns transaction by ID.
 // Returns storage.ErrNotFound if transaction not found by query.
-func (s *PostgreSQLStorage) GetByID(ctx context.Context, transactionID string) (Transaction, error) {
+func (s *TransactionStorage) GetByID(ctx context.Context, transactionID string) (Transaction, error) {
 	row := s.pool.QueryRow(
 		ctx,
 		`select * from transaction
@@ -158,7 +154,7 @@ func (s *PostgreSQLStorage) GetByID(ctx context.Context, transactionID string) (
 
 // GetByCategory returns transactions by category.
 // Returns storage.ErrNotFound if transaction not found by query.
-func (s *PostgreSQLStorage) GetByCategory(ctx context.Context, categoryID int32) ([]Transaction, error) {
+func (s *TransactionStorage) GetByCategory(ctx context.Context, categoryID int32) ([]Transaction, error) {
 	const limit = 50
 
 	rows, err := s.pool.Query(
@@ -181,41 +177,8 @@ func (s *PostgreSQLStorage) GetByCategory(ctx context.Context, categoryID int32)
 	return scanTransactions(limit, rows)
 }
 
-func scanTransactions(buffSize int, rows pgx.Rows) ([]Transaction, error) {
-	buffer := make([]Transaction, buffSize)
-	i := 0
-
-	for rows.Next() {
-		t := Transaction{}
-
-		err := rows.Scan(
-			&t.ID,
-			&t.Time,
-			&t.Description,
-			&t.MCC,
-			&t.Hold,
-			&t.Amount,
-			&t.AccountID,
-			&t.CategoryID,
-			&t.LastUpdatedAt,
-			&t.Comment)
-		if err != nil {
-			return nil, err
-		}
-
-		buffer[i] = t
-
-		i++
-	}
-
-	result := make([]Transaction, i)
-	copy(result, buffer)
-
-	return result, nil
-}
-
 // UpdateTransaction allows to partially update transaction.
-func (s *PostgreSQLStorage) UpdateTransaction(
+func (s *TransactionStorage) UpdateTransaction(
 	ctx context.Context,
 	params UpdateTransactionCommand) (Transaction, error) {
 	paramIterator := 1
@@ -226,22 +189,22 @@ func (s *PostgreSQLStorage) UpdateTransaction(
 
 	sqlParams := make([]interface{}, 0)
 
-	if params.CategoryID != nil {
+	if params.UpdatedFields.CategoryID != nil {
 		sql.WriteString("set \"categoryID\" = $")
 		sql.WriteString(strconv.Itoa(paramIterator))
 		sql.WriteString(", ")
 		paramIterator++
 
-		sqlParams = append(sqlParams, *params.CategoryID)
+		sqlParams = append(sqlParams, *params.UpdatedFields.CategoryID)
 	}
 
-	if params.Comment != nil {
+	if params.UpdatedFields.Comment != nil {
 		sql.WriteString("set \"comment\" = $")
 		sql.WriteString(strconv.Itoa(paramIterator))
 		sql.WriteString(", ")
 		paramIterator++
 
-		sqlParams = append(sqlParams, *params.Comment)
+		sqlParams = append(sqlParams, *params.UpdatedFields.Comment)
 	}
 
 	sql.WriteString("\"lastUpdatedAt\" = current_timestamp(0) \n")
@@ -256,9 +219,8 @@ func (s *PostgreSQLStorage) UpdateTransaction(
 	}
 
 	sqlString := sql.String()
-	log.Trace().Str("sql", sqlString).Msg("transaction update received")
 
-	sqlParams = append(sqlParams, params.ID, params.LastUpdatedAt)
+	sqlParams = append(sqlParams, params.Query.ID, params.Query.LastUpdatedAt)
 
 	cmd, err := s.pool.Exec(
 		ctx,
@@ -276,7 +238,7 @@ func (s *PostgreSQLStorage) UpdateTransaction(
 		ctx,
 		`select * from transaction
 		where "ID" = $1`,
-		params.ID)
+		params.Query.ID)
 	if err != nil {
 		return Transaction{}, err
 	}
@@ -290,7 +252,7 @@ func (s *PostgreSQLStorage) UpdateTransaction(
 }
 
 // GetReport generates spending report for set date/time interval.
-func (s *PostgreSQLStorage) GetReport(ctx context.Context, from, to time.Time) (map[int32]int64, error) {
+func (s *TransactionStorage) GetReport(ctx context.Context, from, to time.Time) (map[int32]int64, error) {
 	rows, err := s.pool.Query(
 		ctx,
 		`select "categoryID", sum("amount") as "amount" from transaction
@@ -322,41 +284,34 @@ func (s *PostgreSQLStorage) GetReport(ctx context.Context, from, to time.Time) (
 	return result, nil
 }
 
-// GetCategories returns existing categories.
-func (s *PostgreSQLStorage) GetCategories(ctx context.Context) ([]Category, error) {
-	const limit = 20
-
-	rows, err := s.pool.Query(
-		ctx,
-		`select "ID", "name", "logo" from category
-		 limit $1`,
-		limit)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	buffer := make([]Category, limit)
+func scanTransactions(buffSize int, rows pgx.Rows) ([]Transaction, error) {
+	buffer := make([]Transaction, buffSize)
 	i := 0
 
 	for rows.Next() {
-		var c Category
+		t := Transaction{}
 
 		err := rows.Scan(
-			&c.ID,
-			&c.Name,
-			&c.Logo)
+			&t.ID,
+			&t.Time,
+			&t.Description,
+			&t.MCC,
+			&t.Hold,
+			&t.Amount,
+			&t.AccountID,
+			&t.CategoryID,
+			&t.LastUpdatedAt,
+			&t.Comment)
 		if err != nil {
 			return nil, err
 		}
 
-		buffer[i] = c
+		buffer[i] = t
 
 		i++
 	}
 
-	result := make([]Category, i)
+	result := make([]Transaction, i)
 	copy(result, buffer)
 
 	return result, nil

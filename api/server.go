@@ -8,7 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lungria/spendshelf-backend/config"
+	"github.com/lungria/spendshelf-backend/app/config"
 )
 
 const defaultServerShutdownTimeout = 5 * time.Second
@@ -43,8 +43,8 @@ func (s *Server) Start() {
 }
 
 // Shutdown web server and kill all keep-alive connections.
-func (s *Server) Shutdown(ctx context.Context) {
-	shutdownCtx, cancel := context.WithTimeout(ctx, defaultServerShutdownTimeout)
+func (s *Server) Shutdown() {
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), defaultServerShutdownTimeout)
 	defer cancel()
 
 	s.server.SetKeepAlivesEnabled(false)

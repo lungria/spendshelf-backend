@@ -7,6 +7,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/lungria/spendshelf-backend/app/job"
+
 	"github.com/rs/zerolog/log"
 
 	"github.com/lungria/spendshelf-backend/app"
@@ -20,13 +22,17 @@ func main() {
 
 	defer state.Close()
 
+	state.API.Start()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	state.API.Start()
-
 	if state.Config.EnableImportJob {
-		state.Scheduler.Schedule(ctx, state.Importer.Import(state.Config.MonoAccountID), 1*time.Minute, 30*time.Second)
+		state.Scheduler.Schedule(ctx, job.Job{
+			Run:            state.Importer.Import(state.Config.MonoAccountID),
+			WaitBeforeRuns: 1 * time.Minute,
+			Timeout:        30 * time.Second,
+		})
 	}
 
 	sigChan := make(chan os.Signal, 1)

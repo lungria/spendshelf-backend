@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lungria/spendshelf-backend/config"
+	"github.com/lungria/spendshelf-backend/app/config"
 	cors "github.com/rs/cors/wrapper/gin"
 )
 
@@ -26,9 +26,9 @@ func newPipelineBuilder(routes []RouteBinder, cfg config.Config) *pipelineBuilde
 
 // addMiddleware builds middleware pipeline.
 func (b *pipelineBuilder) addMiddleware() *pipelineBuilder {
-	b.router.Use(gin.RecoveryWithWriter(log.Writer()))
-	b.router.Use(defaultHeaders())
-	b.router.Use(cors.Default())
+	b.router.Use(gin.RecoveryWithWriter(log.Writer())).
+		Use(defaultHeaders()).
+		Use(cors.Default())
 
 	return b
 }
@@ -49,7 +49,7 @@ func (b *pipelineBuilder) build() *gin.Engine {
 
 func defaultHeaders() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Header("content-type", "application/json")
+		c.Header("Content-Type", "application/json")
 		c.Next()
 	}
 }

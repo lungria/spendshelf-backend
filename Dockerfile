@@ -1,4 +1,4 @@
-FROM --platform=${BUILDPLATFORM} golang:1.15.3-alpine3.12 as builder
+FROM --platform=${BUILDPLATFORM} golang:1.15.8-alpine3.13.1 as builder
 
 ARG TARGETOS
 ARG TARGETARCH
@@ -9,7 +9,7 @@ COPY . ./
 RUN echo "Building for ${TARGETOS}/${TARGETARCH}"
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o /spendshelf-backend
 
-FROM alpine:3.12.1
+FROM alpine:3.13.1
 
 WORKDIR /root/
 COPY --from=builder /spendshelf-backend .

@@ -4,12 +4,25 @@ on:
   pull_request: 
 
 jobs:
-
-  build:
-    name: Build
-    runs-on: ubuntu-latest
+  runner-job:
+    name: Build & Test
+    runs-on: ubuntu-20.04
+    services:
+      postgres:
+        image: postgres
+        env:
+          # Must be set to any custom value except the default 'postgres'. If default value is used - for some reason
+          # we would not be able to connect to new dynamically created databases in runtime.
+          POSTGRES_PASSWORD: adminpass123
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
     steps:
-
     - name: Set up Go 1.x
       uses: actions/setup-go@v2
       with:
@@ -23,14 +36,18 @@ jobs:
       run: go build -v .
 
     - name: Test
-      run: go test -v .
-      
+      run: |
+          export PG_TEST_USERNAME=postgres
+          export PG_TEST_PASSWORD=adminpass123
+          export PG_TEST_HOST=localhost:5432
+          go test -v ./...
+
   golangci:
-    name: lint
-    runs-on: ubuntu-latest
+    name: Lint
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
-          version: v1.31
+          version: v1.36

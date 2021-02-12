@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lungria/spendshelf-backend/mono/importer/interval"
-	"github.com/lungria/spendshelf-backend/mono/importer/interval/moq"
+	"github.com/lungria/spendshelf-backend/importer/interval"
+	"github.com/lungria/spendshelf-backend/importer/interval/moq"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,7 +17,7 @@ func TestGetInterval_WhenDateDiffIsBelowLimit_IntervalReturned(t *testing.T) {
 	mockStorage.GetLastTransactionDateFunc = func(ctx context.Context, accountID string) (time.Time, error) {
 		return timeFrom, nil
 	}
-	svc := interval.NewIntervalGenerator(&mockStorage)
+	svc := interval.NewGenerator(&mockStorage)
 
 	from, to, err := svc.GetInterval(context.Background(), "accID")
 
@@ -32,7 +32,7 @@ func TestGetInterval_WhenDateDiffIsAboveLimit_ErrorReturned(t *testing.T) {
 	mockStorage.GetLastTransactionDateFunc = func(ctx context.Context, accountID string) (time.Time, error) {
 		return timeFrom, nil
 	}
-	svc := interval.NewIntervalGenerator(&mockStorage)
+	svc := interval.NewGenerator(&mockStorage)
 
 	_, _, err := svc.GetInterval(context.Background(), "accID")
 
@@ -46,7 +46,7 @@ func TestGetInterval_WhenStorageReturnsError_ErrorReturned(t *testing.T) {
 	mockStorage.GetLastTransactionDateFunc = func(ctx context.Context, accountID string) (time.Time, error) {
 		return time.Time{}, expectedErr
 	}
-	svc := interval.NewIntervalGenerator(&mockStorage)
+	svc := interval.NewGenerator(&mockStorage)
 
 	_, _, err := svc.GetInterval(context.Background(), "accID")
 
