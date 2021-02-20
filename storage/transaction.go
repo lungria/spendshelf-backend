@@ -122,6 +122,7 @@ func (s *TransactionStorage) GetLastTransactionDate(ctx context.Context, account
 func (s *TransactionStorage) GetByID(ctx context.Context, transactionID string) (Transaction, error) {
 	row := s.pool.QueryRow(
 		ctx,
+		// todo: replace * with specified fields names
 		`select * from transaction
 		where "ID" = $1
 		order by "time" desc

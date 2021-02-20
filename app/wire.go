@@ -23,6 +23,7 @@ func InitializeApp() (*State, error) {
 		storage.NewTransactionStorage,
 		storage.NewCategoryStorage,
 		storage.NewAccountsStorage,
+		storage.NewBudgetsStorage,
 		interval.NewGenerator,
 		NewSchedulerProvider,
 		NewRoutesProvider,
@@ -33,8 +34,8 @@ func InitializeApp() (*State, error) {
 		transaction.NewImporter,
 		account.NewDefaultImporter,
 
-		wire.Bind(new(transaction.Storage), new(*storage.PostgreSQLStorage)),
-		wire.Bind(new(interval.TransactionsStorage), new(*storage.PostgreSQLStorage)),
+		wire.Bind(new(transaction.Storage), new(*storage.TransactionStorage)),
+		wire.Bind(new(interval.TransactionsStorage), new(*storage.TransactionStorage)),
 		wire.Bind(new(account.Storage), new(*storage.AccountsStorage)),
 		wire.Bind(new(importer.AccountImporter), new(*account.DefaultImporter)),
 		wire.Bind(new(importer.TransactionsImporter), new(*transaction.DefaultImporter)),
@@ -44,10 +45,12 @@ func InitializeApp() (*State, error) {
 
 		handler.NewTransactionHandler,
 		handler.NewAccountHandler,
+		handler.NewBudgetHandler,
 
-		wire.Bind(new(handler.TransactionStorage), new(*storage.PostgreSQLStorage)),
+		wire.Bind(new(handler.TransactionStorage), new(*storage.TransactionStorage)),
 		wire.Bind(new(handler.CategoryStorage), new(*storage.CategoryStorage)),
 		wire.Bind(new(handler.AccountsStorage), new(*storage.AccountsStorage)),
+		wire.Bind(new(handler.BudgetsStorage), new(*storage.BudgetsStorage)),
 	)
 	return &State{}, nil
 }
