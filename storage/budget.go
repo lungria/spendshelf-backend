@@ -11,7 +11,7 @@ import (
 
 // Budget describes single month budget.
 type Budget struct {
-	ID        string    `json:"id"`
+	ID        int       `json:"id"`
 	CreatedAt time.Time `json:"createdAt"`
 	StartsAt  time.Time `json:"startsAt"`
 	EndsAt    time.Time `json:"endsAt"`
@@ -51,7 +51,6 @@ func (s *BudgetsStorage) GetLast(ctx context.Context) (Budget, error) {
 		&b.StartsAt,
 		&b.EndsAt,
 		&b.CreatedAt)
-
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return Budget{}, ErrNotFound

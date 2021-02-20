@@ -32,6 +32,7 @@ func (h *BudgetHandler) GetCurrentBudget(c *gin.Context) {
 	if err != nil {
 		log.Error().Err(err).Msg("unable to load current budget from storage")
 		c.JSON(api.InternalServerError())
+
 		return
 	}
 
@@ -39,6 +40,6 @@ func (h *BudgetHandler) GetCurrentBudget(c *gin.Context) {
 }
 
 // BindRoutes bind gin routes to handler methods.
-func (t *BudgetHandler) BindRoutes(router *gin.Engine) {
-	router.GET("/v1/budget?month=current", t.GetCurrentBudget)
+func (h *BudgetHandler) BindRoutes(router *gin.Engine) {
+	router.GET("/v1/budget?month=current", h.GetCurrentBudget)
 }

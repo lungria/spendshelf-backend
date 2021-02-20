@@ -26,7 +26,10 @@ func NewSchedulerProvider() *job.Scheduler {
 	return scheduler
 }
 
-func NewRoutesProvider(t *handler.TransactionHandler, a *handler.AccountHandler, b *handler.BudgetHandler) []api.RouteBinder {
+func NewRoutesProvider(
+	t *handler.TransactionHandler,
+	a *handler.AccountHandler,
+	b *handler.BudgetHandler) []api.RouteBinder {
 	return []api.RouteBinder{t, a, b}
 }
 
