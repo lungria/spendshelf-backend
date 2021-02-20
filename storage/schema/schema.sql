@@ -36,7 +36,7 @@ CREATE TABLE budget (
 	unique ("startsAt", "endsAt")
 );
 
-CREATE TABLE limit (
+CREATE TABLE "limit" (
     "budgetID" integer NOT NULL references budget("ID"),
     "categoryID" integer NOT NULL references category("ID"),
     "amount" integer NOT NULL,

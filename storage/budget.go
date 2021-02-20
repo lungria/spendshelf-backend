@@ -64,7 +64,7 @@ func (s *BudgetsStorage) GetLast(ctx context.Context) (Budget, error) {
 
 	rows, err := s.pool.Query(
 		ctx,
-		`select "categoryID", "amount" from limits
+		`select "categoryID", "amount" from "limit"
 			where "budgetID" = $1
 			order by "amount" desc
 			limit $2`,
