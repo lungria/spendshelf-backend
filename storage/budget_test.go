@@ -31,16 +31,14 @@ func TestBudgetsStorageGetLast_WhenLimitsExist_NoErrorReturned(t *testing.T) {
 
 	budgetID := prepareTestBudget(t, pool)
 	prepareTestCategory(t, pool, storage.Category{
-		ID:      1,
-		Name:    "test1",
-		Logo:    "test1",
-		Visible: true,
+		ID:   1,
+		Name: "test1",
+		Logo: "test1",
 	})
 	prepareTestCategory(t, pool, storage.Category{
-		ID:      2,
-		Name:    "test2",
-		Logo:    "test2",
-		Visible: true,
+		ID:   2,
+		Name: "test2",
+		Logo: "test2",
 	})
 	prepareTestLimit(t, pool, budgetID, storage.Limit{
 		CategoryID: 1,

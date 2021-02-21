@@ -1,12 +1,3 @@
-alter table category
-add column visible bool;
-
-update category
-set visible = true;
-
-alter table category
-alter column visible set not null;
-
 create table budget (
     "ID" integer primary key,
     "startsAt" timestamp not null,

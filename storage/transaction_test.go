@@ -14,10 +14,9 @@ import (
 )
 
 var defaultCategory = storage.Category{
-	ID:      1,
-	Name:    "Unknown",
-	Logo:    "creditcard",
-	Visible: true,
+	ID:   1,
+	Name: "Unknown",
+	Logo: "creditcard",
 }
 
 func TestSave_OnDuplicateInsert_DoesNothing(t *testing.T) {
@@ -354,8 +353,8 @@ func prepareTestAccount(t *testing.T, db *pgxpool.Pool) string {
 
 func prepareTestCategory(t *testing.T, db *pgxpool.Pool, category storage.Category) {
 	_, err := db.Exec(context.Background(), `
-				insert into category ("ID", "name", "logo", "createdAt", "visible")
-				values ($1, $2, $3, current_timestamp(0), true)`, category.ID, category.Name, category.Logo)
+				insert into category ("ID", "name", "logo", "createdAt")
+				values ($1, $2, $3, current_timestamp(0))`, category.ID, category.Name, category.Logo)
 
 	require.NoError(t, err)
 }
