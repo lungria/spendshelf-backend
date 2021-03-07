@@ -41,5 +41,5 @@ func (h *BudgetHandler) GetCurrentBudget(c *gin.Context) {
 
 // BindRoutes bind gin routes to handler methods.
 func (h *BudgetHandler) BindRoutes(router *gin.Engine) {
-	router.GET("/v1/budget?month=current", h.GetCurrentBudget)
+	router.GET("/v1/budget", h.GetCurrentBudget)
 }
