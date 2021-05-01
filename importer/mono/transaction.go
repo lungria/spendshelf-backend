@@ -53,7 +53,7 @@ func (c *Client) GetTransactions(ctx context.Context, query GetTransactionsQuery
 
 // Transaction describes monobank transaction.
 type Transaction struct {
-	ID          string `json:"ID"`
+	ID          string `json:"id"`
 	Time        Time   `json:"time"`
 	Description string `json:"description"`
 	MCC         int32  `json:"mcc"`

@@ -17,7 +17,7 @@ import (
 // UpdateTransactionBody describes request body for update transaction request.
 // todo: validate.
 type UpdateTransactionBody struct {
-	CategoryID *int32  `json:"categoryID"`
+	CategoryID *int32  `json:"categoryId"`
 	Comment    *string `json:"comment"`
 }
 

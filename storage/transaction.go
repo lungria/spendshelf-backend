@@ -18,14 +18,14 @@ var ErrNotFound = errors.New("data not found")
 
 // Transaction describes single user's transaction.
 type Transaction struct {
-	ID            string    `json:"ID"`
+	ID            string    `json:"id"`
 	Time          time.Time `json:"time"`
 	Description   string    `json:"description"`
 	MCC           int32     `json:"mcc"`
 	Hold          bool      `json:"hold"`
 	Amount        int64     `json:"amount"`
-	AccountID     string    `json:"accountID"`
-	CategoryID    int32     `json:"categoryID"`
+	AccountID     string    `json:"accountId"`
+	CategoryID    int32     `json:"categoryId"`
 	LastUpdatedAt time.Time `json:"lastUpdatedAt"`
 	Comment       *string   `json:"comment"`
 }

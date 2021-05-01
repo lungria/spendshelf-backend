@@ -11,7 +11,7 @@ import (
 
 // Budget describes single month budget.
 type Budget struct {
-	ID        int       `json:"ID"`
+	ID        int       `json:"id"`
 	CreatedAt time.Time `json:"createdAt"`
 	StartsAt  time.Time `json:"startsAt"`
 	EndsAt    time.Time `json:"endsAt"`
@@ -20,7 +20,7 @@ type Budget struct {
 
 // Limit describe per-category limit inside monthly budget.
 type Limit struct {
-	CategoryID int32 `json:"categoryID"`
+	CategoryID int32 `json:"categoryId"`
 	Amount     int64 `json:"amount"`
 }
 

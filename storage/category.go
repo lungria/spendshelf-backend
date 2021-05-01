@@ -8,7 +8,7 @@ import (
 
 // Category describes transaction category.
 type Category struct {
-	ID   int32  `json:"ID"`
+	ID   int32  `json:"id"`
 	Name string `json:"name"`
 	Logo string `json:"logo"`
 }
