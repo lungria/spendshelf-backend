@@ -2,14 +2,13 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/lungria/spendshelf-backend/api"
 	"github.com/lungria/spendshelf-backend/storage"
-	"github.com/lungria/spendshelf-backend/storage/category"
 	"github.com/rs/zerolog/log"
 )
 
@@ -54,21 +53,23 @@ func NewTransactionHandler(transactions TransactionStorage, categories CategoryS
 	return &TransactionHandler{transactions: transactions, categories: categories}
 }
 
+// GetTransactionsQuery describes request query for transaction list.
+type GetTransactionsQuery struct {
+	From       time.Time `form:"from" binding:"required"`
+	To         time.Time `form:"to" binding:"required"`
+	CategoryID int32     `form:"categoryId" binding:"required"`
+}
+
 // GetTransactions returns transactions (without category).
 func (t *TransactionHandler) GetTransactions(c *gin.Context) {
-	categoryID := category.Default
+	query := GetTransactionsQuery{}
 
-	if query, exists := c.GetQuery("categoryId"); exists {
-		intID, err := strconv.Atoi(query)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, api.Error{Message: "invalid categoryId: must be an integer"})
-			return
-		}
-
-		categoryID = int32(intID)
+	if err := c.BindQuery(&query); err != nil {
+		c.JSON(http.StatusBadRequest, api.Error{Message: fmt.Sprintf("unable to parse query: %s", err)})
+		return
 	}
 
-	result, err := t.transactions.GetByCategory(c, categoryID)
+	result, err := t.transactions.GetByCategory(c, query.CategoryID)
 	if err != nil {
 		log.Error().Err(err).Msg("unable to load transactions from storage")
 		c.JSON(api.InternalServerError())

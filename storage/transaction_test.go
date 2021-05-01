@@ -123,7 +123,7 @@ func TestGetLastTransactionDate_WithProductionSchema_NoErrorReturned(t *testing.
 	assert.Equal(t, mockTransactions[1].Time, lastTransactionDate)
 }
 
-func TestGetByID_WithProductionSchema_NoErrorReturned(t *testing.T) {
+func TestGetOne_WithProductionSchema_NoErrorReturned(t *testing.T) {
 	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
 	defer cleanup()
 
@@ -156,7 +156,7 @@ func TestGetByID_WithProductionSchema_NoErrorReturned(t *testing.T) {
 	err := db.Save(context.Background(), mockTransactions)
 	assert.NoError(t, err)
 
-	transaction, err := db.GetByID(context.Background(), "1")
+	transaction, err := db.GetOne(context.Background(), storage.Query{ID: "id4"})
 
 	assert.NoError(t, err)
 	assert.Equal(t, "1", transaction.ID)
@@ -201,7 +201,7 @@ func TestGetByCategory_WithProductionSchema_NoErrorReturned(t *testing.T) {
 	err := db.Save(context.Background(), mockTransactions)
 	assert.NoError(t, err)
 
-	transaction, err := db.GetByCategory(context.Background(), newCategory.ID)
+	transaction, err := db.Get(context.Background(), storage.Query{CategoryId: newCategory.ID}, storage.Page{})
 
 	assert.NoError(t, err)
 	assert.Len(t, transaction, 1)
@@ -229,7 +229,7 @@ func TestUpdate_WithProductionSchema_NoErrorReturned(t *testing.T) {
 		nil,
 	}})
 	assert.NoError(t, err)
-	transaction, err := db.GetByID(context.Background(), "id4")
+	transaction, err := db.GetOne(context.Background(), storage.Query{ID: "id4"})
 	assert.NoError(t, err)
 
 	// update comment without category
@@ -244,12 +244,12 @@ func TestUpdate_WithProductionSchema_NoErrorReturned(t *testing.T) {
 		},
 	})
 	assert.NoError(t, err)
-	updatedTransaction, err := db.GetByID(context.Background(), "id4")
+	updatedTransaction, err := db.GetOne(context.Background(), storage.Query{ID: "id4"})
 	assert.NoError(t, err)
 	assert.Equal(t, "comment", *updatedTransaction.Comment)
 	assert.Equal(t, category.Default, updatedTransaction.CategoryID)
 
-	transaction, err = db.GetByID(context.Background(), "id4")
+	transaction, err = db.GetOne(context.Background(), storage.Query{ID: "id4"})
 	require.NoError(t, err)
 
 	// update category without comment
@@ -271,7 +271,7 @@ func TestUpdate_WithProductionSchema_NoErrorReturned(t *testing.T) {
 		},
 	})
 	assert.NoError(t, err)
-	updatedTransaction, err = db.GetByID(context.Background(), "id4")
+	updatedTransaction, err = db.GetOne(context.Background(), storage.Query{ID: "id4"})
 	assert.NoError(t, err)
 	assert.Equal(t, "comment", *updatedTransaction.Comment)
 	assert.Equal(t, newCategory.ID, updatedTransaction.CategoryID)

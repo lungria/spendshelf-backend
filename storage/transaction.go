@@ -36,10 +36,34 @@ type UpdateTransactionCommand struct {
 	UpdatedFields UpdatedFields
 }
 
-// Query fields for UpdateTransactionCommand. All fields are required.
+// Query fields for UpdateTransactionCommand. Zero value fields are treated as absent.
 type Query struct {
-	ID            string
+	ID         string
+	CategoryId int32
+	// TODO: USE?!
 	LastUpdatedAt time.Time
+}
+
+type Page struct {
+	Limit  int
+	Offset int
+}
+
+func (p Page) withDefaults() Page {
+	limit := p.Limit
+	offset := p.Offset
+
+	if limit <= 0 {
+		limit = 50
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	return Page{
+		Limit:  limit,
+		Offset: offset,
+	}
 }
 
 // UpdatedFields for UpdateTransactionCommand. All fields are optional, but at least one field must be non-nil.
@@ -117,54 +141,49 @@ func (s *TransactionStorage) GetLastTransactionDate(ctx context.Context, account
 	return lastKnownTransaction, nil
 }
 
-// GetByID returns transaction by ID.
-// Returns storage.ErrNotFound if transaction not found by query.
-func (s *TransactionStorage) GetByID(ctx context.Context, transactionID string) (Transaction, error) {
-	row := s.pool.QueryRow(
-		ctx,
-		// todo: replace * with specified fields names
-		`select * from transaction
-		where "ID" = $1
-		order by "time" desc
-		limit 1`,
-		transactionID)
-
-	t := Transaction{}
-
-	err := row.Scan(
-		&t.ID,
-		&t.Time,
-		&t.Description,
-		&t.MCC,
-		&t.Hold,
-		&t.Amount,
-		&t.AccountID,
-		&t.CategoryID,
-		&t.LastUpdatedAt,
-		&t.Comment)
+func (s *TransactionStorage) GetOne(ctx context.Context, query Query) (Transaction, error) {
+	transactions, err := s.Get(ctx, query, Page{Limit: 1})
 	if err != nil {
-		if err == pgx.ErrNoRows {
-			return Transaction{}, ErrNotFound
-		}
-
 		return Transaction{}, err
 	}
 
-	return t, nil
+	return transactions[0], nil
 }
 
-// GetByCategory returns transactions by category.
+// Get returns transactions by filter.
 // Returns storage.ErrNotFound if transaction not found by query.
-func (s *TransactionStorage) GetByCategory(ctx context.Context, categoryID int32) ([]Transaction, error) {
-	const limit = 50
+func (s *TransactionStorage) Get(ctx context.Context, query Query, page Page) ([]Transaction, error) {
+	page = page.withDefaults()
+	sqlBuilder := strings.Builder{}
+	sqlBuilder.WriteString("select * from transaction ")
+	sqlParams := make([]interface{}, 0)
 
+	if query.ID != "" {
+		sqlParams = append(sqlParams, query.ID)
+		sqlBuilder.WriteString(fmt.Sprintf(`where "ID" = $%v `, len(sqlParams)))
+	}
+
+	if query.CategoryId != 0 {
+		if len(sqlParams) > 0 {
+			sqlBuilder.WriteString("and ")
+		}
+
+		sqlParams = append(sqlParams, query.CategoryId)
+		sqlBuilder.WriteString(fmt.Sprintf(`where "categoryID" = $%v `, len(sqlParams)))
+	}
+
+	sqlBuilder.WriteString(`order by "time" desc `)
+
+	sqlParams = append(sqlParams, page.Limit)
+	sqlBuilder.WriteString(fmt.Sprintf(`limit $%v `, len(sqlParams)))
+
+	sqlParams = append(sqlParams, page.Offset)
+	sqlBuilder.WriteString(fmt.Sprintf(`offset $%v `, len(sqlParams)))
+	sqls := sqlBuilder.String()
 	rows, err := s.pool.Query(
 		ctx,
-		`select * from transaction
-			where "categoryID" = $1
-			order by "time" desc
-			limit $2`,
-		categoryID, limit)
+		sqls,
+		sqlParams...)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, ErrNotFound
@@ -175,7 +194,7 @@ func (s *TransactionStorage) GetByCategory(ctx context.Context, categoryID int32
 
 	defer rows.Close()
 
-	return scanTransactions(limit, rows)
+	return scanTransactions(page.Limit, rows)
 }
 
 // UpdateTransaction allows to partially update transaction.
@@ -186,7 +205,6 @@ func (s *TransactionStorage) UpdateTransaction(
 	sql := strings.Builder{}
 
 	sql.WriteString(`update "transaction" `)
-	sql.WriteString("\n")
 
 	sqlParams := make([]interface{}, 0)
 
@@ -289,6 +307,8 @@ func scanTransactions(buffSize int, rows pgx.Rows) ([]Transaction, error) {
 	buffer := make([]Transaction, buffSize)
 	i := 0
 
+	// todo: what if only one row?!
+	// todo2: check similar code in mongo client
 	for rows.Next() {
 		t := Transaction{}
 
