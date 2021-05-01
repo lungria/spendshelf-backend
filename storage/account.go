@@ -11,7 +11,7 @@ import (
 
 // Account describes single user's bank account.
 type Account struct {
-	ID            string    `json:"id"`
+	ID            string    `json:"ID"`
 	CreatedAt     time.Time `json:"createdAt"`
 	Description   string    `json:"description"`
 	Balance       int64     `json:"balance"`

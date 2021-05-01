@@ -34,7 +34,7 @@ type userInfoResponse struct {
 
 // Account describes monobank account.
 type Account struct {
-	ID           string `json:"id"`
+	ID           string `json:"ID"`
 	Balance      int64  `json:"balance"`
 	CurrencyCode int16  `json:"currencyCode"`
 }

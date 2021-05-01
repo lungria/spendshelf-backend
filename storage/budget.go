@@ -11,7 +11,7 @@ import (
 
 // Budget describes single month budget.
 type Budget struct {
-	ID        int       `json:"id"`
+	ID        int       `json:"ID"`
 	CreatedAt time.Time `json:"createdAt"`
 	StartsAt  time.Time `json:"startsAt"`
 	EndsAt    time.Time `json:"endsAt"`
