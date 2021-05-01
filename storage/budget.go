@@ -20,7 +20,7 @@ type Budget struct {
 
 // Limit describe per-category limit inside monthly budget.
 type Limit struct {
-	CategoryID int32 `json:"categoryID"`
+	CategoryID int32 `json:"categoryId"`
 	Amount     int64 `json:"amount"`
 }
 

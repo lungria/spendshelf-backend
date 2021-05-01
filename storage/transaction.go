@@ -24,8 +24,8 @@ type Transaction struct {
 	MCC           int32     `json:"mcc"`
 	Hold          bool      `json:"hold"`
 	Amount        int64     `json:"amount"`
-	AccountID     string    `json:"accountID"`
-	CategoryID    int32     `json:"categoryID"`
+	AccountID     string    `json:"accountId"`
+	CategoryID    int32     `json:"categoryId"`
 	LastUpdatedAt time.Time `json:"lastUpdatedAt"`
 	Comment       *string   `json:"comment"`
 }
