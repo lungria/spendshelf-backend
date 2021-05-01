@@ -3,15 +3,14 @@ package handler
 import (
 	"context"
 	"net/http"
+	"strconv"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/lungria/spendshelf-backend/api"
 	"github.com/lungria/spendshelf-backend/storage"
 	"github.com/lungria/spendshelf-backend/storage/category"
-
 	"github.com/rs/zerolog/log"
-
-	"github.com/gin-gonic/gin"
 )
 
 // UpdateTransactionBody describes request body for update transaction request.
@@ -57,9 +56,19 @@ func NewTransactionHandler(transactions TransactionStorage, categories CategoryS
 
 // GetTransactions returns transactions (without category).
 func (t *TransactionHandler) GetTransactions(c *gin.Context) {
-	// todo: store transactions list cached in thread-safe circular buffer
-	// todo: add categoryID as URL query parameter
-	result, err := t.transactions.GetByCategory(c, category.Default)
+	categoryID := category.Default
+
+	if query, exists := c.GetQuery("categoryId"); exists {
+		intID, err := strconv.Atoi(query)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, api.Error{Message: "invalid categoryId: must be an integer"})
+			return
+		}
+
+		categoryID = int32(intID)
+	}
+
+	result, err := t.transactions.GetByCategory(c, categoryID)
 	if err != nil {
 		log.Error().Err(err).Msg("unable to load transactions from storage")
 		c.JSON(api.InternalServerError())
