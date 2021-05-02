@@ -300,8 +300,6 @@ func scanTransactions(buffSize int, rows pgx.Rows) ([]Transaction, error) {
 	buffer := make([]Transaction, buffSize)
 	i := 0
 
-	// todo: what if only one row?!
-	// todo2: check similar code in mongo client
 	for rows.Next() {
 		t := Transaction{}
 
