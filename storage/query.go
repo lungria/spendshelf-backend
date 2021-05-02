@@ -13,11 +13,8 @@ type Query struct {
 	LastUpdatedAt time.Time
 }
 
-// AsSQL formats query as sql code and params slice.
-func (q Query) AsSQL() (string, []interface{}) {
-	sqlBuilder := strings.Builder{}
-	sqlParams := make([]interface{}, 0)
-
+// appendToSQL formats query to SQL and adds it to existing sqlBuilder and sqlParams.
+func (q Query) appendToSQL(sqlBuilder *strings.Builder, sqlParams []interface{}) []interface{} {
 	sqlBuilder.WriteString("WHERE ")
 
 	if q.ID != "" {
@@ -44,5 +41,5 @@ func (q Query) AsSQL() (string, []interface{}) {
 		sqlBuilder.WriteString(fmt.Sprintf(`"lastUpdatedAt" = $%v `, len(sqlParams)))
 	}
 
-	return sqlBuilder.String(), sqlParams
+	return sqlParams
 }

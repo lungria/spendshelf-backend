@@ -156,7 +156,7 @@ func TestGetOne_WithProductionSchema_NoErrorReturned(t *testing.T) {
 	err := db.Save(context.Background(), mockTransactions)
 	assert.NoError(t, err)
 
-	transaction, err := db.GetOne(context.Background(), storage.Query{ID: "id4"})
+	transaction, err := db.GetOne(context.Background(), storage.Query{ID: "1"})
 
 	assert.NoError(t, err)
 	assert.Equal(t, "1", transaction.ID)

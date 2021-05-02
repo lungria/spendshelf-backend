@@ -45,6 +45,16 @@ type Page struct {
 	Offset int
 }
 
+func (p Page) appendToSQL(sqlBuilder *strings.Builder, sqlParams []interface{}) []interface{} {
+	sqlParams = append(sqlParams, p.Limit)
+	sqlBuilder.WriteString(fmt.Sprintf(`limit $%v `, len(sqlParams)))
+
+	sqlParams = append(sqlParams, p.Offset)
+	sqlBuilder.WriteString(fmt.Sprintf(`offset $%v `, len(sqlParams)))
+
+	return sqlParams
+}
+
 func (p Page) withDefaults() Page {
 	limit := p.Limit
 	offset := p.Offset
@@ -69,8 +79,24 @@ type UpdatedFields struct {
 	Comment    *string
 }
 
-// Valid checks if updated fields are valid. Checks that at least single field is not nil.
-func (f UpdatedFields) Valid() bool {
+func (f UpdatedFields) appendToSQL(sqlBuilder *strings.Builder, sqlParams []interface{}) []interface{} {
+	if f.CategoryID != nil {
+		sqlParams = append(sqlParams, *f.CategoryID)
+		sqlBuilder.WriteString(fmt.Sprintf(`"categoryID" = $%v, `, len(sqlParams)))
+	}
+
+	if f.Comment != nil {
+		sqlParams = append(sqlParams, *f.Comment)
+		sqlBuilder.WriteString(fmt.Sprintf(`"comment" = $%v, `, len(sqlParams)))
+	}
+
+	sqlBuilder.WriteString(`"lastUpdatedAt" = current_timestamp(0) `)
+
+	return sqlParams
+}
+
+// valid checks if updated fields are valid. Checks that at least single field is not nil.
+func (f UpdatedFields) valid() bool {
 	if f.CategoryID == nil && f.Comment == nil {
 		return false
 	}
@@ -161,28 +187,20 @@ func (s *TransactionStorage) GetOne(ctx context.Context, query Query) (Transacti
 // Returns storage.ErrNotFound if transaction not found by query.
 func (s *TransactionStorage) Get(ctx context.Context, query Query, page Page) ([]Transaction, error) {
 	page = page.withDefaults()
-	sqlBuilder := strings.Builder{}
+	sqlBuilder := &strings.Builder{}
+	sqlParams := make([]interface{}, 0)
 
 	sqlBuilder.WriteString("select * from transaction ")
-
-	filter, filterParams := query.AsSQL()
-	sqlBuilder.WriteString(filter)
-
+	sqlParams = query.appendToSQL(sqlBuilder, sqlParams)
 	sqlBuilder.WriteString(`order by "time" desc `)
+	sqlParams = page.appendToSQL(sqlBuilder, sqlParams)
 
-	pageParams := make([]interface{}, 0)
-	pageParams = append(pageParams, page.Limit)
-	sqlBuilder.WriteString(fmt.Sprintf(`limit $%v `, len(pageParams)))
-
-	pageParams = append(pageParams, page.Offset)
-	sqlBuilder.WriteString(fmt.Sprintf(`offset $%v `, len(pageParams)))
-
-	sqls := sqlBuilder.String()
+	vsx := sqlBuilder.String()
 
 	rows, err := s.pool.Query(
 		ctx,
-		sqls,
-		append(filterParams, pageParams)...)
+		vsx,
+		sqlParams...)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, ErrNotFound
@@ -200,35 +218,22 @@ func (s *TransactionStorage) Get(ctx context.Context, query Query, page Page) ([
 func (s *TransactionStorage) UpdateTransaction(
 	ctx context.Context,
 	cmd UpdateTransactionCommand) (Transaction, error) {
-	sqlBuilder := strings.Builder{}
+	sqlBuilder := &strings.Builder{}
+	sqlParams := make([]interface{}, 0)
 
-	if !cmd.UpdatedFields.Valid() {
+	if !cmd.UpdatedFields.valid() {
 		return Transaction{}, ErrAtLeastOneUpdateFieldRequired
 	}
 
 	sqlBuilder.WriteString(`update "transaction" set `)
 
-	setParams := make([]interface{}, 0)
-
-	if cmd.UpdatedFields.CategoryID != nil {
-		setParams = append(setParams, *cmd.UpdatedFields.CategoryID)
-		sqlBuilder.WriteString(fmt.Sprintf(`"categoryID" = $%v, `, len(setParams)))
-	}
-
-	if cmd.UpdatedFields.Comment != nil {
-		setParams = append(setParams, *cmd.UpdatedFields.Comment)
-		sqlBuilder.WriteString(fmt.Sprintf(`"comment" = $%v, `, len(setParams)))
-	}
-
-	sqlBuilder.WriteString(`"lastUpdatedAt" = current_timestamp(0) `)
-
-	filter, filterParams := cmd.Query.AsSQL()
-	sqlBuilder.WriteString(filter)
+	sqlParams = cmd.UpdatedFields.appendToSQL(sqlBuilder, sqlParams)
+	sqlParams = cmd.Query.appendToSQL(sqlBuilder, sqlParams)
 
 	cmdResult, err := s.pool.Exec(
 		ctx,
 		sqlBuilder.String(),
-		append(setParams, filterParams)...)
+		sqlParams...)
 	if err != nil {
 		return Transaction{}, err
 	}
