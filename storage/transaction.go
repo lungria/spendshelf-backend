@@ -45,6 +45,8 @@ type Page struct {
 	Offset int
 }
 
+// appendToSQL formats pagination settings to SQL and adds it to existing sqlBuilder.
+// Returns updated sqlParams slice with all added parameters for pagination.
 func (p Page) appendToSQL(sqlBuilder *strings.Builder, sqlParams []interface{}) []interface{} {
 	sqlParams = append(sqlParams, p.Limit)
 	sqlBuilder.WriteString(fmt.Sprintf(`limit $%v `, len(sqlParams)))
@@ -79,6 +81,8 @@ type UpdatedFields struct {
 	Comment    *string
 }
 
+// appendToSQL formats updated fields to SQL and adds it to existing sqlBuilder.
+// Returns updated sqlParams slice with all added parameters for update statement.
 func (f UpdatedFields) appendToSQL(sqlBuilder *strings.Builder, sqlParams []interface{}) []interface{} {
 	if f.CategoryID != nil {
 		sqlParams = append(sqlParams, *f.CategoryID)

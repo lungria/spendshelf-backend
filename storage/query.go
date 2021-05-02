@@ -13,7 +13,8 @@ type Query struct {
 	LastUpdatedAt time.Time
 }
 
-// appendToSQL formats query to SQL and adds it to existing sqlBuilder and sqlParams.
+// appendToSQL formats query to SQL and adds it to existing sqlBuilder.
+// Returns updated sqlParams slice with all added parameters for query.
 func (q Query) appendToSQL(sqlBuilder *strings.Builder, sqlParams []interface{}) []interface{} {
 	sqlBuilder.WriteString("WHERE ")
 
