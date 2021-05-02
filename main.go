@@ -7,11 +7,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/lungria/spendshelf-backend/app/job"
-
-	"github.com/rs/zerolog/log"
-
 	"github.com/lungria/spendshelf-backend/app"
+	"github.com/lungria/spendshelf-backend/app/job"
+	"github.com/rs/zerolog/log"
 )
 
 func main() {

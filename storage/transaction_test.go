@@ -201,7 +201,7 @@ func TestGetByCategory_WithProductionSchema_NoErrorReturned(t *testing.T) {
 	err := db.Save(context.Background(), mockTransactions)
 	assert.NoError(t, err)
 
-	transaction, err := db.Get(context.Background(), storage.Query{CategoryId: newCategory.ID}, storage.Page{})
+	transaction, err := db.Get(context.Background(), storage.Query{CategoryID: newCategory.ID}, storage.Page{})
 
 	assert.NoError(t, err)
 	assert.Len(t, transaction, 1)

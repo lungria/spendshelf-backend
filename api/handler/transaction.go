@@ -32,8 +32,8 @@ type GetReportQuery struct {
 
 // TransactionStorage abstracts transactions storage implementation.
 type TransactionStorage interface {
-	GetByCategory(ctx context.Context, categoryID int32) ([]storage.Transaction, error)
-	UpdateTransaction(ctx context.Context, params storage.UpdateTransactionCommand) (storage.Transaction, error)
+	Get(ctx context.Context, query storage.Query, page storage.Page) ([]storage.Transaction, error)
+	UpdateTransaction(ctx context.Context, cmd storage.UpdateTransactionCommand) (storage.Transaction, error)
 	GetReport(ctx context.Context, from, to time.Time) (map[int32]int64, error)
 }
 
@@ -69,7 +69,7 @@ func (t *TransactionHandler) GetTransactions(c *gin.Context) {
 		return
 	}
 
-	result, err := t.transactions.GetByCategory(c, query.CategoryID)
+	result, err := t.transactions.Get(c, storage.Query{CategoryID: query.CategoryID}, storage.Page{})
 	if err != nil {
 		log.Error().Err(err).Msg("unable to load transactions from storage")
 		c.JSON(api.InternalServerError())
