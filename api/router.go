@@ -31,7 +31,7 @@ func (b *pipelineBuilder) addMiddleware() *pipelineBuilder {
 	b.router.Use(gin.RecoveryWithWriter(log.Writer())).
 		Use(defaultHeaders()).
 		Use(cors.New(cors.Options{
-			AllowedOrigins: []string{b.cfg.WebAPIPort},
+			AllowedOrigins: []string{b.cfg.CORSHost},
 			AllowedMethods: []string{
 				http.MethodHead,
 				http.MethodGet,
