@@ -11,6 +11,7 @@ type Config struct {
 	DBConnString    string `env:"SHELF_DB_CONN,required"`
 	MonoBaseURL     string `env:"SHELF_MONO_BASE_URL,required"`
 	WebAPIPort      string `env:"SHELF_API_PORT" envDefault:"8080"`
+	CORSHost        string `env:"SHELF_CORS_HOST,required"`
 	EnableImportJob bool   `env:"SHELF_MONO_ENABLE_IMPORT" envDefault:"false"`
 }
 
