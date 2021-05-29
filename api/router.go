@@ -2,6 +2,8 @@ package api
 
 import (
 	"log"
+	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/lungria/spendshelf-backend/app/config"
@@ -28,7 +30,18 @@ func newPipelineBuilder(routes []RouteBinder, cfg config.Config) *pipelineBuilde
 func (b *pipelineBuilder) addMiddleware() *pipelineBuilder {
 	b.router.Use(gin.RecoveryWithWriter(log.Writer())).
 		Use(defaultHeaders()).
-		Use(cors.Default())
+		Use(cors.New(cors.Options{
+			AllowedOrigins: []string{b.cfg.WebAPIPort},
+			AllowedMethods: []string{
+				http.MethodHead,
+				http.MethodGet,
+				http.MethodPost,
+				http.MethodPut,
+				http.MethodPatch,
+				http.MethodDelete,
+			},
+			MaxAge: int((24 * time.Hour).Seconds()),
+		}))
 
 	return b
 }
