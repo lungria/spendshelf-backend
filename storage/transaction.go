@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -13,8 +12,12 @@ import (
 	"github.com/lungria/spendshelf-backend/storage/category"
 )
 
-// ErrNotFound is being returned, if no data was found in database.
-var ErrNotFound = errors.New("data not found")
+var (
+	// ErrNotFound is being returned, if no data was found in database.
+	ErrNotFound = errors.New("data not found")
+	// ErrAtLeastOneUpdateFieldRequired is being returned, if all update fields are nil.
+	ErrAtLeastOneUpdateFieldRequired = errors.New("at least single update field must not be nil")
+)
 
 // Transaction describes single user's transaction.
 type Transaction struct {
@@ -36,16 +39,63 @@ type UpdateTransactionCommand struct {
 	UpdatedFields UpdatedFields
 }
 
-// Query fields for UpdateTransactionCommand. All fields are required.
-type Query struct {
-	ID            string
-	LastUpdatedAt time.Time
+// Page controls pagination settings. Both fields are optional and would be set to defaults if not passed.
+type Page struct {
+	Limit  int
+	Offset int
+}
+
+// appendToSQL formats pagination settings to SQL and adds it to existing sqlBuilder.
+// Returns updated sqlParams slice with all added parameters for pagination.
+func (p *Page) appendToSQL(sqlBuilder *strings.Builder, sqlParams []interface{}) []interface{} {
+	if p.Limit <= 0 {
+		p.Limit = 50
+	}
+
+	sqlParams = append(sqlParams, p.Limit)
+	sqlBuilder.WriteString(fmt.Sprintf(`limit $%v `, len(sqlParams)))
+
+	if p.Offset < 0 {
+		p.Offset = 0
+	}
+
+	sqlParams = append(sqlParams, p.Offset)
+	sqlBuilder.WriteString(fmt.Sprintf(`offset $%v `, len(sqlParams)))
+
+	return sqlParams
 }
 
 // UpdatedFields for UpdateTransactionCommand. All fields are optional, but at least one field must be non-nil.
 type UpdatedFields struct {
 	CategoryID *int32
 	Comment    *string
+}
+
+// appendToSQL formats updated fields to SQL and adds it to existing sqlBuilder.
+// Returns updated sqlParams slice with all added parameters for update statement.
+func (f UpdatedFields) appendToSQL(sqlBuilder *strings.Builder, sqlParams []interface{}) []interface{} {
+	if f.CategoryID != nil {
+		sqlParams = append(sqlParams, *f.CategoryID)
+		sqlBuilder.WriteString(fmt.Sprintf(`"categoryID" = $%v, `, len(sqlParams)))
+	}
+
+	if f.Comment != nil {
+		sqlParams = append(sqlParams, *f.Comment)
+		sqlBuilder.WriteString(fmt.Sprintf(`"comment" = $%v, `, len(sqlParams)))
+	}
+
+	sqlBuilder.WriteString(`"lastUpdatedAt" = current_timestamp(0) `)
+
+	return sqlParams
+}
+
+// valid checks if updated fields are valid. Checks that at least single field is not nil.
+func (f UpdatedFields) valid() bool {
+	if f.CategoryID == nil && f.Comment == nil {
+		return false
+	}
+
+	return true
 }
 
 // TransactionStorage for transactions.
@@ -117,54 +167,33 @@ func (s *TransactionStorage) GetLastTransactionDate(ctx context.Context, account
 	return lastKnownTransaction, nil
 }
 
-// GetByID returns transaction by ID.
-// Returns storage.ErrNotFound if transaction not found by query.
-func (s *TransactionStorage) GetByID(ctx context.Context, transactionID string) (Transaction, error) {
-	row := s.pool.QueryRow(
-		ctx,
-		// todo: replace * with specified fields names
-		`select * from transaction
-		where "ID" = $1
-		order by "time" desc
-		limit 1`,
-		transactionID)
-
-	t := Transaction{}
-
-	err := row.Scan(
-		&t.ID,
-		&t.Time,
-		&t.Description,
-		&t.MCC,
-		&t.Hold,
-		&t.Amount,
-		&t.AccountID,
-		&t.CategoryID,
-		&t.LastUpdatedAt,
-		&t.Comment)
+// GetOne tries to find one transaction by query.
+func (s *TransactionStorage) GetOne(ctx context.Context, query Query) (Transaction, error) {
+	transactions, err := s.Get(ctx, query, Page{Limit: 1})
 	if err != nil {
-		if err == pgx.ErrNoRows {
-			return Transaction{}, ErrNotFound
-		}
-
 		return Transaction{}, err
 	}
 
-	return t, nil
+	return transactions[0], nil
 }
 
-// GetByCategory returns transactions by category.
+// Get returns transactions by filter.
 // Returns storage.ErrNotFound if transaction not found by query.
-func (s *TransactionStorage) GetByCategory(ctx context.Context, categoryID int32) ([]Transaction, error) {
-	const limit = 50
+func (s *TransactionStorage) Get(ctx context.Context, query Query, page Page) ([]Transaction, error) {
+	sqlBuilder := &strings.Builder{}
+	sqlParams := make([]interface{}, 0)
+
+	sqlBuilder.WriteString("select * from transaction ")
+	sqlParams = query.appendToSQL(sqlBuilder, sqlParams)
+	sqlBuilder.WriteString(`order by "time" desc `)
+	sqlParams = page.appendToSQL(sqlBuilder, sqlParams)
+
+	vsx := sqlBuilder.String()
 
 	rows, err := s.pool.Query(
 		ctx,
-		`select * from transaction
-			where "categoryID" = $1
-			order by "time" desc
-			limit $2`,
-		categoryID, limit)
+		vsx,
+		sqlParams...)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, ErrNotFound
@@ -175,63 +204,34 @@ func (s *TransactionStorage) GetByCategory(ctx context.Context, categoryID int32
 
 	defer rows.Close()
 
-	return scanTransactions(limit, rows)
+	return scanTransactions(page.Limit, rows)
 }
 
 // UpdateTransaction allows to partially update transaction.
 func (s *TransactionStorage) UpdateTransaction(
 	ctx context.Context,
-	params UpdateTransactionCommand) (Transaction, error) {
-	paramIterator := 1
-	sql := strings.Builder{}
-
-	sql.WriteString(`update "transaction" `)
-	sql.WriteString("\n")
-
+	cmd UpdateTransactionCommand) (Transaction, error) {
+	sqlBuilder := &strings.Builder{}
 	sqlParams := make([]interface{}, 0)
 
-	if params.UpdatedFields.CategoryID != nil {
-		sql.WriteString("set \"categoryID\" = $")
-		sql.WriteString(strconv.Itoa(paramIterator))
-		sql.WriteString(", ")
-		paramIterator++
-
-		sqlParams = append(sqlParams, *params.UpdatedFields.CategoryID)
+	if !cmd.UpdatedFields.valid() {
+		return Transaction{}, ErrAtLeastOneUpdateFieldRequired
 	}
 
-	if params.UpdatedFields.Comment != nil {
-		sql.WriteString("set \"comment\" = $")
-		sql.WriteString(strconv.Itoa(paramIterator))
-		sql.WriteString(", ")
-		paramIterator++
+	sqlBuilder.WriteString(`update "transaction" set `)
 
-		sqlParams = append(sqlParams, *params.UpdatedFields.Comment)
-	}
+	sqlParams = cmd.UpdatedFields.appendToSQL(sqlBuilder, sqlParams)
+	sqlParams = cmd.Query.appendToSQL(sqlBuilder, sqlParams)
 
-	sql.WriteString("\"lastUpdatedAt\" = current_timestamp(0) \n")
-	sql.WriteString(fmt.Sprintf("where \"ID\" = $%v \n", paramIterator))
-	paramIterator++
-
-	sql.WriteString(fmt.Sprintf("AND \"lastUpdatedAt\" = $%v", paramIterator))
-	paramIterator++
-
-	if len(sqlParams) == 0 {
-		return Transaction{}, fmt.Errorf("nothing to update: all optional parameters are nil")
-	}
-
-	sqlString := sql.String()
-
-	sqlParams = append(sqlParams, params.Query.ID, params.Query.LastUpdatedAt)
-
-	cmd, err := s.pool.Exec(
+	cmdResult, err := s.pool.Exec(
 		ctx,
-		sqlString,
+		sqlBuilder.String(),
 		sqlParams...)
 	if err != nil {
 		return Transaction{}, err
 	}
 
-	if cmd.RowsAffected() == 0 {
+	if cmdResult.RowsAffected() == 0 {
 		return Transaction{}, errors.New("failed to update transaction")
 	}
 
@@ -239,7 +239,7 @@ func (s *TransactionStorage) UpdateTransaction(
 		ctx,
 		`select * from transaction
 		where "ID" = $1`,
-		params.Query.ID)
+		cmd.Query.ID)
 	if err != nil {
 		return Transaction{}, err
 	}
@@ -310,6 +310,11 @@ func scanTransactions(buffSize int, rows pgx.Rows) ([]Transaction, error) {
 		buffer[i] = t
 
 		i++
+	}
+
+	// no rows were parsed
+	if i == 0 {
+		return nil, ErrNotFound
 	}
 
 	result := make([]Transaction, i)

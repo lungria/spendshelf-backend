@@ -2,20 +2,17 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/lungria/spendshelf-backend/api"
 	"github.com/lungria/spendshelf-backend/storage"
-	"github.com/lungria/spendshelf-backend/storage/category"
-
 	"github.com/rs/zerolog/log"
-
-	"github.com/gin-gonic/gin"
 )
 
 // UpdateTransactionBody describes request body for update transaction request.
-// todo: validate.
 type UpdateTransactionBody struct {
 	CategoryID *int32  `json:"categoryId"`
 	Comment    *string `json:"comment"`
@@ -34,8 +31,8 @@ type GetReportQuery struct {
 
 // TransactionStorage abstracts transactions storage implementation.
 type TransactionStorage interface {
-	GetByCategory(ctx context.Context, categoryID int32) ([]storage.Transaction, error)
-	UpdateTransaction(ctx context.Context, params storage.UpdateTransactionCommand) (storage.Transaction, error)
+	Get(ctx context.Context, query storage.Query, page storage.Page) ([]storage.Transaction, error)
+	UpdateTransaction(ctx context.Context, cmd storage.UpdateTransactionCommand) (storage.Transaction, error)
 	GetReport(ctx context.Context, from, to time.Time) (map[int32]int64, error)
 }
 
@@ -55,11 +52,23 @@ func NewTransactionHandler(transactions TransactionStorage, categories CategoryS
 	return &TransactionHandler{transactions: transactions, categories: categories}
 }
 
+// GetTransactionsQuery describes request query for transaction list.
+type GetTransactionsQuery struct {
+	From       time.Time `form:"from" binding:"required"`
+	To         time.Time `form:"to" binding:"required"`
+	CategoryID int32     `form:"categoryId" binding:"required"`
+}
+
 // GetTransactions returns transactions (without category).
 func (t *TransactionHandler) GetTransactions(c *gin.Context) {
-	// todo: store transactions list cached in thread-safe circular buffer
-	// todo: add categoryID as URL query parameter
-	result, err := t.transactions.GetByCategory(c, category.Default)
+	query := GetTransactionsQuery{}
+
+	if err := c.BindQuery(&query); err != nil {
+		c.JSON(http.StatusBadRequest, api.Error{Message: fmt.Sprintf("unable to parse query: %s", err)})
+		return
+	}
+
+	result, err := t.transactions.Get(c, storage.Query{CategoryID: query.CategoryID}, storage.Page{})
 	if err != nil {
 		log.Error().Err(err).Msg("unable to load transactions from storage")
 		c.JSON(api.InternalServerError())

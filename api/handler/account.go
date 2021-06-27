@@ -4,12 +4,10 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/lungria/spendshelf-backend/api"
 	"github.com/lungria/spendshelf-backend/storage"
-
 	"github.com/rs/zerolog/log"
-
-	"github.com/gin-gonic/gin"
 )
 
 // AccountsStorage abstracts storage implementation

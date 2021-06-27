@@ -5,10 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/rs/zerolog/log"
-
 	"github.com/gin-gonic/gin"
 	"github.com/lungria/spendshelf-backend/app/config"
+	"github.com/rs/zerolog/log"
 )
 
 const defaultServerShutdownTimeout = 5 * time.Second
