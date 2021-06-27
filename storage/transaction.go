@@ -47,32 +47,22 @@ type Page struct {
 
 // appendToSQL formats pagination settings to SQL and adds it to existing sqlBuilder.
 // Returns updated sqlParams slice with all added parameters for pagination.
-func (p Page) appendToSQL(sqlBuilder *strings.Builder, sqlParams []interface{}) []interface{} {
+func (p *Page) appendToSQL(sqlBuilder *strings.Builder, sqlParams []interface{}) []interface{} {
+	if p.Limit <= 0 {
+		p.Limit = 50
+	}
+
 	sqlParams = append(sqlParams, p.Limit)
 	sqlBuilder.WriteString(fmt.Sprintf(`limit $%v `, len(sqlParams)))
+
+	if p.Offset < 0 {
+		p.Offset = 0
+	}
 
 	sqlParams = append(sqlParams, p.Offset)
 	sqlBuilder.WriteString(fmt.Sprintf(`offset $%v `, len(sqlParams)))
 
 	return sqlParams
-}
-
-func (p Page) withDefaults() Page {
-	limit := p.Limit
-	offset := p.Offset
-
-	if limit <= 0 {
-		limit = 50
-	}
-
-	if offset < 0 {
-		offset = 0
-	}
-
-	return Page{
-		Limit:  limit,
-		Offset: offset,
-	}
 }
 
 // UpdatedFields for UpdateTransactionCommand. All fields are optional, but at least one field must be non-nil.
@@ -190,7 +180,6 @@ func (s *TransactionStorage) GetOne(ctx context.Context, query Query) (Transacti
 // Get returns transactions by filter.
 // Returns storage.ErrNotFound if transaction not found by query.
 func (s *TransactionStorage) Get(ctx context.Context, query Query, page Page) ([]Transaction, error) {
-	page = page.withDefaults()
 	sqlBuilder := &strings.Builder{}
 	sqlParams := make([]interface{}, 0)
 
