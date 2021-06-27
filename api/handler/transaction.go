@@ -54,9 +54,7 @@ func NewTransactionHandler(transactions TransactionStorage, categories CategoryS
 
 // GetTransactionsQuery describes request query for transaction list.
 type GetTransactionsQuery struct {
-	From       time.Time `form:"from" binding:"required"`
-	To         time.Time `form:"to" binding:"required"`
-	CategoryID int32     `form:"categoryId" binding:"required"`
+	CategoryID int32 `form:"categoryId" binding:"required"`
 }
 
 // GetTransactions returns transactions (without category).
