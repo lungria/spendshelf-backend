@@ -2,6 +2,7 @@ package storage_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -160,6 +161,18 @@ func TestGetOne_WithProductionSchema_NoErrorReturned(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, "1", transaction.ID)
+}
+
+func TestGetOne_WhenNoTransactionFound_WithProductionSchema_NoErrorReturned(t *testing.T) {
+	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
+	defer cleanup()
+
+	prepareTestCategory(t, pool, defaultCategory)
+	db := storage.NewTransactionStorage(pool)
+
+	_, err := db.GetOne(context.Background(), storage.Query{ID: "1"})
+
+	assert.True(t, errors.Is(err, storage.ErrNotFound))
 }
 
 func TestGetByCategory_WithProductionSchema_NoErrorReturned(t *testing.T) {

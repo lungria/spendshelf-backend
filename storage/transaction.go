@@ -312,6 +312,11 @@ func scanTransactions(buffSize int, rows pgx.Rows) ([]Transaction, error) {
 		i++
 	}
 
+	// no rows were parsed
+	if i == 0 {
+		return nil, ErrNotFound
+	}
+
 	result := make([]Transaction, i)
 	copy(result, buffer)
 
