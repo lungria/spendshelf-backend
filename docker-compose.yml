@@ -17,7 +17,6 @@ services:
     build:
       context: .
       args:
-        BUILDPLATFORM: linux/amd64
         TARGETOS: linux
         TARGETARCH: amd64
     restart: always
