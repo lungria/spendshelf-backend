@@ -36,8 +36,8 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           build-args: |
-            TARGETOS:linux
-            TARGETARCH:arm64
+            "TARGETOS:linux"
+            "TARGETARCH:arm64"
           platforms: linux/arm64
           push: true
           tags: suddengunter/spendshelf-backend:latest
