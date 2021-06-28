@@ -12,9 +12,14 @@ services:
       POSTGRES_PASSWORD: adminpass123
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
-      - ./dbdata:/var/lib/postgresql/data
+      - dbdata:/var/lib/postgresql/data
   app:
-    build: .
+    build:
+      context: .
+      args:
+        BUILDPLATFORM: linux/amd64
+        TARGETOS: linux
+        TARGETARCH: amd64
     restart: always
     ports:
       - 8080:8080
@@ -22,4 +27,8 @@ services:
       SHELF_MONO_ACCOUNT_ID: "acc1"
       SHELF_MONO_API_KEY: "apikey1"
       SHELF_MONO_BASE_URL: "https://api.monobank.ua"
-      SHELF_DB_CONN: "postgres://db/postgres?sslmode=disable&user=postgres&password=adminpass123"
+      SHELF_DB_CONN: "postgres://db/spendshelf?sslmode=disable&user=postgres&password=adminpass123"
+      SHELF_CORS_HOST: "http://localhost:3000"
+
+volumes:
+  dbdata:

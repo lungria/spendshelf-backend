@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -67,14 +68,16 @@ func (t *TransactionHandler) GetTransactions(c *gin.Context) {
 	}
 
 	result, err := t.transactions.Get(c, storage.Query{CategoryID: query.CategoryID}, storage.Page{})
-	if err != nil {
+
+	switch {
+	case errors.Is(err, storage.ErrNotFound):
+		c.Status(http.StatusNoContent)
+	case errors.Is(err, nil):
+		c.JSON(http.StatusOK, &result)
+	default:
 		log.Error().Err(err).Msg("unable to load transactions from storage")
 		c.JSON(api.InternalServerError())
-
-		return
 	}
-
-	c.JSON(http.StatusOK, &result)
 }
 
 // PatchTransaction allows to update single transaction.
