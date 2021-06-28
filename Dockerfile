@@ -1,6 +1,5 @@
 ARG TARGETOS
 ARG TARGETARCH
-ARG BUILDPLATFORM
 
 FROM --platform=${TARGETOS}/${TARGETARCH} golang:1.15.8-alpine3.13 as builder
 
