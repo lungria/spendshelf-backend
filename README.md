@@ -33,6 +33,6 @@ Preview screenshots of native iOS client:
 ## Frontend (Web)
 
 React app is being actively developed in private repository, but at the moment there are lots of hardcoded stuff in there. Contact [me](https://github.com/suddengunter) if you want to get access to the repository.
-Preview screenshots of native iOS client:
+Preview screenshots of React app:
 
 ![main](https://raw.githubusercontent.com/lungria/spendshelf-backend/main/.github/img/2.png)
