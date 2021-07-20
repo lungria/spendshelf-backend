@@ -5,7 +5,7 @@ COPY . ./
 
 RUN go build -o /spendshelf-backend
 
-FROM alpine3.14
+FROM alpine:3.14
 
 WORKDIR /root/
 COPY --from=builder /spendshelf-backend .
