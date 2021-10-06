@@ -39,10 +39,9 @@ linters:
   enable:
     - dogsled
     - gocognit
-    - maligned
     - gocyclo
     - gofumpt
-    - golint
+    - revive
     - lll
     - wsl
     - misspell
@@ -50,6 +49,7 @@ linters:
     - noctx # Doesn't have any config for linters-settings section.
     - prealloc
     - testpackage
+    - govet
 issues:
   include:
     # Disable excluding of issues about comments from golint.
