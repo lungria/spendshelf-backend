@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-20.04
     services:
       postgres:
-        image: postgres
+        image: postgres:14
         env:
           # Must be set to any custom value except the default 'postgres'. If default value is used - for some reason
           # we would not be able to connect to new dynamically created databases in runtime.
