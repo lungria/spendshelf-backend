@@ -1,4 +1,4 @@
-package storage
+package account
 
 import (
 	"context"
@@ -11,10 +11,11 @@ import (
 
 // Account describes single user's bank account.
 type Account struct {
-	ID            string    `json:"id"`
-	CreatedAt     time.Time `json:"createdAt"`
-	Description   string    `json:"description"`
-	Balance       int64     `json:"balance"`
+	ID          string    `json:"id"`
+	CreatedAt   time.Time `json:"createdAt"`
+	Description string    `json:"description"`
+	Balance     int64     `json:"balance"`
+	Type
 	Currency      string    `json:"currency"`
 	LastUpdatedAt time.Time `json:"lastUpdatedAt"`
 }
