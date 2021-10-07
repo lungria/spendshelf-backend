@@ -27,14 +27,16 @@ Any contribution is welcome through pull requests
 
 ## Frontend (iOS)
 
-Native iOS app is being actively developed in private repository, but at the moment there are lots of hardcoded stuff in there. Contact [me](https://github.com/suddengunter) if you want to get access to the repository.
+Native iOS app was being actively developed in a private repository, but at the moment it's abandoned. 
+
+There are lots of hardcoded stuff in there. Contact [me](https://github.com/suddengunter) if you want to get access to the repository.
 Preview screenshots of native iOS client:
 
 ![main](https://raw.githubusercontent.com/lungria/spendshelf-backend/main/.github/img/1.png)
 
 ## Frontend (Web)
 
-React app is being actively developed in private repository, but at the moment there are lots of hardcoded stuff in there. Contact [me](https://github.com/suddengunter) if you want to get access to the repository.
+React app is being slowly developed in a private repository, but at the moment there are lots of hardcoded stuff in there. Contact [me](https://github.com/suddengunter) if you want to get access to the repository.
 Preview screenshots of React app:
 
 ![main](https://raw.githubusercontent.com/lungria/spendshelf-backend/main/.github/img/2.png)
