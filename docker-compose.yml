@@ -1,10 +1,10 @@
 # docker-compose for local debugging
-version: '3.1'
+version: '3.8'
 
 services:
 
   db:
-    image: postgres
+    image: postgres:14.0
     restart: always
     ports:
       - 5432:5432

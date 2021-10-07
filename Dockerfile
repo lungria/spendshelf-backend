@@ -1,6 +1,18 @@
-FROM golang:1.16.6-alpine3.14 as builder
+FROM golang:1.17.1-alpine3.14 as builder
+
+ARG TARGETOS
+ARG TARGETARCH
+
+ENV GOOS $TARGETOS
+ENV GOARCH $TARGETARCH
+ENV CGO_ENABLED 0
 
 WORKDIR /src
+
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
+
 COPY . ./
 
 RUN go build -o /spendshelf-backend

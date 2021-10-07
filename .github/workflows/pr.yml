@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-20.04
     services:
       postgres:
-        image: postgres
+        image: postgres:14
         env:
           # Must be set to any custom value except the default 'postgres'. If default value is used - for some reason
           # we would not be able to connect to new dynamically created databases in runtime.
@@ -26,7 +26,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v2
       with:
-        go-version: ^1.15
+        go-version: ^1.17
       id: go
 
     - name: Check out code into the Go module directory
@@ -50,4 +50,4 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
-          version: v1.41.1
+          version: v1.42.1
