@@ -15,9 +15,11 @@ All incoming transactions are being sent to categories - and each category has a
 - Readonly API for categories
 - API for transactions that allows to list transactions / set transaction category
 - Basic monthly report
-### Not working
-- Budget keeping (at the moment it's done outside of this service)
+- Budget keeping (PoC) - we have read-only API that uses budget from DB. Budget is created manualy in the DB.
+### Not working / Not Implemented
+- Budget keeping: CRUD API for budget
 - Automated transaction category matching (based on description/mcc/amount)
+- Savings accounts tracking: monobank doesn't have any API for it, but we could keep track of those accounts using some internal logic.
 
 ## Contributors guide
 
