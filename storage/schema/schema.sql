@@ -42,7 +42,6 @@ CREATE TABLE "limit" (
     PRIMARY KEY ("budgetID", "categoryID")
 );
 
-
 /* Insert indexes */
 
 BEGIN;
