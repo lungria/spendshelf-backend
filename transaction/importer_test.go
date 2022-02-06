@@ -6,12 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lungria/spendshelf-backend/importer/transaction/mock"
-
-	"github.com/lungria/spendshelf-backend/storage"
+	"github.com/lungria/spendshelf-backend/transaction"
+	"github.com/lungria/spendshelf-backend/transaction/mock"
 
 	"github.com/lungria/spendshelf-backend/importer/mono"
-	"github.com/lungria/spendshelf-backend/importer/transaction"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -87,7 +85,7 @@ func TestImport_WhenStorageSaveReturnsError_ReturnsError(t *testing.T) {
 		}, nil
 	}
 	db := &mock.StorageMock{}
-	db.SaveFunc = func(ctx context.Context, transactions []storage.Transaction) error {
+	db.SaveFunc = func(ctx context.Context, transactions []transaction.Transaction) error {
 		return testError
 	}
 	gen := &mock.ImportIntervalGeneratorMock{}
@@ -118,7 +116,7 @@ func TestImport_WhenDataIsSaved_ReturnsNil(t *testing.T) {
 		}, nil
 	}
 	db := &mock.StorageMock{}
-	db.SaveFunc = func(ctx context.Context, transactions []storage.Transaction) error {
+	db.SaveFunc = func(ctx context.Context, transactions []transaction.Transaction) error {
 		return nil
 	}
 	gen := &mock.ImportIntervalGeneratorMock{}

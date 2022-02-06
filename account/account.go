@@ -1,4 +1,4 @@
-package storage
+package account
 
 import (
 	"context"
@@ -19,20 +19,20 @@ type Account struct {
 	LastUpdatedAt time.Time `json:"lastUpdatedAt"`
 }
 
-// AccountsStorage implements persistent storage layer for accounts in PostgreSQL.
-type AccountsStorage struct {
+// Repository implements persistent storage layer for accounts in PostgreSQL.
+type Repository struct {
 	pool *pgxpool.Pool
 }
 
-// NewAccountsStorage creates new instance of AccountsStorage.
-func NewAccountsStorage(pool *pgxpool.Pool) *AccountsStorage {
-	return &AccountsStorage{
+// NewRepository creates new instance of Repository.
+func NewRepository(pool *pgxpool.Pool) *Repository {
+	return &Repository{
 		pool: pool,
 	}
 }
 
 // Save account to db. If conflict (on ID) occurs - only "lastUpdatedAt" and "balance" fields would be updated.
-func (s *AccountsStorage) Save(ctx context.Context, account Account) error {
+func (s *Repository) Save(ctx context.Context, account Account) error {
 	cmd, err := s.pool.Exec(
 		ctx,
 		`insert into "account"
@@ -53,7 +53,7 @@ func (s *AccountsStorage) Save(ctx context.Context, account Account) error {
 }
 
 // GetAll accounts from database.
-func (s *AccountsStorage) GetAll(ctx context.Context) ([]Account, error) {
+func (s *Repository) GetAll(ctx context.Context) ([]Account, error) {
 	const limit = 10
 
 	rows, err := s.pool.Query(

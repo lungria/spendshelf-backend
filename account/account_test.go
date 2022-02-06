@@ -1,22 +1,25 @@
-package storage_test
+package account_test
 
 import (
 	"context"
 	"testing"
 
-	"github.com/lungria/spendshelf-backend/storage"
+	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/lungria/spendshelf-backend/account"
+
 	"github.com/lungria/spendshelf-backend/storage/pgtest"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAccountStorageSave_WithProductionSchema_NoErrorReturned(t *testing.T) {
 	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
 	defer cleanup()
 
-	db := storage.NewAccountsStorage(pool)
+	db := account.NewRepository(pool)
 
 	// test insert
-	err := db.Save(context.Background(), storage.Account{
+	err := db.Save(context.Background(), account.Account{
 		ID:       "acc1",
 		Balance:  10000,
 		Currency: "UAH",
@@ -25,7 +28,7 @@ func TestAccountStorageSave_WithProductionSchema_NoErrorReturned(t *testing.T) {
 	assert.NoError(t, err)
 
 	// test on conflict update
-	err = db.Save(context.Background(), storage.Account{
+	err = db.Save(context.Background(), account.Account{
 		ID:       "acc1",
 		Balance:  20000,
 		Currency: "UAH",
@@ -50,11 +53,24 @@ func TestAccountStorageGetAll_WithProductionSchema_NoErrorReturned(t *testing.T)
 	defer cleanup()
 
 	accountID := prepareTestAccount(t, pool)
-	db := storage.NewAccountsStorage(pool)
+	db := account.NewRepository(pool)
 
 	accounts, err := db.GetAll(context.Background())
 
 	assert.NoError(t, err)
 	assert.Len(t, accounts, 1)
 	assert.Equal(t, accounts[0].ID, accountID)
+}
+
+func prepareTestAccount(t *testing.T, db *pgxpool.Pool) string {
+	accountID := "test-acc-id"
+	_, err := db.Exec(context.Background(), `
+				insert into "account"
+							 ("ID", "createdAt", "description", "balance", "currency", "lastUpdatedAt")
+							 values ($1, current_timestamp(0), 'desc', 0, 'UAH', current_timestamp(0))
+				`, accountID)
+
+	require.NoError(t, err)
+
+	return accountID
 }

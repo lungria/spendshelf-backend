@@ -7,15 +7,14 @@ import (
 	"context"
 	"sync"
 
-	"github.com/lungria/spendshelf-backend/importer/account"
+	account2 "github.com/lungria/spendshelf-backend/account"
 
 	"github.com/lungria/spendshelf-backend/importer/mono"
-	"github.com/lungria/spendshelf-backend/storage"
 )
 
 // Ensure, that StorageMock does implement Storage.
 // If this is not the case, regenerate this file with moq.
-var _ account.Storage = &StorageMock{}
+var _ account2.Storage = &StorageMock{}
 
 // StorageMock is a mock implementation of Storage.
 //
@@ -34,7 +33,7 @@ var _ account.Storage = &StorageMock{}
 //     }
 type StorageMock struct {
 	// SaveFunc mocks the Save method.
-	SaveFunc func(ctx context.Context, account storage.Account) error
+	SaveFunc func(ctx context.Context, account account2.Account) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -43,20 +42,20 @@ type StorageMock struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// Account is the account argument value.
-			Account storage.Account
+			Account account2.Account
 		}
 	}
 	lockSave sync.RWMutex
 }
 
 // Save calls SaveFunc.
-func (mock *StorageMock) Save(ctx context.Context, account storage.Account) error {
+func (mock *StorageMock) Save(ctx context.Context, account account2.Account) error {
 	if mock.SaveFunc == nil {
 		panic("StorageMock.SaveFunc: method is nil but Storage.Save was just called")
 	}
 	callInfo := struct {
 		Ctx     context.Context
-		Account storage.Account
+		Account account2.Account
 	}{
 		Ctx:     ctx,
 		Account: account,
@@ -72,11 +71,11 @@ func (mock *StorageMock) Save(ctx context.Context, account storage.Account) erro
 //     len(mockedStorage.SaveCalls())
 func (mock *StorageMock) SaveCalls() []struct {
 	Ctx     context.Context
-	Account storage.Account
+	Account account2.Account
 } {
 	var calls []struct {
 		Ctx     context.Context
-		Account storage.Account
+		Account account2.Account
 	}
 	mock.lockSave.RLock()
 	calls = mock.calls.Save
@@ -86,7 +85,7 @@ func (mock *StorageMock) SaveCalls() []struct {
 
 // Ensure, that BankAPIMock does implement BankAPI.
 // If this is not the case, regenerate this file with moq.
-var _ account.BankAPI = &BankAPIMock{}
+var _ account2.BankAPI = &BankAPIMock{}
 
 // BankAPIMock is a mock implementation of BankAPI.
 //

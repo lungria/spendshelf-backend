@@ -1,4 +1,4 @@
-package storage
+package transaction
 
 import (
 	"context"
@@ -7,9 +7,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/lungria/spendshelf-backend/transaction/category"
+
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/lungria/spendshelf-backend/storage/category"
 )
 
 var (
@@ -98,20 +99,20 @@ func (f UpdatedFields) valid() bool {
 	return true
 }
 
-// TransactionStorage for transactions.
-type TransactionStorage struct {
+// Repository for transactions.
+type Repository struct {
 	pool *pgxpool.Pool
 }
 
-// NewTransactionStorage creates new instance of TransactionStorage.
-func NewTransactionStorage(pool *pgxpool.Pool) *TransactionStorage {
-	return &TransactionStorage{pool: pool}
+// NewRepository creates new instance of Repository.
+func NewRepository(pool *pgxpool.Pool) *Repository {
+	return &Repository{pool: pool}
 }
 
 const insertPrepStatementName = "insert_transactions"
 
 // Save transactions to db with deduplication using transaction ID.
-func (s *TransactionStorage) Save(ctx context.Context, transactions []Transaction) error {
+func (s *Repository) Save(ctx context.Context, transactions []Transaction) error {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -144,7 +145,7 @@ func (s *TransactionStorage) Save(ctx context.Context, transactions []Transactio
 
 // GetLastTransactionDate returns date property of latest transaction (sorted by date desc).
 // Returns storage.ErrNotFound if transaction not found by query.
-func (s *TransactionStorage) GetLastTransactionDate(ctx context.Context, accountID string) (time.Time, error) {
+func (s *Repository) GetLastTransactionDate(ctx context.Context, accountID string) (time.Time, error) {
 	row := s.pool.QueryRow(
 		ctx,
 		`select "time" from transaction
@@ -168,7 +169,7 @@ func (s *TransactionStorage) GetLastTransactionDate(ctx context.Context, account
 }
 
 // GetOne tries to find one transaction by query.
-func (s *TransactionStorage) GetOne(ctx context.Context, query Query) (Transaction, error) {
+func (s *Repository) GetOne(ctx context.Context, query Query) (Transaction, error) {
 	transactions, err := s.Get(ctx, query, Page{Limit: 1})
 	if err != nil {
 		return Transaction{}, err
@@ -179,7 +180,7 @@ func (s *TransactionStorage) GetOne(ctx context.Context, query Query) (Transacti
 
 // Get returns transactions by filter.
 // Returns storage.ErrNotFound if transaction not found by query.
-func (s *TransactionStorage) Get(ctx context.Context, query Query, page Page) ([]Transaction, error) {
+func (s *Repository) Get(ctx context.Context, query Query, page Page) ([]Transaction, error) {
 	sqlBuilder := &strings.Builder{}
 	sqlParams := make([]interface{}, 0)
 
@@ -208,7 +209,7 @@ func (s *TransactionStorage) Get(ctx context.Context, query Query, page Page) ([
 }
 
 // UpdateTransaction allows to partially update transaction.
-func (s *TransactionStorage) UpdateTransaction(
+func (s *Repository) UpdateTransaction(
 	ctx context.Context,
 	cmd UpdateTransactionCommand) (Transaction, error) {
 	sqlBuilder := &strings.Builder{}
@@ -253,7 +254,7 @@ func (s *TransactionStorage) UpdateTransaction(
 }
 
 // GetReport generates spending report for set date/time interval.
-func (s *TransactionStorage) GetReport(ctx context.Context, from, to time.Time) (map[int32]int64, error) {
+func (s *Repository) GetReport(ctx context.Context, from, to time.Time) (map[int32]int64, error) {
 	rows, err := s.pool.Query(
 		ctx,
 		`select "categoryID", sum("amount") as "amount" from transaction

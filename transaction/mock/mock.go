@@ -8,15 +8,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lungria/spendshelf-backend/importer/transaction"
+	transaction2 "github.com/lungria/spendshelf-backend/transaction"
 
 	"github.com/lungria/spendshelf-backend/importer/mono"
-	"github.com/lungria/spendshelf-backend/storage"
 )
 
 // Ensure, that BankAPIMock does implement BankAPI.
 // If this is not the case, regenerate this file with moq.
-var _ transaction.BankAPI = &BankAPIMock{}
+var _ transaction2.BankAPI = &BankAPIMock{}
 
 // BankAPIMock is a mock implementation of BankAPI.
 //
@@ -87,7 +86,7 @@ func (mock *BankAPIMock) GetTransactionsCalls() []struct {
 
 // Ensure, that StorageMock does implement Storage.
 // If this is not the case, regenerate this file with moq.
-var _ transaction.Storage = &StorageMock{}
+var _ transaction2.Storage = &StorageMock{}
 
 // StorageMock is a mock implementation of Storage.
 //
@@ -106,7 +105,7 @@ var _ transaction.Storage = &StorageMock{}
 //     }
 type StorageMock struct {
 	// SaveFunc mocks the Save method.
-	SaveFunc func(ctx context.Context, transactions []storage.Transaction) error
+	SaveFunc func(ctx context.Context, transactions []transaction2.Transaction) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -115,20 +114,20 @@ type StorageMock struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// Transactions is the transactions argument value.
-			Transactions []storage.Transaction
+			Transactions []transaction2.Transaction
 		}
 	}
 	lockSave sync.RWMutex
 }
 
 // Save calls SaveFunc.
-func (mock *StorageMock) Save(ctx context.Context, transactions []storage.Transaction) error {
+func (mock *StorageMock) Save(ctx context.Context, transactions []transaction2.Transaction) error {
 	if mock.SaveFunc == nil {
 		panic("StorageMock.SaveFunc: method is nil but Storage.Save was just called")
 	}
 	callInfo := struct {
 		Ctx          context.Context
-		Transactions []storage.Transaction
+		Transactions []transaction2.Transaction
 	}{
 		Ctx:          ctx,
 		Transactions: transactions,
@@ -144,11 +143,11 @@ func (mock *StorageMock) Save(ctx context.Context, transactions []storage.Transa
 //     len(mockedStorage.SaveCalls())
 func (mock *StorageMock) SaveCalls() []struct {
 	Ctx          context.Context
-	Transactions []storage.Transaction
+	Transactions []transaction2.Transaction
 } {
 	var calls []struct {
 		Ctx          context.Context
-		Transactions []storage.Transaction
+		Transactions []transaction2.Transaction
 	}
 	mock.lockSave.RLock()
 	calls = mock.calls.Save
@@ -158,7 +157,7 @@ func (mock *StorageMock) SaveCalls() []struct {
 
 // Ensure, that ImportIntervalGeneratorMock does implement ImportIntervalGenerator.
 // If this is not the case, regenerate this file with moq.
-var _ transaction.ImportIntervalGenerator = &ImportIntervalGeneratorMock{}
+var _ transaction2.ImportIntervalGenerator = &ImportIntervalGeneratorMock{}
 
 // ImportIntervalGeneratorMock is a mock implementation of ImportIntervalGenerator.
 //

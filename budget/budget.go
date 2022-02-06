@@ -1,8 +1,10 @@
-package storage
+package budget
 
 import (
 	"context"
 	"time"
+
+	"github.com/lungria/spendshelf-backend/transaction"
 
 	"github.com/jackc/pgx/v4"
 
@@ -24,20 +26,20 @@ type Limit struct {
 	Amount     int64 `json:"amount"`
 }
 
-// BudgetsStorage implements persistent storage layer for budgets and limits in PostgreSQL.
-type BudgetsStorage struct {
+// Repository implements persistent storage layer for budgets and limits in PostgreSQL.
+type Repository struct {
 	pool *pgxpool.Pool
 }
 
-// NewBudgetsStorage creates new instance of BudgetsStorage.
-func NewBudgetsStorage(pool *pgxpool.Pool) *BudgetsStorage {
-	return &BudgetsStorage{
+// NewRepository creates new instance of Repository.
+func NewRepository(pool *pgxpool.Pool) *Repository {
+	return &Repository{
 		pool: pool,
 	}
 }
 
-// GetLast returns last budget from storage.
-func (s *BudgetsStorage) GetLast(ctx context.Context) (Budget, error) {
+// GetLast returns last budget from repository.
+func (s *Repository) GetLast(ctx context.Context) (Budget, error) {
 	row := s.pool.QueryRow(
 		ctx,
 		`select "ID", "startsAt", "endsAt", "createdAt" from budget
@@ -53,7 +55,7 @@ func (s *BudgetsStorage) GetLast(ctx context.Context) (Budget, error) {
 		&b.CreatedAt)
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return Budget{}, ErrNotFound
+			return Budget{}, transaction.ErrNotFound
 		}
 
 		return Budget{}, err

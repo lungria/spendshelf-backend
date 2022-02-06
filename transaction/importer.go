@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/lungria/spendshelf-backend/importer/account"
+	"github.com/lungria/spendshelf-backend/account"
+
+	"github.com/lungria/spendshelf-backend/transaction/category"
 
 	"github.com/lungria/spendshelf-backend/importer/mono"
-	"github.com/lungria/spendshelf-backend/storage"
-	"github.com/lungria/spendshelf-backend/storage/category"
 )
 
 // BankAPI abstracts bank API related to transactions information.
@@ -21,7 +21,7 @@ type BankAPI interface {
 // Storage abstracts persistent storage for transactions.
 type Storage interface {
 	// Save transactions to database.
-	Save(ctx context.Context, transactions []storage.Transaction) error
+	Save(ctx context.Context, transactions []Transaction) error
 }
 
 // ImportIntervalGenerator generates time interval for transaction import.
@@ -31,21 +31,21 @@ type ImportIntervalGenerator interface {
 	GetInterval(ctx context.Context, accountID string) (from, to time.Time, err error)
 }
 
-// DefaultImporter loads transactions in specified interval for specified accountID and saves
+// Importer loads transactions in specified interval for specified accountID and saves
 // them to storage.
-type DefaultImporter struct {
+type Importer struct {
 	api          BankAPI
 	transactions Storage
-	accounts     account.DefaultImporter
+	accounts     account.Importer
 	intervalGen  ImportIntervalGenerator
 }
 
-// NewImporter create new instance of DefaultImporter.
+// NewImporter create new instance of Importer.
 func NewImporter(
 	api BankAPI,
 	storage Storage,
-	gen ImportIntervalGenerator) *DefaultImporter {
-	return &DefaultImporter{
+	gen ImportIntervalGenerator) *Importer {
+	return &Importer{
 		api:          api,
 		transactions: storage,
 		intervalGen:  gen,
@@ -53,7 +53,7 @@ func NewImporter(
 }
 
 // Import loads transactions in specified interval for specified accountID and saves them to storage.
-func (i *DefaultImporter) Import(ctx context.Context, accountID string) error {
+func (i *Importer) Import(ctx context.Context, accountID string) error {
 	from, to, err := i.intervalGen.GetInterval(ctx, accountID)
 	if err != nil {
 		return fmt.Errorf("failed import transaction for account '%s': %w", accountID, err)
@@ -84,10 +84,10 @@ func (i *DefaultImporter) Import(ctx context.Context, accountID string) error {
 	return nil
 }
 
-func (i *DefaultImporter) mapTransactions(accountID string, src []mono.Transaction) []storage.Transaction {
-	dst := make([]storage.Transaction, len(src))
+func (i *Importer) mapTransactions(accountID string, src []mono.Transaction) []Transaction {
+	dst := make([]Transaction, len(src))
 	for i, v := range src {
-		dst[i] = storage.Transaction{
+		dst[i] = Transaction{
 			ID:          v.ID,
 			Time:        time.Time(v.Time),
 			Description: v.Description,

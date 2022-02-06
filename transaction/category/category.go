@@ -1,9 +1,18 @@
-package storage
+package category
 
 import (
 	"context"
 
 	"github.com/jackc/pgx/v4/pgxpool"
+)
+
+const (
+	// common categories
+
+	// Default is the ID of category, that must be used for all new imported transactions.
+	Default = int32(1)
+	// Ignored is the ID of category, that would be ignored in report.
+	Ignored = int32(127)
 )
 
 // Category describes transaction category.
@@ -13,18 +22,18 @@ type Category struct {
 	Logo string `json:"logo"`
 }
 
-// CategoryStorage for categories.
-type CategoryStorage struct {
+// Repository for categories.
+type Repository struct {
 	pool *pgxpool.Pool
 }
 
-// NewCategoryStorage creates new instance of CategoryStorage.
-func NewCategoryStorage(pool *pgxpool.Pool) *CategoryStorage {
-	return &CategoryStorage{pool: pool}
+// NewRepository creates new instance of Repository.
+func NewRepository(pool *pgxpool.Pool) *Repository {
+	return &Repository{pool: pool}
 }
 
 // GetAll returns existing categories.
-func (s *CategoryStorage) GetAll(ctx context.Context) ([]Category, error) {
+func (s *Repository) GetAll(ctx context.Context) ([]Category, error) {
 	const limit = 20
 
 	rows, err := s.pool.Query(

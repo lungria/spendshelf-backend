@@ -1,13 +1,15 @@
-package storage_test
+package budget_test
 
 import (
 	"context"
 	"testing"
 
+	"github.com/lungria/spendshelf-backend/budget"
+	"github.com/lungria/spendshelf-backend/transaction/category"
+
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/stretchr/testify/require"
 
-	"github.com/lungria/spendshelf-backend/storage"
 	"github.com/lungria/spendshelf-backend/storage/pgtest"
 	"github.com/stretchr/testify/assert"
 )
@@ -17,7 +19,7 @@ func TestBudgetsStorageGetLast_WhenNoLimitsExist_NoErrorReturned(t *testing.T) {
 	defer cleanup()
 
 	budgetID := prepareTestBudget(t, pool)
-	db := storage.NewBudgetsStorage(pool)
+	db := budget.NewRepository(pool)
 
 	budget, err := db.GetLast(context.Background())
 
@@ -30,26 +32,26 @@ func TestBudgetsStorageGetLast_WhenLimitsExist_NoErrorReturned(t *testing.T) {
 	defer cleanup()
 
 	budgetID := prepareTestBudget(t, pool)
-	prepareTestCategory(t, pool, storage.Category{
+	prepareTestCategory(t, pool, category.Category{
 		ID:   1,
 		Name: "test1",
 		Logo: "test1",
 	})
-	prepareTestCategory(t, pool, storage.Category{
+	prepareTestCategory(t, pool, category.Category{
 		ID:   2,
 		Name: "test2",
 		Logo: "test2",
 	})
-	prepareTestLimit(t, pool, budgetID, storage.Limit{
+	prepareTestLimit(t, pool, budgetID, budget.Limit{
 		CategoryID: 1,
 		Amount:     100,
 	})
-	prepareTestLimit(t, pool, budgetID, storage.Limit{
+	prepareTestLimit(t, pool, budgetID, budget.Limit{
 		CategoryID: 2,
 		Amount:     200,
 	})
 
-	db := storage.NewBudgetsStorage(pool)
+	db := budget.NewRepository(pool)
 
 	budget, err := db.GetLast(context.Background())
 
@@ -72,11 +74,19 @@ func prepareTestBudget(t *testing.T, db *pgxpool.Pool) int {
 	return budgetID
 }
 
-func prepareTestLimit(t *testing.T, db *pgxpool.Pool, budgetID int, limit storage.Limit) {
+func prepareTestLimit(t *testing.T, db *pgxpool.Pool, budgetID int, limit budget.Limit) {
 	_, err := db.Exec(context.Background(), `
 				insert into "limit"
 					("budgetID", "categoryID", amount) 
 					VALUES ($1,$2,$3)`, budgetID, limit.CategoryID, limit.Amount)
+
+	require.NoError(t, err)
+}
+
+func prepareTestCategory(t *testing.T, db *pgxpool.Pool, category category.Category) {
+	_, err := db.Exec(context.Background(), `
+				insert into category ("ID", "name", "logo", "createdAt")
+				values ($1, $2, $3, current_timestamp(0))`, category.ID, category.Name, category.Logo)
 
 	require.NoError(t, err)
 }

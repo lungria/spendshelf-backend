@@ -6,8 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lungria/spendshelf-backend/importer/interval"
-	"github.com/lungria/spendshelf-backend/importer/interval/moq"
+	"github.com/lungria/spendshelf-backend/transaction/interval"
+	"github.com/lungria/spendshelf-backend/transaction/interval/moq"
+
 	"github.com/stretchr/testify/assert"
 )
 

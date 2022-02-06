@@ -1,15 +1,15 @@
-package handler
+package transaction
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/lungria/spendshelf-backend/transaction/category"
+
 	"github.com/gin-gonic/gin"
 	"github.com/lungria/spendshelf-backend/api"
-	"github.com/lungria/spendshelf-backend/storage"
 	"github.com/rs/zerolog/log"
 )
 
@@ -30,27 +30,15 @@ type GetReportQuery struct {
 	To   time.Time `form:"to" binding:"required"`
 }
 
-// TransactionStorage abstracts transactions storage implementation.
-type TransactionStorage interface {
-	Get(ctx context.Context, query storage.Query, page storage.Page) ([]storage.Transaction, error)
-	UpdateTransaction(ctx context.Context, cmd storage.UpdateTransactionCommand) (storage.Transaction, error)
-	GetReport(ctx context.Context, from, to time.Time) (map[int32]int64, error)
+// Handler handles /vN/transaction routes.
+type Handler struct {
+	transactions *Repository
+	categories   *category.Repository
 }
 
-// CategoryStorage abstracts categories storage implementation.
-type CategoryStorage interface {
-	GetAll(ctx context.Context) ([]storage.Category, error)
-}
-
-// TransactionHandler handles /vN/transaction routes.
-type TransactionHandler struct {
-	transactions TransactionStorage
-	categories   CategoryStorage
-}
-
-// NewTransactionHandler returns new instance of TransactionHandler.
-func NewTransactionHandler(transactions TransactionStorage, categories CategoryStorage) *TransactionHandler {
-	return &TransactionHandler{transactions: transactions, categories: categories}
+// NewHandler returns new instance of Handler.
+func NewHandler(transactions *Repository, categories *category.Repository) *Handler {
+	return &Handler{transactions: transactions, categories: categories}
 }
 
 // GetTransactionsQuery describes request query for transaction list.
@@ -59,7 +47,7 @@ type GetTransactionsQuery struct {
 }
 
 // GetTransactions returns transactions (without category).
-func (t *TransactionHandler) GetTransactions(c *gin.Context) {
+func (t *Handler) GetTransactions(c *gin.Context) {
 	query := GetTransactionsQuery{}
 
 	if err := c.BindQuery(&query); err != nil {
@@ -67,10 +55,10 @@ func (t *TransactionHandler) GetTransactions(c *gin.Context) {
 		return
 	}
 
-	result, err := t.transactions.Get(c, storage.Query{CategoryID: query.CategoryID}, storage.Page{})
+	result, err := t.transactions.Get(c, Query{CategoryID: query.CategoryID}, Page{})
 
 	switch {
-	case errors.Is(err, storage.ErrNotFound):
+	case errors.Is(err, ErrNotFound):
 		c.Status(http.StatusNoContent)
 	case errors.Is(err, nil):
 		c.JSON(http.StatusOK, &result)
@@ -85,7 +73,7 @@ func (t *TransactionHandler) GetTransactions(c *gin.Context) {
 // lastUpdatedAt filtering protects us from concurrent updates issues (simplest implementation of optimistic
 // concurrency). Body can contain optional parameters (see UpdateTransactionBody fields). Patch will update
 // only not nil fields.
-func (t *TransactionHandler) PatchTransaction(c *gin.Context) {
+func (t *Handler) PatchTransaction(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
 		c.JSON(http.StatusBadRequest, api.Error{Message: "id required"})
@@ -104,12 +92,12 @@ func (t *TransactionHandler) PatchTransaction(c *gin.Context) {
 		return
 	}
 
-	result, err := t.transactions.UpdateTransaction(c, storage.UpdateTransactionCommand{
-		Query: storage.Query{
+	result, err := t.transactions.UpdateTransaction(c, UpdateTransactionCommand{
+		Query: Query{
 			ID:            id,
 			LastUpdatedAt: query.LastUpdatedAt,
 		},
-		UpdatedFields: storage.UpdatedFields{
+		UpdatedFields: UpdatedFields{
 			CategoryID: req.CategoryID,
 			Comment:    req.Comment,
 		},
@@ -125,7 +113,7 @@ func (t *TransactionHandler) PatchTransaction(c *gin.Context) {
 }
 
 // GetReport returns monthly spendings report.
-func (t *TransactionHandler) GetReport(c *gin.Context) {
+func (t *Handler) GetReport(c *gin.Context) {
 	var query GetReportQuery
 	if err := c.BindQuery(&query); err != nil {
 		c.JSON(http.StatusBadRequest, api.Error{Message: "from/to query parameters are required"})
@@ -144,7 +132,7 @@ func (t *TransactionHandler) GetReport(c *gin.Context) {
 }
 
 // GetCategories returns list of existing categories.
-func (t *TransactionHandler) GetCategories(c *gin.Context) {
+func (t *Handler) GetCategories(c *gin.Context) {
 	result, err := t.categories.GetAll(c)
 	if err != nil {
 		log.Error().Err(err).Msg("unable to load categories from storage")
@@ -157,7 +145,7 @@ func (t *TransactionHandler) GetCategories(c *gin.Context) {
 }
 
 // BindRoutes bind gin routes to handler methods.
-func (t *TransactionHandler) BindRoutes(router *gin.Engine) {
+func (t *Handler) BindRoutes(router *gin.Engine) {
 	router.GET("/v1/transactions", t.GetTransactions)
 	router.PATCH("/v1/transactions/:id", t.PatchTransaction)
 	router.GET("/v1/transactions/report", t.GetReport)

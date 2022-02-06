@@ -41,12 +41,12 @@ func (s *Server) Start() {
 	}()
 }
 
-// Shutdown web server and kill all keep-alive connections.
-func (s *Server) Shutdown() {
+// Close web server and kill all keep-alive connections.
+func (s *Server) Close() error {
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), defaultServerShutdownTimeout)
 	defer cancel()
 
 	s.server.SetKeepAlivesEnabled(false)
-	// we do not care about this particular error because we can't do anything when we already shutting down.
-	_ = s.server.Shutdown(shutdownCtx)
+
+	return s.server.Shutdown(shutdownCtx)
 }
