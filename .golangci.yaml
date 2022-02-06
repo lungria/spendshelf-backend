@@ -11,12 +11,10 @@ linters-settings:
   gofumpt:
     # Whether or not to use the extra rules extending gofmt.
     extra-rules: true
-  golint:
-    min-confidence: 0
   lll:
-    # Mininal line length to report.
-    line-length: 120
-    # Tab 'legth' when counting length of the line.
+    # Minimal line length to report.
+    line-length: 150
+    # Tab 'length' when counting length of the line.
     tab-width: 1
   misspell:
     # Locale to use when checking for misspellings.
@@ -31,6 +29,32 @@ linters-settings:
     range-loops: true
     # Report preallocation suggestions on for loops.
     for-loops: true
+  testpackage:
+    # Regexp pattern to skip files.
+    skip-regexp: "(whitebox)_test\\.go"
+  wsl:
+    # If true append is only allowed to be cuddled if appending value is matching variables, fields or types on line above
+    strict-append: true
+    # Allow calls and assignments to be cuddled as long as the lines have any matching variables, fields or types.
+    allow-assign-and-call: false
+    # Allow multiline assignments to be cuddled.
+    allow-multiline-assign: false
+    # Allow declarations (var) to be cuddled.
+    allow-cuddle-declarations: false
+    # Allow trailing comments in ending of blocks.
+    allow-trailing-comment: false
+    # Force newlines in end of case at this limit (0 = never).
+    force-case-trailing-whitespace: 0
+    # Force cuddling of err checks with err var assignment.
+    force-err-cuddling: true
+    # Allow leading comments to be separated with empty lines.
+    allow-separated-leading-comment: false
+  staticcheck:
+    go: "1.17"
+    checks: ["all"]
+  govet:
+    # report about shadowed variables
+    check-shadowing: true
 
 linters:
   # please, do not use `enable-all`: it's deprecated and will be removed soon.
@@ -40,28 +64,52 @@ linters:
     - dogsled
     - gocognit
     - gocyclo
+    - gocritic
+    - godot
     - gofumpt
     - revive
+    - ifshort
     - lll
-    - wsl
     - misspell
     - nestif
     - noctx # Doesn't have any config for linters-settings section.
     - prealloc
+    - staticcheck
     - testpackage
+    - wsl
+    - ineffassign
     - govet
+
 issues:
   include:
-    # Disable excluding of issues about comments from golint.
-    - EXC0002
+    # Disable excluding of issues about comments from revive.
+    - EXC0012
+    # ineffective break statement. Did you mean to break out of the outer loop? (staticcheck)
+    - EXC0005
   exclude-rules:
-    - path: app.providers.go
+    - path: transaction/query.go
+      text: "variable 'zero' is only used in the if-statement"
+
+    # Disable some linters for tests.
+    - path: _test\.go
       linters:
+        - revive
         - wsl
-        - golint
+        - ifshort
+    # Disable reporting some particular issues.
     - linters:
-        - golint
+        - wsl
+      text: "if statements should only be cuddled with assignments"
+    - linters:
+        - wsl
+      text: "return statements should not be cuddled if block has more than two lines"
+    - linters:
+        - revive
       text: "unless it's in another file for this package"
+    # Exclude issues for long lines with go:generate
     - linters:
-        - wsl
-      text: "declarations should never be cuddled"
+        - lll
+      source: "^//go:generate "
+    - linters:
+        - govet
+      text: 'declaration of "(err|ctx)" shadows declaration at'

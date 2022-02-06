@@ -17,6 +17,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// Initialize dependencies graph.
 func Initialize() (*App, error) {
 	cfg, err := config.FromEnv()
 	if err != nil {

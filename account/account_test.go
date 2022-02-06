@@ -44,6 +44,7 @@ func TestAccountStorageSave_WithProductionSchema_NoErrorReturned(t *testing.T) {
 
 	err = row.Scan(&balance)
 
+	require.NoError(t, err)
 	assert.Equal(t, int64(20000), balance)
 }
 

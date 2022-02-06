@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	// common categories
+	// common categories.
 
 	// Default is the ID of category, that must be used for all new imported transactions.
 	Default = int32(1)

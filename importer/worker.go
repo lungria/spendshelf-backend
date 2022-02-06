@@ -13,6 +13,8 @@ const (
 	timeout        = 30 * time.Second
 )
 
+// Worker is the app/Worker interface implementation, so importer lifecycle can be managed with other parts of the
+// app lifecycle.
 type Worker struct {
 	im        *Importer
 	accountID string
@@ -21,12 +23,14 @@ type Worker struct {
 	wg        *sync.WaitGroup
 }
 
+// NewWorker creates new instance of Worker.
 func NewWorker(im *Importer, accountID string) *Worker {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Worker{im: im, accountID: accountID, ctx: ctx, cancel: cancel, wg: &sync.WaitGroup{}}
 }
 
+// Start importer worker. Blocks until Close() is called.
 func (w *Worker) Start() {
 	ticker := time.NewTicker(waitBeforeRuns)
 
@@ -53,6 +57,7 @@ func (w *Worker) executeWithTimeout(ctx context.Context) {
 	w.im.Import(timeoutCtx, w.accountID)
 }
 
+// Close importer worker, blocks until import is fully stopped.
 func (w Worker) Close() error {
 	w.ctx.Done()
 	w.wg.Wait()

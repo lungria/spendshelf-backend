@@ -32,8 +32,9 @@ func (q Query) appendToSQL(sqlBuilder *strings.Builder, sqlParams []interface{})
 		sqlBuilder.WriteString(fmt.Sprintf(`"categoryID" = $%v `, len(sqlParams)))
 	}
 
-	zeroTimeValue := time.Time{}
-	if q.LastUpdatedAt != zeroTimeValue {
+	//ifshort:i
+	zero := time.Time{}
+	if q.LastUpdatedAt != zero {
 		if len(sqlParams) > 0 {
 			sqlBuilder.WriteString("AND ")
 		}

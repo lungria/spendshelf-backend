@@ -184,8 +184,11 @@ func (s *Repository) Get(ctx context.Context, query Query, page Page) ([]Transac
 	sqlParams := make([]interface{}, 0)
 
 	sqlBuilder.WriteString("select * from transaction ")
+
 	sqlParams = query.appendToSQL(sqlBuilder, sqlParams)
+
 	sqlBuilder.WriteString(`order by "time" desc `)
+
 	sqlParams = page.appendToSQL(sqlBuilder, sqlParams)
 
 	vsx := sqlBuilder.String()
@@ -269,8 +272,10 @@ func (s *Repository) GetReport(ctx context.Context, from, to time.Time) (map[int
 	result := make(map[int32]int64)
 
 	for rows.Next() {
-		var categoryID int32
-		var amount int64
+		var (
+			categoryID int32
+			amount     int64
+		)
 
 		err := rows.Scan(
 			&categoryID,
