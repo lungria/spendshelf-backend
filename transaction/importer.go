@@ -6,10 +6,8 @@ import (
 	"time"
 
 	"github.com/lungria/spendshelf-backend/account"
-
-	"github.com/lungria/spendshelf-backend/transaction/category"
-
 	"github.com/lungria/spendshelf-backend/importer/mono"
+	"github.com/lungria/spendshelf-backend/transaction/category"
 )
 
 // BankAPI abstracts bank API related to transactions information.

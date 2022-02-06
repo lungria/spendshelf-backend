@@ -4,14 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/lungria/spendshelf-backend/budget"
-	"github.com/lungria/spendshelf-backend/transaction/category"
-
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/stretchr/testify/require"
-
+	"github.com/lungria/spendshelf-backend/budget"
 	"github.com/lungria/spendshelf-backend/storage/pgtest"
+	"github.com/lungria/spendshelf-backend/transaction/category"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestBudgetsStorageGetLast_WhenNoLimitsExist_NoErrorReturned(t *testing.T) {

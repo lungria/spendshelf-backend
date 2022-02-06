@@ -6,10 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/lungria/spendshelf-backend/importer/mono"
 	"github.com/lungria/spendshelf-backend/transaction"
 	"github.com/lungria/spendshelf-backend/transaction/mock"
-
-	"github.com/lungria/spendshelf-backend/importer/mono"
 	"github.com/stretchr/testify/assert"
 )
 

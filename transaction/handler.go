@@ -6,10 +6,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/lungria/spendshelf-backend/transaction/category"
-
 	"github.com/gin-gonic/gin"
 	"github.com/lungria/spendshelf-backend/api"
+	"github.com/lungria/spendshelf-backend/transaction/category"
 	"github.com/rs/zerolog/log"
 )
 

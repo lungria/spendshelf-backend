@@ -6,12 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lungria/spendshelf-backend/transaction/category"
-
-	"github.com/lungria/spendshelf-backend/transaction"
-
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/lungria/spendshelf-backend/storage/pgtest"
+	"github.com/lungria/spendshelf-backend/transaction"
+	"github.com/lungria/spendshelf-backend/transaction/category"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -6,7 +6,6 @@ import (
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/lungria/spendshelf-backend/account"
-
 	"github.com/lungria/spendshelf-backend/storage/pgtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

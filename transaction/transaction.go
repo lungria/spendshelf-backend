@@ -7,10 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lungria/spendshelf-backend/transaction/category"
-
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/lungria/spendshelf-backend/transaction/category"
 )
 
 var (

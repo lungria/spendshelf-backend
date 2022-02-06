@@ -4,11 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/lungria/spendshelf-backend/transaction"
-
 	"github.com/jackc/pgx/v4"
-
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/lungria/spendshelf-backend/transaction"
 )
 
 // Budget describes single month budget.

@@ -8,7 +8,6 @@ import (
 	"sync"
 
 	account2 "github.com/lungria/spendshelf-backend/account"
-
 	"github.com/lungria/spendshelf-backend/importer/mono"
 )
 

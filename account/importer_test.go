@@ -7,7 +7,6 @@ import (
 
 	"github.com/lungria/spendshelf-backend/account"
 	"github.com/lungria/spendshelf-backend/account/mock"
-
 	"github.com/lungria/spendshelf-backend/importer/mono"
 	"github.com/stretchr/testify/assert"
 )
