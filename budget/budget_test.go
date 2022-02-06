@@ -13,7 +13,7 @@ import (
 )
 
 func TestBudgetsStorageGetLast_WhenNoLimitsExist_NoErrorReturned(t *testing.T) {
-	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
+	pool, cleanup := pgtest.PrepareWithSchema(t, "../storage/schema/schema.sql")
 	defer cleanup()
 
 	budgetID := prepareTestBudget(t, pool)
@@ -26,7 +26,7 @@ func TestBudgetsStorageGetLast_WhenNoLimitsExist_NoErrorReturned(t *testing.T) {
 }
 
 func TestBudgetsStorageGetLast_WhenLimitsExist_NoErrorReturned(t *testing.T) {
-	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
+	pool, cleanup := pgtest.PrepareWithSchema(t, "../storage/schema/schema.sql")
 	defer cleanup()
 
 	budgetID := prepareTestBudget(t, pool)

@@ -21,7 +21,7 @@ var defaultCategory = category.Category{
 }
 
 func TestSave_OnDuplicateInsert_DoesNothing(t *testing.T) {
-	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
+	pool, cleanup := pgtest.PrepareWithSchema(t, "../storage/schema/schema.sql")
 	defer cleanup()
 
 	accountID := prepareTestAccount(t, pool)
@@ -86,7 +86,7 @@ func TestSave_OnDuplicateInsert_DoesNothing(t *testing.T) {
 }
 
 func TestGetLastTransactionDate_WithProductionSchema_NoErrorReturned(t *testing.T) {
-	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
+	pool, cleanup := pgtest.PrepareWithSchema(t, "../storage/schema/schema.sql")
 	defer cleanup()
 
 	accountID := prepareTestAccount(t, pool)
@@ -125,7 +125,7 @@ func TestGetLastTransactionDate_WithProductionSchema_NoErrorReturned(t *testing.
 }
 
 func TestGetOne_WithProductionSchema_NoErrorReturned(t *testing.T) {
-	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
+	pool, cleanup := pgtest.PrepareWithSchema(t, "../storage/schema/schema.sql")
 	defer cleanup()
 
 	accountID := prepareTestAccount(t, pool)
@@ -164,7 +164,7 @@ func TestGetOne_WithProductionSchema_NoErrorReturned(t *testing.T) {
 }
 
 func TestGetOne_WhenNoTransactionFound_WithProductionSchema_NoErrorReturned(t *testing.T) {
-	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
+	pool, cleanup := pgtest.PrepareWithSchema(t, "../storage/schema/schema.sql")
 	defer cleanup()
 
 	prepareTestCategory(t, pool, defaultCategory)
@@ -176,7 +176,7 @@ func TestGetOne_WhenNoTransactionFound_WithProductionSchema_NoErrorReturned(t *t
 }
 
 func TestGetByCategory_WithProductionSchema_NoErrorReturned(t *testing.T) {
-	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
+	pool, cleanup := pgtest.PrepareWithSchema(t, "../storage/schema/schema.sql")
 	defer cleanup()
 
 	newCategory := category.Category{
@@ -222,7 +222,7 @@ func TestGetByCategory_WithProductionSchema_NoErrorReturned(t *testing.T) {
 }
 
 func TestUpdate_WithProductionSchema_NoErrorReturned(t *testing.T) {
-	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
+	pool, cleanup := pgtest.PrepareWithSchema(t, "../storage/schema/schema.sql")
 	defer cleanup()
 
 	accountID := prepareTestAccount(t, pool)
@@ -291,7 +291,7 @@ func TestUpdate_WithProductionSchema_NoErrorReturned(t *testing.T) {
 }
 
 func TestGetReport_WithProductionSchema_NoErrorReturned(t *testing.T) {
-	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
+	pool, cleanup := pgtest.PrepareWithSchema(t, "../storage/schema/schema.sql")
 	defer cleanup()
 
 	newCategory := category.Category{

@@ -12,7 +12,7 @@ import (
 )
 
 func TestAccountStorageSave_WithProductionSchema_NoErrorReturned(t *testing.T) {
-	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
+	pool, cleanup := pgtest.PrepareWithSchema(t, "../storage/schema/schema.sql")
 	defer cleanup()
 
 	db := account.NewRepository(pool)
@@ -49,7 +49,7 @@ func TestAccountStorageSave_WithProductionSchema_NoErrorReturned(t *testing.T) {
 }
 
 func TestAccountStorageGetAll_WithProductionSchema_NoErrorReturned(t *testing.T) {
-	pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
+	pool, cleanup := pgtest.PrepareWithSchema(t, "../storage/schema/schema.sql")
 	defer cleanup()
 
 	accountID := prepareTestAccount(t, pool)
