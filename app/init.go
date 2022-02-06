@@ -55,10 +55,10 @@ func initAPI(cfg config.Config, pool *pgxpool.Pool) (Worker, *account.Repository
 	return api.NewServer(cfg, acHandler, bgHandler, txHandler), acRepo, txRepo
 }
 
-func initImporter(cfg config.Config, client *mono.Client, acRepo *account.Repository, txRepo *transaction.Repository) Worker {
-	gen := interval.NewGenerator(txRepo)
-	acIm := account.NewImporter(client, acRepo)
-	txIm := transaction.NewImporter(client, txRepo, gen)
+func initImporter(cfg config.Config, cl *mono.Client, a *account.Repository, t *transaction.Repository) Worker {
+	gen := interval.NewGenerator(t)
+	acIm := account.NewImporter(cl, a)
+	txIm := transaction.NewImporter(cl, t, gen)
 	globalIm := importer.NewImporter(acIm, txIm)
 
 	return importer.NewWorker(globalIm, cfg.MonoAccountID)

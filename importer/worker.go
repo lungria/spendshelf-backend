@@ -23,11 +23,13 @@ type Worker struct {
 
 func NewWorker(im *Importer, accountID string) *Worker {
 	ctx, cancel := context.WithCancel(context.Background())
+
 	return &Worker{im: im, accountID: accountID, ctx: ctx, cancel: cancel, wg: &sync.WaitGroup{}}
 }
 
 func (w *Worker) Start() {
 	ticker := time.NewTicker(waitBeforeRuns)
+
 	w.wg.Add(1)
 
 	for {
