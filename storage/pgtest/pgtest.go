@@ -4,7 +4,7 @@
 //     func TestSomethingThatUsesPostgres(t *testing.T) {
 //
 //         // create pool and schedule cleanup function
-//         pool, cleanup := pgtest.PrepareWithSchema(t, "schema/schema.sql")
+//         pool, cleanup := pgtest.PrepareWithSchema(t, "../storage/schema/schema.sql")
 //         defer cleanup()
 //         // use pool in your code
 //         accountID := prepareTestAccount(t, pool)

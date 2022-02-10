@@ -33,18 +33,16 @@ func NewImporter(transactions TransactionsImporter, accounts AccountImporter) *I
 }
 
 // Import latest data from bank for specified accountID.
-func (i *Importer) Import(accountID string) func(context.Context) {
-	return func(ctx context.Context) {
-		err := i.accounts.Import(ctx, accountID)
-		if err != nil {
-			log.Err(err).Msg("failed import")
-			return
-		}
+func (i *Importer) Import(ctx context.Context, accountID string) {
+	err := i.accounts.Import(ctx, accountID)
+	if err != nil {
+		log.Err(err).Msg("failed import")
+		return
+	}
 
-		err = i.transactions.Import(ctx, accountID)
-		if err != nil {
-			log.Err(err).Msg("failed import")
-			return
-		}
+	err = i.transactions.Import(ctx, accountID)
+	if err != nil {
+		log.Err(err).Msg("failed import")
+		return
 	}
 }

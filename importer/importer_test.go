@@ -5,13 +5,10 @@ import (
 	"io/ioutil"
 	"testing"
 
+	"github.com/lungria/spendshelf-backend/importer"
+	"github.com/lungria/spendshelf-backend/importer/mock"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-
-	"github.com/lungria/spendshelf-backend/importer"
-
-	"github.com/lungria/spendshelf-backend/importer/mock"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,8 +24,7 @@ func TestImport_WhenCalled_ImportsAccountsAndTransactions(t *testing.T) {
 	log.Logger = zerolog.New(ioutil.Discard)
 	svc := importer.NewImporter(transactions, accounts)
 
-	callback := svc.Import("account")
-	callback(context.Background())
+	svc.Import(context.Background(), "account")
 
 	assert.Equal(t, 1, len(accounts.ImportCalls()))
 	assert.Equal(t, 1, len(transactions.ImportCalls()))
