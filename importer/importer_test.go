@@ -4,6 +4,7 @@ import (
 	"context"
 	"io/ioutil"
 	"testing"
+	"time"
 
 	"github.com/lungria/spendshelf-backend/importer"
 	"github.com/lungria/spendshelf-backend/importer/mock"
@@ -18,8 +19,8 @@ func TestImport_WhenCalled_ImportsAccountsAndTransactions(t *testing.T) {
 		return nil
 	}
 	transactions := &mock.TransactionsImporterMock{}
-	transactions.ImportFunc = func(ctx context.Context, accountID string) error {
-		return nil
+	transactions.ImportFunc = func(ctx context.Context, accountID string) (time.Time, time.Time, error) {
+		return time.Time{}, time.Time{}, nil
 	}
 	log.Logger = zerolog.New(ioutil.Discard)
 	svc := importer.NewImporter(transactions, accounts)

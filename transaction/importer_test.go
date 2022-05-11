@@ -22,7 +22,7 @@ func TestImport_WhenGetIntervalFails_ReturnsError(t *testing.T) {
 	}
 	svc := transaction.NewImporter(api, storage, gen)
 
-	err := svc.Import(context.Background(), "acc")
+	_, _, err := svc.Import(context.Background(), "acc")
 
 	assert.True(t, errors.Is(err, testError))
 	assert.Zero(t, len(storage.SaveCalls()))
@@ -43,7 +43,7 @@ func TestImport_WhenApiGetTransactionsFails_ReturnsError(t *testing.T) {
 	}
 	svc := transaction.NewImporter(api, storage, gen)
 
-	err := svc.Import(context.Background(), "acc")
+	_, _, err := svc.Import(context.Background(), "acc")
 
 	assert.True(t, errors.Is(err, testError))
 	assert.Zero(t, len(storage.SaveCalls()))
@@ -63,7 +63,7 @@ func TestImport_WhenApiGetTransactionsReturnsNothing_StorageNotCalled(t *testing
 	}
 	svc := transaction.NewImporter(api, storage, gen)
 
-	err := svc.Import(context.Background(), "acc")
+	_, _, err := svc.Import(context.Background(), "acc")
 
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(storage.SaveCalls()))
@@ -93,7 +93,7 @@ func TestImport_WhenStorageSaveReturnsError_ReturnsError(t *testing.T) {
 	}
 	svc := transaction.NewImporter(api, db, gen)
 
-	err := svc.Import(context.Background(), "acc")
+	_, _, err := svc.Import(context.Background(), "acc")
 	saveCalls := db.SaveCalls()
 
 	assert.Error(t, err)
@@ -124,7 +124,7 @@ func TestImport_WhenDataIsSaved_ReturnsNil(t *testing.T) {
 	}
 	svc := transaction.NewImporter(api, db, gen)
 
-	err := svc.Import(context.Background(), "acc")
+	_, _, err := svc.Import(context.Background(), "acc")
 	saveCalls := db.SaveCalls()
 
 	assert.Nil(t, err)
