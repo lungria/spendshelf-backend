@@ -60,7 +60,7 @@ func initImporter(cfg config.Config, cl *mono.Client, a *account.Repository, t *
 	gen := interval.NewGenerator(t)
 	acIm := account.NewImporter(cl, a)
 	txIm := transaction.NewImporter(cl, t, gen)
-	globalIm := importer.NewImporter(acIm, txIm)
+	globalIm := importer.NewImporter(txIm, acIm)
 
 	return importer.NewWorker(globalIm, cfg.MonoAccountID)
 }

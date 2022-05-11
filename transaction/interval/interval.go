@@ -49,7 +49,7 @@ func (gen *Generator) GetInterval(ctx context.Context, accountID string) (from, 
 
 	diffSecs := nowUtc.Sub(lastKnownTransactionDate.UTC()).Seconds()
 	if diffSecs > maxAllowedIntervalDuration {
-		return lastKnownTransactionDate, lastKnownTransactionDate.Add(maxAllowedIntervalDuration / 2), nil
+		return lastKnownTransactionDate, lastKnownTransactionDate.Add(time.Second * maxAllowedIntervalDuration / 2), nil
 	}
 
 	return lastKnownTransactionDate.UTC(), nowUtc, nil

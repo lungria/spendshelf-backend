@@ -5,10 +5,81 @@ package mock
 
 import (
 	"context"
-	"sync"
-
 	"github.com/lungria/spendshelf-backend/importer"
+	"sync"
+	"time"
 )
+
+// Ensure, that TransactionsImporterMock does implement TransactionsImporter.
+// If this is not the case, regenerate this file with moq.
+var _ importer.TransactionsImporter = &TransactionsImporterMock{}
+
+// TransactionsImporterMock is a mock implementation of TransactionsImporter.
+//
+// 	func TestSomethingThatUsesTransactionsImporter(t *testing.T) {
+//
+// 		// make and configure a mocked TransactionsImporter
+// 		mockedTransactionsImporter := &TransactionsImporterMock{
+// 			ImportFunc: func(ctx context.Context, accountID string) (time.Time, time.Time, error) {
+// 				panic("mock out the Import method")
+// 			},
+// 		}
+//
+// 		// use mockedTransactionsImporter in code that requires TransactionsImporter
+// 		// and then make assertions.
+//
+// 	}
+type TransactionsImporterMock struct {
+	// ImportFunc mocks the Import method.
+	ImportFunc func(ctx context.Context, accountID string) (time.Time, time.Time, error)
+
+	// calls tracks calls to the methods.
+	calls struct {
+		// Import holds details about calls to the Import method.
+		Import []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// AccountID is the accountID argument value.
+			AccountID string
+		}
+	}
+	lockImport sync.RWMutex
+}
+
+// Import calls ImportFunc.
+func (mock *TransactionsImporterMock) Import(ctx context.Context, accountID string) (time.Time, time.Time, error) {
+	if mock.ImportFunc == nil {
+		panic("TransactionsImporterMock.ImportFunc: method is nil but TransactionsImporter.Import was just called")
+	}
+	callInfo := struct {
+		Ctx       context.Context
+		AccountID string
+	}{
+		Ctx:       ctx,
+		AccountID: accountID,
+	}
+	mock.lockImport.Lock()
+	mock.calls.Import = append(mock.calls.Import, callInfo)
+	mock.lockImport.Unlock()
+	return mock.ImportFunc(ctx, accountID)
+}
+
+// ImportCalls gets all the calls that were made to Import.
+// Check the length with:
+//     len(mockedTransactionsImporter.ImportCalls())
+func (mock *TransactionsImporterMock) ImportCalls() []struct {
+	Ctx       context.Context
+	AccountID string
+} {
+	var calls []struct {
+		Ctx       context.Context
+		AccountID string
+	}
+	mock.lockImport.RLock()
+	calls = mock.calls.Import
+	mock.lockImport.RUnlock()
+	return calls
+}
 
 // Ensure, that AccountImporterMock does implement AccountImporter.
 // If this is not the case, regenerate this file with moq.
@@ -16,19 +87,19 @@ var _ importer.AccountImporter = &AccountImporterMock{}
 
 // AccountImporterMock is a mock implementation of AccountImporter.
 //
-//     func TestSomethingThatUsesAccountImporter(t *testing.T) {
+// 	func TestSomethingThatUsesAccountImporter(t *testing.T) {
 //
-//         // make and configure a mocked AccountImporter
-//         mockedAccountImporter := &AccountImporterMock{
-//             ImportFunc: func(ctx context.Context, accountID string) error {
-// 	               panic("mock out the Import method")
-//             },
-//         }
+// 		// make and configure a mocked AccountImporter
+// 		mockedAccountImporter := &AccountImporterMock{
+// 			ImportFunc: func(ctx context.Context, accountID string) error {
+// 				panic("mock out the Import method")
+// 			},
+// 		}
 //
-//         // use mockedAccountImporter in code that requires AccountImporter
-//         // and then make assertions.
+// 		// use mockedAccountImporter in code that requires AccountImporter
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type AccountImporterMock struct {
 	// ImportFunc mocks the Import method.
 	ImportFunc func(ctx context.Context, accountID string) error
@@ -68,77 +139,6 @@ func (mock *AccountImporterMock) Import(ctx context.Context, accountID string) e
 // Check the length with:
 //     len(mockedAccountImporter.ImportCalls())
 func (mock *AccountImporterMock) ImportCalls() []struct {
-	Ctx       context.Context
-	AccountID string
-} {
-	var calls []struct {
-		Ctx       context.Context
-		AccountID string
-	}
-	mock.lockImport.RLock()
-	calls = mock.calls.Import
-	mock.lockImport.RUnlock()
-	return calls
-}
-
-// Ensure, that TransactionsImporterMock does implement TransactionsImporter.
-// If this is not the case, regenerate this file with moq.
-var _ importer.TransactionsImporter = &TransactionsImporterMock{}
-
-// TransactionsImporterMock is a mock implementation of TransactionsImporter.
-//
-//     func TestSomethingThatUsesTransactionsImporter(t *testing.T) {
-//
-//         // make and configure a mocked TransactionsImporter
-//         mockedTransactionsImporter := &TransactionsImporterMock{
-//             ImportFunc: func(ctx context.Context, accountID string) error {
-// 	               panic("mock out the Import method")
-//             },
-//         }
-//
-//         // use mockedTransactionsImporter in code that requires TransactionsImporter
-//         // and then make assertions.
-//
-//     }
-type TransactionsImporterMock struct {
-	// ImportFunc mocks the Import method.
-	ImportFunc func(ctx context.Context, accountID string) error
-
-	// calls tracks calls to the methods.
-	calls struct {
-		// Import holds details about calls to the Import method.
-		Import []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// AccountID is the accountID argument value.
-			AccountID string
-		}
-	}
-	lockImport sync.RWMutex
-}
-
-// Import calls ImportFunc.
-func (mock *TransactionsImporterMock) Import(ctx context.Context, accountID string) error {
-	if mock.ImportFunc == nil {
-		panic("TransactionsImporterMock.ImportFunc: method is nil but TransactionsImporter.Import was just called")
-	}
-	callInfo := struct {
-		Ctx       context.Context
-		AccountID string
-	}{
-		Ctx:       ctx,
-		AccountID: accountID,
-	}
-	mock.lockImport.Lock()
-	mock.calls.Import = append(mock.calls.Import, callInfo)
-	mock.lockImport.Unlock()
-	return mock.ImportFunc(ctx, accountID)
-}
-
-// ImportCalls gets all the calls that were made to Import.
-// Check the length with:
-//     len(mockedTransactionsImporter.ImportCalls())
-func (mock *TransactionsImporterMock) ImportCalls() []struct {
 	Ctx       context.Context
 	AccountID string
 } {
