@@ -120,7 +120,7 @@ func (s *Repository) Save(ctx context.Context, transactions []Transaction) error
 	defer func() { _ = tx.Rollback(ctx) }()
 
 	if _, err = tx.Prepare(ctx, insertPrepStatementName,
-		`insert into transaction s
+		`insert into transaction
 		("ID", "time", "description", "mcc", "hold", "amount", "accountID", "categoryID", "lastUpdatedAt") 
 		 values ($1, $2, $3, $4, $5, $6, $7, $8, current_timestamp(0)) on conflict do nothing`); err != nil {
 		return err
