@@ -117,10 +117,10 @@ func (s *Repository) Save(ctx context.Context, transactions []Transaction) error
 		return err
 	}
 
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }()
 
 	if _, err = tx.Prepare(ctx, insertPrepStatementName,
-		`insert into transaction 
+		`insert into transaction s
 		("ID", "time", "description", "mcc", "hold", "amount", "accountID", "categoryID", "lastUpdatedAt") 
 		 values ($1, $2, $3, $4, $5, $6, $7, $8, current_timestamp(0)) on conflict do nothing`); err != nil {
 		return err
@@ -213,7 +213,8 @@ func (s *Repository) Get(ctx context.Context, query Query, page Page) ([]Transac
 // UpdateTransaction allows to partially update transaction.
 func (s *Repository) UpdateTransaction(
 	ctx context.Context,
-	cmd UpdateTransactionCommand) (Transaction, error) {
+	cmd UpdateTransactionCommand,
+) (Transaction, error) {
 	sqlBuilder := &strings.Builder{}
 	sqlParams := make([]interface{}, 0)
 

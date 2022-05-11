@@ -42,7 +42,8 @@ type Importer struct {
 func NewImporter(
 	api BankAPI,
 	storage Storage,
-	gen ImportIntervalGenerator) *Importer {
+	gen ImportIntervalGenerator,
+) *Importer {
 	return &Importer{
 		api:          api,
 		transactions: storage,

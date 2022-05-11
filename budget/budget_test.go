@@ -19,10 +19,10 @@ func TestBudgetsStorageGetLast_WhenNoLimitsExist_NoErrorReturned(t *testing.T) {
 	budgetID := prepareTestBudget(t, pool)
 	db := budget.NewRepository(pool)
 
-	budget, err := db.GetLast(context.Background())
+	result, err := db.GetLast(context.Background())
 
 	assert.NoError(t, err)
-	assert.Equal(t, budget.ID, budgetID)
+	assert.Equal(t, result.ID, budgetID)
 }
 
 func TestBudgetsStorageGetLast_WhenLimitsExist_NoErrorReturned(t *testing.T) {
@@ -51,12 +51,12 @@ func TestBudgetsStorageGetLast_WhenLimitsExist_NoErrorReturned(t *testing.T) {
 
 	db := budget.NewRepository(pool)
 
-	budget, err := db.GetLast(context.Background())
+	result, err := db.GetLast(context.Background())
 
 	assert.NoError(t, err)
-	assert.Equal(t, budget.ID, budgetID)
-	assert.Len(t, budget.Limits, 2)
-	assert.Equal(t, int64(200), budget.Limits[0].Amount)
+	assert.Equal(t, result.ID, budgetID)
+	assert.Len(t, result.Limits, 2)
+	assert.Equal(t, int64(200), result.Limits[0].Amount)
 }
 
 func prepareTestBudget(t *testing.T, db *pgxpool.Pool) int {
@@ -81,10 +81,10 @@ func prepareTestLimit(t *testing.T, db *pgxpool.Pool, budgetID int, limit budget
 	require.NoError(t, err)
 }
 
-func prepareTestCategory(t *testing.T, db *pgxpool.Pool, category category.Category) {
+func prepareTestCategory(t *testing.T, db *pgxpool.Pool, ctg category.Category) {
 	_, err := db.Exec(context.Background(), `
 				insert into category ("ID", "name", "logo", "createdAt")
-				values ($1, $2, $3, current_timestamp(0))`, category.ID, category.Name, category.Logo)
+				values ($1, $2, $3, current_timestamp(0))`, ctg.ID, ctg.Name, ctg.Logo)
 
 	require.NoError(t, err)
 }
