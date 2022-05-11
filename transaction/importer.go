@@ -52,10 +52,10 @@ func NewImporter(
 }
 
 // Import loads transactions in specified interval for specified accountID and saves them to storage.
-func (i *Importer) Import(ctx context.Context, accountID string) error {
+func (i *Importer) Import(ctx context.Context, accountID string) (time.Time, time.Time, error) {
 	from, to, err := i.intervalGen.GetInterval(ctx, accountID)
 	if err != nil {
-		return fmt.Errorf("failed import transaction for account '%s': %w", accountID, err)
+		return i.resultWithErr(fmt.Errorf("failed import transaction for account '%s': %w", accountID, err))
 	}
 
 	query := mono.GetTransactionsQuery{
@@ -66,21 +66,25 @@ func (i *Importer) Import(ctx context.Context, accountID string) error {
 
 	monoTransactions, err := i.api.GetTransactions(ctx, query)
 	if err != nil {
-		return fmt.Errorf("failed import transaction for account '%s': %w", accountID, err)
+		return i.resultWithErr(fmt.Errorf("failed import transaction for account '%s': %w", accountID, err))
 	}
 
 	if len(monoTransactions) == 0 {
-		return nil
+		return from, to, nil
 	}
 
 	transactions := i.mapTransactions(accountID, monoTransactions)
 
 	err = i.transactions.Save(ctx, transactions)
 	if err != nil {
-		return fmt.Errorf("failed import transaction for account '%s': %w", accountID, err)
+		return i.resultWithErr(fmt.Errorf("failed import transaction for account '%s': %w", accountID, err))
 	}
 
-	return nil
+	return from, to, nil
+}
+
+func (i *Importer) resultWithErr(err error) (time.Time, time.Time, error) {
+	return time.Time{}, time.Time{}, err
 }
 
 func (i *Importer) mapTransactions(accountID string, src []mono.Transaction) []Transaction {

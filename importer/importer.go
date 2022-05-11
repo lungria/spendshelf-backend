@@ -2,6 +2,7 @@ package importer
 
 import (
 	"context"
+	"time"
 
 	"github.com/rs/zerolog/log"
 )
@@ -15,7 +16,7 @@ type AccountImporter interface {
 // TransactionsImporter abstracts transactions import logic implementation.
 type TransactionsImporter interface {
 	// Import loads transactions in specified interval for specified accountID and saves them to storage.
-	Import(ctx context.Context, accountID string) error
+	Import(ctx context.Context, accountID string) (time.Time, time.Time, error)
 }
 
 // Importer loads latest data from bank for specified accountID.
@@ -32,17 +33,25 @@ func NewImporter(transactions TransactionsImporter, accounts AccountImporter) *I
 	}
 }
 
-// Import latest data from bank for specified accountID.
+// Import the latest data from bank for specified accountID.
 func (i *Importer) Import(ctx context.Context, accountID string) {
 	err := i.accounts.Import(ctx, accountID)
 	if err != nil {
-		log.Err(err).Msg("failed import")
+		log.Err(err).Msg("failed account import")
 		return
 	}
 
-	err = i.transactions.Import(ctx, accountID)
+	from, to, err := i.transactions.Import(ctx, accountID)
 	if err != nil {
-		log.Err(err).Msg("failed import")
+		log.Err(err).
+			Time("from", from).
+			Time("to", to).
+			Msg("failed transactions import")
 		return
 	}
+
+	log.Debug().
+		Time("from", from).
+		Time("to", to).
+		Msg("import finished")
 }

@@ -4,8 +4,6 @@ import (
 	"context"
 	"sync"
 	"time"
-
-	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -40,7 +38,6 @@ func (w *Worker) Start() {
 		select {
 		case _ = <-ticker.C:
 			w.executeWithTimeout(w.ctx)
-			log.Debug().Msg("import finished")
 		case _ = <-w.ctx.Done():
 			return
 		}
