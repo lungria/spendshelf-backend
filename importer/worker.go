@@ -39,14 +39,10 @@ func (w *Worker) Start() {
 	for {
 		select {
 		case _ = <-ticker.C:
-			{
-				w.executeWithTimeout(w.ctx)
-				log.Debug().Msg("import finished")
-			}
+			w.executeWithTimeout(w.ctx)
+			log.Debug().Msg("import finished")
 		case _ = <-w.ctx.Done():
-			{
-				return
-			}
+			return
 		}
 	}
 }

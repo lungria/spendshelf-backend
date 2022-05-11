@@ -2,7 +2,6 @@ package interval
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/lungria/spendshelf-backend/transaction"
@@ -50,12 +49,8 @@ func (gen *Generator) GetInterval(ctx context.Context, accountID string) (from, 
 
 	diffSecs := nowUtc.Sub(lastKnownTransactionDate.UTC()).Seconds()
 	if diffSecs > maxAllowedIntervalDuration {
-		return time.Time{}, time.Time{}, intervalTooLongErr(lastKnownTransactionDate)
+		return lastKnownTransactionDate, lastKnownTransactionDate.Add(maxAllowedIntervalDuration / 2), nil
 	}
 
 	return lastKnownTransactionDate.UTC(), nowUtc, nil
-}
-
-func intervalTooLongErr(lastKnownTransactionDate time.Time) error {
-	return fmt.Errorf("interval too long, lastKnownTransactionDate: %v", lastKnownTransactionDate)
 }

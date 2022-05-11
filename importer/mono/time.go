@@ -22,7 +22,7 @@ func (t *Time) UnmarshalJSON(s []byte) (err error) {
 		return err
 	}
 
-	*t = (Time)(time.Unix(q, 0))
+	*t = Time(time.Unix(q, 0))
 
 	return nil
 }

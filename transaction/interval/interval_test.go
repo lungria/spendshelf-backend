@@ -27,7 +27,7 @@ func TestGetInterval_WhenDateDiffIsBelowLimit_IntervalReturned(t *testing.T) {
 	assert.GreaterOrEqual(t, time.Now().UTC().Unix(), to.Unix())
 }
 
-func TestGetInterval_WhenDateDiffIsAboveLimit_ErrorReturned(t *testing.T) {
+func TestGetInterval_WhenDateDiffIsAboveLimit_IntermediateIntervalSelected(t *testing.T) {
 	mockStorage := moq.TransactionsStorageMock{}
 	timeFrom := time.Now().UTC().Add(-2682001 * time.Second)
 	mockStorage.GetLastTransactionDateFunc = func(ctx context.Context, accountID string) (time.Time, error) {
@@ -35,10 +35,11 @@ func TestGetInterval_WhenDateDiffIsAboveLimit_ErrorReturned(t *testing.T) {
 	}
 	svc := interval.NewGenerator(&mockStorage)
 
-	_, _, err := svc.GetInterval(context.Background(), "accID")
+	from, to, err := svc.GetInterval(context.Background(), "accID")
 
-	assert.NotNil(t, err)
-	assert.Contains(t, err.Error(), "interval too long")
+	assert.NoError(t, err)
+	assert.Equal(t, timeFrom, from)
+	assert.GreaterOrEqual(t, to.Unix(), time.Now().UTC().Unix()/2)
 }
 
 func TestGetInterval_WhenStorageReturnsError_ErrorReturned(t *testing.T) {
