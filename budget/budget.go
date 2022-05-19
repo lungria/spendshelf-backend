@@ -18,6 +18,12 @@ type Budget struct {
 	Limits    []Limit   `json:"limits"`
 }
 
+// CreateBudgetRequest describes single month budget creation request.
+type CreateBudgetRequest struct {
+	Days   int     `json:"days"`
+	Limits []Limit `json:"limits"`
+}
+
 // Limit describe per-category limit inside monthly budget.
 type Limit struct {
 	CategoryID int32 `json:"categoryId"`
@@ -34,6 +40,12 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 	return &Repository{
 		pool: pool,
 	}
+}
+
+// Create returns last budget from repository.
+func (s *Repository) Create(ctx context.Context, budget CreateBudgetRequest) (Budget, error) {
+	// todo
+	return Budget{}, nil
 }
 
 // GetLast returns last budget from repository.
