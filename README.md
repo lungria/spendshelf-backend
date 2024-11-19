@@ -2,6 +2,14 @@
 
 ![main](https://github.com/lungria/spendshelf-backend/workflows/main/badge.svg)
 
+## Current status
+
+Project is paused indefinitely. I might get back to it later. Reasons:
+
+- my current bank does not expose any API's for implementing automated transactions export
+- budget is configured via manual DB calls each month
+- front-end that uses current spendshelf API is written in old deprecated React version and it's too high maintanance of a framework for such a small project. Next FE version will be done in either HTMX or Elixir Phoenix
+
 ## Overview
 
 Spendshelf started as a desire to keep money spending in the personal or/and family budget under control.
